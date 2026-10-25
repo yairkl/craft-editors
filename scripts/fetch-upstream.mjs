@@ -8,12 +8,12 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const manifest = JSON.parse(readFileSync(resolve(root, 'upstream/manifest.json'), 'utf8'));
 const selected = process.argv.slice(2);
 if (selected.some(id => !manifest.applications.some(app => app.id === id))) {
-  throw new Error('Choose gridcraft, wordcraft, deckcraft, pdfcraft, or no arguments for all.');
+  throw new Error('Choose gridcraft, wordcraft, deckcraft, pdfcraft, vectorcraft, or no arguments for all.');
 }
 const git = (cwd, args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] }).trim();
 for (const app of manifest.applications) {
   if (selected.length && !selected.includes(app.id)) continue;
-  if (!['gridcraft', 'pdfcraft', 'wordcraft', 'deckcraft'].includes(app.id) ||
+  if (!['gridcraft', 'pdfcraft', 'wordcraft', 'deckcraft', 'vectorcraft'].includes(app.id) ||
       app.repository !== `https://github.com/storytold/${app.id}` ||
       !/^[a-f0-9]{40}$/.test(app.revision)) throw new Error('Invalid source pin.');
   const directory = resolve(root, 'upstream/checkouts', app.id);

@@ -10,6 +10,7 @@ PROGRAMS = {
     'word': ('word', 'docx', 'wordcraft'),
     'powerpoint': ('deck', 'pptx', 'deckcraft'),
     'pdf': ('pdf', 'pdf', 'pdfcraft'),
+    'vector': ('vector', 'svg', 'vectorcraft'),
 }
 for name in [*PROGRAMS, 'suite']:
     manifest = json.loads((ROOT / 'packages' / name / 'package.json').read_text())
@@ -32,7 +33,7 @@ for name in [*PROGRAMS, 'suite']:
                 if other_name != name:
                     assert not any(p['name'].startswith(other_program + '-') for p in dependencies), f'{name}: sibling engine dependency'
             for editor in installed['contributes']['customEditors']:
-                assert editor['selector'] == [{'filenamePattern': f'*.{extension}'}]
+                assert editor['selector'] == ([{'filenamePattern': '*.svg'}, {'filenamePattern': '*.vectorcraft'}] if name == 'vector' and not editor['viewType'].endswith('integrationProbe') else [{'filenamePattern': f'*.{extension}'}])
             for renderer in (ROOT / 'media/engines' / engine).rglob('*'):
                 if renderer.is_file() and renderer.suffix in ('.js', '.wasm'):
                     relative = renderer.relative_to(ROOT / 'media/engines' / engine).as_posix()

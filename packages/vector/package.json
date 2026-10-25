@@ -1,0 +1,62 @@
+{
+  "version": "0.0.1",
+  "publisher": "craft-vscode-dev",
+  "license": "MIT",
+  "preview": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yairkl/craft-vscode.git"
+  },
+  "engines": {
+    "vscode": "^1.102.0"
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false
+    },
+    "virtualWorkspaces": {
+      "supported": true
+    }
+  },
+  "name": "craft-vector",
+  "displayName": "Craft Vector",
+  "description": "Edit SVG and VectorCraft drawings with VectorCraft inside VS Code.",
+  "categories": [
+    "Other"
+  ],
+  "main": "./out/src/entrypoints/vector.js",
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "craft.vector.preview",
+        "displayName": "Craft Vector",
+        "selector": [
+          {
+            "filenamePattern": "*.svg"
+          },
+          {
+            "filenamePattern": "*.vectorcraft"
+          }
+        ],
+        "priority": "option"
+      },
+      {
+        "viewType": "craft.vector.integrationProbe",
+        "displayName": "Craft Vector Integration Probe (development)",
+        "selector": [
+          {
+            "filenamePattern": "*.svg"
+          }
+        ],
+        "priority": "option"
+      }
+    ]
+  },
+  "files": [
+    "out/**",
+    "media/**",
+    "notices/**",
+    "README.md",
+    "LICENSE"
+  ]
+}

@@ -18,7 +18,7 @@ if (output('wasm-bindgen', ['--version']) !== 'wasm-bindgen 0.2.129') {
 }
 run('cargo', ['+1.95.0', 'build', '--manifest-path', 'adapters/Cargo.toml', '--release', '--locked', '--target', 'wasm32-unknown-unknown']);
 const artifacts = {};
-for (const id of ['grid', 'pdf', 'word', 'deck']) {
+for (const id of ['grid', 'pdf', 'word', 'deck', 'vector']) {
   const directory = resolve(root, 'media/engines', id);
   rmSync(directory, { recursive: true, force: true });
   mkdirSync(directory, { recursive: true });

@@ -99,7 +99,7 @@ def presentation():
 if __name__ == "__main__":
     check = "--check" in sys.argv
     ROOT.mkdir(parents=True, exist_ok=True)
-    for name, contents in {"minimal.docx": word_document(), "minimal.pptx": presentation(), "minimal.xlsx": spreadsheet(), "minimal.pdf": pdf(), "rendering.xlsx": spreadsheet(True), "rendering-active.xlsx": spreadsheet(True, 1), "rendering.pdf": pdf(True)}.items():
+    for name, contents in {"minimal.svg": b'<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480" viewBox="0 0 640 480"><rect x="40" y="40" width="240" height="120" fill="#2778c4"/><text x="40" y="220" font-size="28">Craft vector fixture</text></svg>\n', "minimal.docx": word_document(), "minimal.pptx": presentation(), "minimal.xlsx": spreadsheet(), "minimal.pdf": pdf(), "rendering.xlsx": spreadsheet(True), "rendering-active.xlsx": spreadsheet(True, 1), "rendering.pdf": pdf(True)}.items():
         path = ROOT / name
         if check:
             if not path.exists() or path.read_bytes() != contents:

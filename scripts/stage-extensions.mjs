@@ -8,6 +8,7 @@ export const extensions = {
   pdf: { engine: 'pdf', format: 'pdf' },
   word: { engine: 'word', format: 'docx' },
   powerpoint: { engine: 'deck', format: 'pptx' },
+  vector: { engine: 'vector', format: 'svg' },
   suite: {},
 };
 

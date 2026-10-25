@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["grid", "pdf", "word", "deck"]
+members = ["grid", "pdf", "word", "deck", "vector"]
 
 [profile.release]
 opt-level = "s"

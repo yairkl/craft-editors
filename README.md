@@ -83,3 +83,6 @@ Other Office viewers already exist, including [cweijan's Office Viewer](https://
 ## License
 
 This repository is licensed under [MIT](LICENSE). Upstream code and bundled assets retain their own licenses and required notices. Generated VSIX files include their selected renderer and dependency notices; binaries stay out of git. The tracked smoke documents are original generated fixtures.
+
+
+Craft Vector adds independently installable SVG/native `.vectorcraft` editing through the same host. Use **Reopen Editor With… → Craft Vector**; SVG remains opt-in so normal text editing is available.

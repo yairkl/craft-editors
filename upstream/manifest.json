@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "inspectedOn": "2026-10-25",
-  "status": "Native GridCraft, WordCraft, DeckCraft and PdfCraft editing; pinned sources and host patches.",
+  "status": "Native GridCraft, WordCraft, DeckCraft, PdfCraft and VectorCraft editing; pinned sources and per-program host patches.",
   "toolchain": {
     "rust": "1.95.0",
     "rustTarget": "wasm32-unknown-unknown",
@@ -99,6 +99,22 @@
           "sha256": "a2f1bd70a72e0bb4db0afc41763e6b7099c5de26d982f92400328528ba5ce314",
           "purpose": "Delegate file lifecycle and history to the embedding host and omit standalone chrome.",
           "removalCondition": "Remove when upstream exposes equivalent embedding services and host snapshots."
+        }
+      ]
+    },
+    {
+      "id": "vectorcraft",
+      "repository": "https://github.com/storytold/vectorcraft",
+      "revision": "714434527e1a3e03c4b49096e30dd92b258aab50",
+      "version": "0.17.0",
+      "minimumRust": "1.95",
+      "license": "MIT OR Apache-2.0",
+      "patches": [
+        {
+          "path": "upstream/patches/vectorcraft-embedding.patch",
+          "sha256": "642e2cb99fc4ded1f0ea8e25344abf657f7d9881ccf15846a5d8d504d2e84020",
+          "purpose": "Delegate file lifecycle and history to VS Code; omit standalone chrome and restricted branding.",
+          "removalCondition": "Remove when upstream exposes equivalent embedding services."
         }
       ]
     }

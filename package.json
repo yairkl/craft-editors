@@ -30,7 +30,8 @@
     "test:installed": "npm run compile && node scripts/test-installed.cjs",
     "test:editing": "npm run compile && node scripts/test-extensions.cjs editing",
     "test:office": "npm run compile && node scripts/test-extensions.cjs office",
-    "test:theme": "npm run compile && node scripts/test-extensions.cjs theme"
+    "test:theme": "npm run compile && node scripts/test-extensions.cjs theme",
+    "test:graphics": "npm run compile && node scripts/test-extensions.cjs graphics"
   },
   "devDependencies": {
     "@types/node": "22.20.5",

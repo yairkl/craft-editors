@@ -14,7 +14,7 @@ async function main() {
   }));
   writeFileSync(path.join(driver, 'index.js'), 'exports.activate = () => {};\n');
   const [cli, ...cliArgs] = resolveCliArgsFromVSCodeExecutablePath(executable, { reuseMachineInstall: true });
-  for (const names of [['spreadsheets'], ['pdf'], ['word'], ['powerpoint'], ['spreadsheets', 'pdf', 'word', 'powerpoint', 'suite']]) {
+  for (const names of [['spreadsheets'], ['pdf'], ['word'], ['powerpoint'], ['vector'], ['spreadsheets', 'pdf', 'word', 'powerpoint', 'vector', 'suite']]) {
     const label = names.join('-');
     const profile = path.join(root, `.vscode-test/installed-${label}`);
     rmSync(profile, { recursive: true, force: true });
