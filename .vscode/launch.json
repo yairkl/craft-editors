@@ -50,6 +50,18 @@
       "preLaunchTask": "npm: compile"
     },
     {
+      "name": "Craft Vector",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/dist/development/vector"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/dist/development/*/out/**/*.js"
+      ],
+      "preLaunchTask": "npm: compile"
+    },
+    {
       "name": "All Craft extensions",
       "type": "extensionHost",
       "request": "launch",
@@ -57,7 +69,8 @@
         "--extensionDevelopmentPath=${workspaceFolder}/dist/development/spreadsheets",
         "--extensionDevelopmentPath=${workspaceFolder}/dist/development/pdf",
         "--extensionDevelopmentPath=${workspaceFolder}/dist/development/word",
-        "--extensionDevelopmentPath=${workspaceFolder}/dist/development/powerpoint"
+        "--extensionDevelopmentPath=${workspaceFolder}/dist/development/powerpoint",
+        "--extensionDevelopmentPath=${workspaceFolder}/dist/development/vector"
       ],
       "outFiles": [
         "${workspaceFolder}/dist/development/*/out/**/*.js"
