@@ -4,7 +4,7 @@ Craft Spreadsheets 0.0.2 uses GridCraft's existing native ribbon, formula bar, g
 
 ## Using the editor
 
-Open an XLSX normally, select a cell and type or paste. Use the native bottom tabs to switch, add, rename or manage worksheets. Save with Ctrl/Cmd+S or the host Save button. Save As writes an XLSX copy. VS Code's undo/redo and File: Revert File commands operate on committed workbook edits. Pending cell and text-box drafts are committed before serialization; invalid drafts prevent saving.
+Open an XLSX normally, select a cell and type or paste. Use the native bottom tabs to switch, add, rename or manage worksheets. Save with Ctrl/Cmd+S. Use VS Code’s File: Save As command to write an XLSX copy. The embedded spreadsheet has no extra host header or Save buttons. VS Code's undo/redo and File: Revert File commands operate on committed workbook edits. Pending cell and text-box drafts are committed before serialization; invalid drafts prevent saving.
 
 ## Host lifecycle
 

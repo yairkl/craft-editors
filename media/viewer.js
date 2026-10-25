@@ -63,9 +63,9 @@ function renderPdf() {
   } catch { fail(); }
 }
 
-previous.addEventListener('click', () => { if (page > 0) { page--; renderPdf(); } });
-next.addEventListener('click', () => { if (page + 1 < pages) { page++; renderPdf(); } });
-zoom.addEventListener('change', renderPdf);
+previous?.addEventListener('click', () => { if (page > 0) { page--; renderPdf(); } });
+next?.addEventListener('click', () => { if (page + 1 < pages) { page++; renderPdf(); } });
+zoom?.addEventListener('change', renderPdf);
 function hostCommand(command) {
   queueMicrotask(() => {
     try {
@@ -77,8 +77,6 @@ function hostCommand(command) {
     }
   });
 }
-document.getElementById('save').addEventListener('click', () => hostCommand('file.save'));
-document.getElementById('save-as').addEventListener('click', () => hostCommand('file.saveAs'));
 
 window.addEventListener('message', async ({ data }) => {
   if (!data || data.version !== 1 || data.sessionId !== sessionId) return;

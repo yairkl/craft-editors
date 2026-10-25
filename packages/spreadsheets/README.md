@@ -2,7 +2,7 @@
 
 Read XLSX files inside VS Code using GridCraft. This extension contains only its own renderer and does not require the other Craft extensions.
 
-It opens supported files by default unless you have saved another editor preference. GridCraft's native ribbon, formula bar, grid and bottom worksheet tabs support editing. Use Ctrl/Cmd+S or Save to persist XLSX changes; Save As, undo/redo and Revert integrate with VS Code. Files stay local to the VS Code session.
+It opens supported files by default unless you have saved another editor preference. GridCraft's native ribbon, formula bar, grid and bottom worksheet tabs support editing. Use Ctrl/Cmd+S to persist XLSX changes; Save As, undo/redo and Revert integrate with VS Code. Files stay local to the VS Code session.
 
 Use the sheet selector and mouse-wheel scrolling to navigate spreadsheets.
 

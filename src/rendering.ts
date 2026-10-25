@@ -96,9 +96,8 @@ export function renderHtml(webview: vscode.Webview, media: vscode.Uri, engine: v
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}' ${webview.cspSource} 'wasm-unsafe-eval'; style-src ${webview.cspSource}; connect-src ${webview.cspSource}; img-src data: ${webview.cspSource};">
 <link rel="stylesheet" href="${uri('viewer.css')}"><title>Craft preview</title></head>
 <body data-session="${sessionId}" data-module="${webview.asWebviewUri(vscode.Uri.joinPath(engine, 'viewer.js'))}" data-wasm="${webview.asWebviewUri(vscode.Uri.joinPath(engine, 'viewer_bg.wasm'))}">
-<header><strong>Craft</strong><span id="mode">${editable ? 'Editing' : 'Read only'}</span><nav id="file-controls" ${editable ? '' : 'hidden'} aria-label="Workbook file actions"><button id="save" type="button">Save</button><button id="save-as" type="button">Save As…</button></nav>
-<nav id="pdf-controls" hidden aria-label="PDF navigation"><button id="previous" type="button">Previous</button><span id="page-label"></span><button id="next" type="button">Next</button>
-<label>Zoom <select id="zoom"><option value="0.75">75%</option><option value="1" selected>100%</option><option value="1.5">150%</option><option value="2">200%</option></select></label></nav></header>
+${editable ? '' : `<header><nav id="pdf-controls" hidden aria-label="PDF navigation"><button id="previous" type="button">Previous</button><span id="page-label"></span><button id="next" type="button">Next</button>
+<label>Zoom <select id="zoom"><option value="0.75">75%</option><option value="1" selected>100%</option><option value="1.5">150%</option><option value="2">200%</option></select></label></nav></header>`}
 <p id="status" role="status">Loading renderer…</p><main id="viewport"><canvas id="document" aria-label="${editable ? 'Spreadsheet editor' : 'Read-only document preview'}"></canvas></main>
 <script type="module" nonce="${nonce}" src="${uri('viewer.js')}"></script></body></html>`;
 }
