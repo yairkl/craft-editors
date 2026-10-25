@@ -1,13 +1,13 @@
 # Initial implementation plan
 
-Status: native XLSX editing and read-only PDF rendering implemented; broader release gates remain open. Updated: 2026-10-25.
+Status: native XLSX/DOCX/PPTX editing and read-only PDF rendering implemented; broader release gates remain open. Updated: 2026-10-25.
 
 See [editing lifecycle](editing.md) for native UI, Save/Save As, undo/redo, Revert and recovery, and [rendering](rendering.md) for independent engines.
 
 
 ## Current implementation
 
-Independent Craft Spreadsheets and Craft PDF extensions register default editors (editable XLSX, read-only PDF) and optional per-format transport probes. Their common host is maintained once and bundled into each package; neither requires the other. Actual GridCraft grid rendering and PdfCraft page rasterization run as WASM inside VS Code. Generated styled/multi-sheet and multi-page fixtures pass navigation, zoom/resize, source-preservation, malformed-input and non-file URI tests. Native spreadsheet input and persistence are covered by the editing suite. Captured output was visually inspected. See [rendering validation](rendering.md) and [independent packaging](packaging.md).
+Independent Craft Spreadsheets, Craft Word, Craft PowerPoint and Craft PDF extensions register default editors (editable XLSX/DOCX/PPTX, read-only PDF) and optional per-format transport probes. Their common host is maintained once and bundled into each package; neither requires the other. Actual GridCraft grid rendering and PdfCraft page rasterization run as WASM inside VS Code. Generated styled/multi-sheet and multi-page fixtures pass navigation, zoom/resize, source-preservation, malformed-input and non-file URI tests. Native spreadsheet input/persistence are covered by the editing suite; DOCX/PPTX round trips and recovery are covered by the Office suite. Captured output was visually inspected. See [rendering validation](rendering.md) and [independent packaging](packaging.md).
 
 GridCraft and PdfCraft source revisions are pinned in `upstream/manifest.json`. Rust 1.95.0, wasm-bindgen 0.2.129 and the adapter Cargo lockfile are verified for the adapters. These use direct Cargo builds, not Trunk or full upstream app builds. Output sizes/hashes are recorded in `upstream/rendering-build.json`; transitive redistribution notices and wider-platform validation remain open.
 

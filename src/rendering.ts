@@ -4,7 +4,7 @@ import { readProbeDocument, type ProbeDocument } from './document';
 import type { DocumentFormat } from '../protocol/probe';
 
 export interface RenderResult {
-  format: 'xlsx' | 'pdf';
+  format: DocumentFormat;
   rendered: boolean;
   width: number;
   height: number;
@@ -21,7 +21,7 @@ export class RenderingProvider implements vscode.CustomReadonlyEditorProvider<Pr
   private readonly results = new vscode.EventEmitter<RenderResult>();
   readonly onDidRender = this.results.event;
 
-  constructor(private readonly context: vscode.ExtensionContext, private readonly format: DocumentFormat) {}
+  constructor(private readonly context: vscode.ExtensionContext, private readonly format: 'pdf') {}
 
   openCustomDocument(uri: vscode.Uri, _context: vscode.CustomDocumentOpenContext,
     token: vscode.CancellationToken): Promise<ProbeDocument> {
@@ -31,7 +31,7 @@ export class RenderingProvider implements vscode.CustomReadonlyEditorProvider<Pr
   async resolveCustomEditor(document: ProbeDocument, panel: vscode.WebviewPanel,
     token: vscode.CancellationToken): Promise<void> {
     const media = vscode.Uri.joinPath(this.context.extensionUri, 'media');
-    const engine = vscode.Uri.joinPath(media, 'engines', document.format === 'xlsx' ? 'grid' : 'pdf');
+    const engine = vscode.Uri.joinPath(media, 'engines', 'pdf');
     try { await vscode.workspace.fs.stat(vscode.Uri.joinPath(engine, 'viewer_bg.wasm')); }
     catch { throw new Error('Craft renderers are not built. Run npm run renderers:build in the extension source checkout.'); }
     if (token.isCancellationRequested) return;
@@ -94,10 +94,10 @@ export function renderHtml(webview: vscode.Webview, media: vscode.Uri, engine: v
   return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}' ${webview.cspSource} 'wasm-unsafe-eval'; style-src ${webview.cspSource}; connect-src ${webview.cspSource}; img-src data: ${webview.cspSource};">
-<link rel="stylesheet" href="${uri('viewer.css')}"><title>Craft preview</title></head>
+<link rel="stylesheet" href="${uri('viewer.css')}"><title>Craft document</title></head>
 <body data-session="${sessionId}" data-module="${webview.asWebviewUri(vscode.Uri.joinPath(engine, 'viewer.js'))}" data-wasm="${webview.asWebviewUri(vscode.Uri.joinPath(engine, 'viewer_bg.wasm'))}">
 ${editable ? '' : `<header><nav id="pdf-controls" hidden aria-label="PDF navigation"><button id="previous" type="button">Previous</button><span id="page-label"></span><button id="next" type="button">Next</button>
 <label>Zoom <select id="zoom"><option value="0.75">75%</option><option value="1" selected>100%</option><option value="1.5">150%</option><option value="2">200%</option></select></label></nav></header>`}
-<p id="status" role="status">Loading renderer…</p><main id="viewport"><canvas id="document" aria-label="${editable ? 'Spreadsheet editor' : 'Read-only document preview'}"></canvas></main>
+<p id="status" role="status">Loading renderer…</p><main id="viewport"><canvas id="document" aria-label="${editable ? 'Document editor' : 'Read-only document preview'}"></canvas></main>
 <script type="module" nonce="${nonce}" src="${uri('viewer.js')}"></script></body></html>`;
 }

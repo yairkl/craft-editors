@@ -3,11 +3,14 @@ const { runTests } = require('@vscode/test-electron');
 
 const root = path.resolve(__dirname, '..');
 const suite = process.argv[2];
-if (!['integration', 'rendering', 'editing'].includes(suite)) throw new Error('Choose integration, rendering, or editing.');
+if (!['integration', 'rendering', 'editing', 'office'].includes(suite)) throw new Error('Choose integration, rendering, editing, or office.');
 // Each member is first run without the other extension, then together to catch ID collisions.
 async function main() {
-  for (const selected of [['spreadsheets'], ['pdf'], ['spreadsheets', 'pdf']]) {
+  for (const selected of [['spreadsheets'], ['pdf'], ['word'], ['powerpoint'], ['spreadsheets', 'pdf', 'word', 'powerpoint']]) {
+    if (suite === 'office' && !selected.some(name => ['word', 'powerpoint'].includes(name))) continue;
+    if (suite === 'rendering' && selected.length === 1 && !['spreadsheets', 'pdf'].includes(selected[0])) continue;
     if (suite === 'editing' && !selected.includes('spreadsheets')) continue;
+    if (process.env.CRAFT_TEST_ONLY && !selected.includes(process.env.CRAFT_TEST_ONLY)) continue;
     const label = selected.join('-');
     await runTests({
       version: '1.102.0',

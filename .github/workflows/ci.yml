@@ -45,11 +45,12 @@ jobs:
           key: rendering-${{ runner.os }}-rust-1.95.0-${{ hashFiles('adapters/Cargo.lock', 'upstream/manifest.json') }}
       - run: rustup toolchain install 1.95.0 --profile minimal --component rustfmt,clippy --target wasm32-unknown-unknown
       - run: cargo +1.95.0 install wasm-bindgen-cli --version 0.2.129 --locked
-      - run: cargo +1.95.0 fmt --manifest-path adapters/grid/Cargo.toml -p craft-grid-viewer -p craft-pdf-viewer --check
+      - run: cargo +1.95.0 fmt --manifest-path adapters/grid/Cargo.toml -p craft-grid-viewer -p craft-pdf-viewer -p craft-word-viewer -p craft-deck-viewer --check
       - run: cargo +1.95.0 clippy --manifest-path adapters/Cargo.toml --locked --target wasm32-unknown-unknown --no-deps -- -D warnings
       - run: npm run renderers:build
       - run: xvfb-run -a npm run test:rendering
       - run: xvfb-run -a npm run test:editing
+      - run: xvfb-run -a npm run test:office
       - run: npm run package
       - run: npm run packages:check
       - run: xvfb-run -a npm run test:installed

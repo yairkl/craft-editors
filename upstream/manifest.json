@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "inspectedOn": "2026-10-25",
-  "status": "Native GridCraft XLSX editing and read-only PdfCraft WASM adapters; Linux VS Code lifecycle verification",
+  "status": "Native GridCraft, WordCraft and DeckCraft editing plus read-only PdfCraft rendering; pinned source and per-program host patches",
   "toolchain": {
     "rust": "1.95.0",
     "rustTarget": "wasm32-unknown-unknown",
@@ -61,6 +61,38 @@
         "verification": "npm run test:rendering",
         "baseline": "upstream/rendering-build.json"
       }
+    },
+    {
+      "id": "wordcraft",
+      "repository": "https://github.com/storytold/wordcraft",
+      "revision": "85db9cfef5b12f02dc78f3e67774924a0d5e68c7",
+      "version": "0.11.0",
+      "minimumRust": "1.95",
+      "license": "MIT OR Apache-2.0",
+      "patches": [
+        {
+          "path": "upstream/patches/wordcraft-embedding.patch",
+          "sha256": "965121e4f6193656176dcbe9d788b4dbc59cfaee6c3c77ec81532234f3ef0d9f",
+          "purpose": "Delegate file lifecycle and history to the embedding host and omit standalone chrome.",
+          "removalCondition": "Remove when upstream exposes equivalent embedding services and host snapshots."
+        }
+      ]
+    },
+    {
+      "id": "deckcraft",
+      "repository": "https://github.com/storytold/deckcraft",
+      "revision": "14f40c408c67d2cb43e30a47dd179aada6dba53a",
+      "version": "0.11.1",
+      "minimumRust": "1.95",
+      "license": "MIT OR Apache-2.0",
+      "patches": [
+        {
+          "path": "upstream/patches/deckcraft-embedding.patch",
+          "sha256": "a2f1bd70a72e0bb4db0afc41763e6b7099c5de26d982f92400328528ba5ce314",
+          "purpose": "Delegate file lifecycle and history to the embedding host and omit standalone chrome.",
+          "removalCondition": "Remove when upstream exposes equivalent embedding services and host snapshots."
+        }
+      ]
     }
   ],
   "optionalBuildInputs": {

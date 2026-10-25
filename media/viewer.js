@@ -11,7 +11,7 @@ const previous = document.getElementById('previous');
 const next = document.getElementById('next');
 const zoom = document.getElementById('zoom');
 let viewer;
-let moduleApi;
+let Viewer;
 let opened = false;
 let capture = false;
 let page = 0;
@@ -73,7 +73,7 @@ function hostCommand(command) {
       send('editor:command', { command });
     } catch {
       status.hidden = false;
-      status.textContent = 'Finish or correct the current cell edit before saving.';
+      status.textContent = 'Finish or correct the current edit before saving.';
     }
   });
 }
@@ -93,7 +93,7 @@ window.addEventListener('message', async ({ data }) => {
         case 'history': viewer.restore_history(data.token); result = data.token; break;
         case 'ack': viewer.mark_saved(data.token); result = data.token; break;
         case 'restore': result = viewer.replace(new Uint8Array(data.bytes)); break;
-        case 'new': result = moduleApi.GridViewer.blank_workbook().buffer; break;
+        case 'new': result = (Viewer.blank_document ? Viewer.blank_document() : Viewer.blank_document()).buffer; break;
         case 'test:edit': {
           if (!capture) throw new Error('Test operation unavailable.');
           const checks = await import('./editing-checks.js');
@@ -106,33 +106,48 @@ window.addEventListener('message', async ({ data }) => {
           await checks.draftCell(viewer, canvas, data.row, data.col);
           result = true; break;
         }
+        case 'test:text': {
+          if (!capture) throw new Error('Test operation unavailable.');
+          result = viewer.text(); break;
+        }
+        case 'test:history': {
+          if (!capture) throw new Error('Test operation unavailable.');
+          const checks = await import('./editing-checks.js');
+          await checks.historyKey(canvas, data.redo === true); result = true; break;
+        }
+        case 'test:paste': {
+          if (!capture) throw new Error('Test operation unavailable.');
+          const checks = await import('./editing-checks.js');
+          await checks.pasteText(canvas, data.text);
+          result = viewer.text(); break;
+        }
         case 'test:cell': {
           if (!capture) throw new Error('Test operation unavailable.');
           result = viewer.cell_text(data.sheet, data.row, data.col); break;
         }
-        default: throw new Error('Unsupported workbook operation.');
+        default: throw new Error('Unsupported document operation.');
       }
       send('editor:response', { requestId: data.requestId, result });
     } catch (error) {
-      send('editor:response', { requestId: data.requestId, error: error instanceof Error ? error.message : typeof error === 'string' ? error : 'Workbook operation failed.' });
+      send('editor:response', { requestId: data.requestId, error: error instanceof Error ? error.message : typeof error === 'string' ? error : 'Document operation failed.' });
     }
     return;
   }
   if (data.type === 'render:timeout') { fail(); return; }
   if (data.type !== 'render:open' || opened || !(data.bytes instanceof ArrayBuffer) ||
-      !['xlsx', 'pdf'].includes(data.format)) return;
+      !['xlsx', 'pdf', 'docx', 'pptx'].includes(data.format)) return;
   opened = true;
   capture = data.capture === true;
   document.body.dataset.format = data.format;
   document.body.dataset.editable = String(data.editable === true);
   try {
     const module = await import(document.body.dataset.module);
-    moduleApi = module;
     await module.default({ module_or_path: document.body.dataset.wasm });
     const bytes = new Uint8Array(data.bytes);
-    if (data.format === 'xlsx') {
-      viewer = await module.GridViewer.start(canvas, bytes, (width, height, pixels) => {
-        queueMicrotask(() => report(width, height, pixels, viewer.sheets().length || 1));
+    if (data.format !== 'pdf') {
+      Viewer = data.format === 'xlsx' ? module.GridViewer : module.NativeViewer;
+      viewer = await Viewer.start(canvas, bytes, (width, height, pixels) => {
+        queueMicrotask(() => report(width, height, pixels, data.format === 'xlsx' ? viewer.sheets().length || 1 : viewer.unit_count() || 1));
       }, event => {
         if (event.kind === 'changed') send('editor:changed', { before: event.before, after: event.after, label: event.label });
         else if (event.kind === 'command') hostCommand(event.command);
@@ -146,7 +161,7 @@ window.addEventListener('message', async ({ data }) => {
       document.getElementById('pdf-controls').hidden = false;
       renderPdf();
     }
-  } catch (error) { engineReadyReject(error); fail(); }
+  } catch (error) { engineReadyReject(error); fail(error instanceof Error ? error.message : typeof error === 'string' ? error : 'Renderer startup failed.'); }
 });
 window.addEventListener('pagehide', () => { viewer?.destroy?.(); viewer?.free?.(); });
 send('render:ready');

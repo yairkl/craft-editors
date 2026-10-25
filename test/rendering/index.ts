@@ -9,7 +9,7 @@ interface RenderingApi { onDidRender: vscode.Event<RenderResult> }
 
 export async function run(): Promise<void> {
   assertIsolation();
-  const apis = new Map<'xlsx' | 'pdf', RenderingApi>();
+  const apis = new Map<'xlsx' | 'pdf' | 'docx' | 'pptx', RenderingApi>();
   for (const descriptor of selected) {
     const extension = vscode.extensions.getExtension<RenderingApi>(descriptor.id);
     assert.ok(extension);
@@ -68,7 +68,7 @@ export async function run(): Promise<void> {
   } finally { registration.dispose(); changes.dispose(); }
 }
 
-async function openAndWait(api: RenderingApi, uri: vscode.Uri, format: 'xlsx' | 'pdf'): Promise<RenderResult> {
+async function openAndWait(api: RenderingApi, uri: vscode.Uri, format: 'xlsx' | 'pdf' | 'docx' | 'pptx'): Promise<RenderResult> {
   let listener: vscode.Disposable | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
   const receipt = new Promise<RenderResult>((resolve, reject) => {

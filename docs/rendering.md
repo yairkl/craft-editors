@@ -1,6 +1,6 @@
 # Rendering and native spreadsheet UI
 
-**Craft Spreadsheets** embeds GridCraft's native editable UI for XLSX; **Craft PDF** provides read-only PDF rendering. Both use pinned WASM engines inside the VS Code webview, with no local server. Each package contains only its own engine. See [editing lifecycle](editing.md) and [packaging](packaging.md).
+**Craft Spreadsheets**, **Craft Word** and **Craft PowerPoint** embed native editable UIs for XLSX, DOCX and PPTX; **Craft PDF** provides read-only PDF rendering. Both use pinned WASM engines inside the VS Code webview, with no local server. Each package contains only its own engine. See [editing lifecycle](editing.md) and [packaging](packaging.md).
 
 ## Build and run
 
@@ -19,7 +19,7 @@ Source preparation applies the declared patches before Rust checks; the renderer
 
 Generated JavaScript/WASM stays in ignored `media/engines/`. `media/engines/build.json` records tool versions, input pins, lock hash, output sizes and SHA-256 hashes. The tracked `upstream/rendering-build.json` is the baseline from the verified local build, not a promise of identical bytes on every host. Binaries are not committed or downloaded at extension runtime.
 
-Run `npm run compile`, then select **Craft Spreadsheets**, **Craft PDF**, or **Both Craft extensions** in Run and Debug and press F5. In the development window, open the matching `integration-tests/fixtures/rendering.xlsx` or `rendering.pdf` normally. Each extension is the default for its own file type. Existing user editor associations take precedence; use **Reopen Editor With… → Configure default editor** to change a saved preference. The spreadsheet supports wheel scrolling, Shift-wheel horizontal scrolling and sheet selection. The PDF supports Previous/Next and 75–200% zoom.
+Run `npm run compile`, then select an individual Craft application or **All Craft extensions** in Run and Debug and press F5. In the development window, open the matching `integration-tests/fixtures/rendering.xlsx` or `rendering.pdf` normally. Each extension is the default for its own file type. Existing user editor associations take precedence; use **Reopen Editor With… → Configure default editor** to change a saved preference. The spreadsheet supports wheel scrolling, Shift-wheel horizontal scrolling and sheet selection. The PDF supports Previous/Next and 75–200% zoom.
 
 ## Adapter boundaries
 
@@ -38,6 +38,7 @@ npm run fixtures:check
 npm run test:integration
 npm run test:rendering
 npm run test:editing
+npm run test:office
 ```
 
 On headless Linux, prefix each VS Code suite with `xvfb-run -a`. The rendering suite uses Chromium's software WebGL backend for headless testing; normal launches use the available GPU backend. Both suites target VS Code 1.102.0. `VSCODE_EXECUTABLE_PATH` selects a different installed test host.
@@ -59,6 +60,14 @@ The transport/rendering suites run each extension alone and then together, asser
 
 Validation covers the generated fixtures on Linux and a simulated non-file provider. Windows, macOS, actual WSL/SSH sessions, startup/memory benchmarks, large/malformed corpora, full font/script coverage and format fidelity remain release work. Embedded images/charts and complex documents have not been assessed. GridCraft may recalculate formulas while opening, as its native engine does. Rendering inherits upstream behavior and supported formats.
 
-PDF rendering runs synchronously in the webview, so expensive pages can temporarily delay its UI. Password entry is not implemented. Oversized rasters are rejected. No DOCX/PPTX renderer has been integrated yet.
+PDF rendering runs synchronously in the webview, so expensive pages can temporarily delay its UI. Password entry is not implemented. Oversized rasters are rejected. WordCraft and DeckCraft native rendering and text-edit persistence are covered by the Office suite. Complex DOCX/PPTX fidelity remains unvalidated.
 
-Spreadsheet file/window chrome belongs to VS Code; PDF uses its own small viewing toolbar. Packaging now collects renderer-specific dependency inventories and available license/font notices. Reviewing that output and the remaining platform/fidelity limits is still required before public release; see [the asset inventory](../upstream/rendering-assets.md). Building local VSIX files does not publish an extension release.
+Native application file/window chrome belongs to VS Code; PDF uses its own small viewing toolbar. Packaging now collects renderer-specific dependency inventories and available license/font notices. Reviewing that output and the remaining platform/fidelity limits is still required before public release; see [the asset inventory](../upstream/rendering-assets.md). Building local VSIX files does not publish an extension release.
+
+## Word and PowerPoint adapters
+
+`adapters/word` embeds WordCraft with egui 0.36.2; `adapters/deck` embeds DeckCraft with its upstream-pinned egui 0.37 fork. They use `adapters/native/runtime.rs` for runner setup, revision messages, serialization, saved acknowledgments and history. Each supplies model I/O, native UI calls and snapshot restoration. The shared TypeScript host is format-independent.
+
+The adapter workspace repeats required upstream Cargo patches: DeckCraft’s egui/winit fork and WordCraft’s newer Krilla fork (`17744430…`), which supplies the PDF print/optional-content APIs and also satisfies DeckCraft’s older PDF writer requirements. All are immutable git pins in `adapters/Cargo.lock`; no upstream lockfile is changed. Re-run all four renderers when changing these shared build inputs.
+
+wasm-bindgen may emit `snippets/` modules alongside its main wrapper. Packaging includes those modules only with their own engine; the build hashes every generated JS/WASM file and archive checks verify imported modules are present. This is required for DeckCraft’s text agent.

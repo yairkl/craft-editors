@@ -1,10 +1,10 @@
 import { strict as assert } from 'node:assert';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import type { SpreadsheetDocument, SpreadsheetProvider } from '../../src/editing';
+import type { EditableDocument, EditingProvider } from '../../src/editing';
 import type { RenderResult } from '../../src/rendering';
 import { assertIsolation, fixture, root } from '../environment';
-interface EditorApi { editing: SpreadsheetProvider; onDidRender: vscode.Event<RenderResult> }
+interface EditorApi { editing: EditingProvider; onDidRender: vscode.Event<RenderResult> }
 export async function run(): Promise<void> {
   assertIsolation();
   const extension = vscode.extensions.getExtension<EditorApi>('craft-vscode-dev.craft-spreadsheets');
@@ -132,7 +132,7 @@ export async function run(): Promise<void> {
   await waitFor(() => draft.dirty);
   assert.equal(await cell(draft), '42', 'Typing keeps the native draft open until commit');
   assert.ok(await vscode.workspace.save(draftUri));
-  assert.equal(await cell(draft), '7', 'Save commits the pending native cell draft');
+  assert.equal(await cell(draft), '7', 'Save serializes the pending native cell draft');
   assert.equal(draft.dirty, false);
   await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
   const reopenedDraft = await open(api, draftUri);
@@ -140,7 +140,7 @@ export async function run(): Promise<void> {
   await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
   console.log('Native editing: cell/formula round trip, Undo/Redo, Save As, Revert, failed/cancelled saves, edits during write, and backup recovery passed.');
 }
-async function open(api: EditorApi, uri: vscode.Uri): Promise<SpreadsheetDocument> {
+async function open(api: EditorApi, uri: vscode.Uri): Promise<EditableDocument> {
   const result = renderedPromise(api);
   await vscode.commands.executeCommand('vscode.open', uri);
   const rendered = await result;
@@ -153,10 +153,10 @@ function renderedPromise(api: EditorApi): Promise<RenderResult> {
     const listener = api.onDidRender(result => { clearTimeout(timer); listener.dispose(); resolve(result); });
   });
 }
-async function edit(doc: SpreadsheetDocument, text: string): Promise<unknown> {
+async function edit(doc: EditableDocument, text: string): Promise<unknown> {
   return doc.request('test:edit', { row: 1, col: 1, text });
 }
-async function cell(doc: SpreadsheetDocument, row = 1): Promise<unknown> {
+async function cell(doc: EditableDocument, row = 1): Promise<unknown> {
   return doc.request('test:cell', { sheet: 0, row, col: 1 });
 }
 
@@ -168,7 +168,7 @@ async function waitFor(predicate: () => boolean): Promise<void> {
   }
 }
 
-async function revert(doc: SpreadsheetDocument): Promise<void> {
+async function revert(doc: EditableDocument): Promise<void> {
   const before = doc.token;
   await vscode.commands.executeCommand('workbench.action.files.revert');
   await waitFor(() => doc.token !== before && !doc.dirty);

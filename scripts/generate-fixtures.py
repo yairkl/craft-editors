@@ -68,10 +68,38 @@ def pdf(multipage=False):
     return bytes(output)
 
 
+def office_package(parts):
+    output = BytesIO()
+    with ZipFile(output, "w") as archive:
+        for name, text in parts.items():
+            archive.writestr(ZipInfo(name, (2026, 1, 1, 0, 0, 0)), text.encode("utf-8"))
+    return output.getvalue()
+
+
+def word_document():
+    return office_package({
+        "[Content_Types].xml": '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>',
+        "_rels/.rels": '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>',
+        "word/document.xml": '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:rPr><w:b/><w:color w:val="185A8D"/><w:sz w:val="40"/></w:rPr><w:t>Craft Word fixture</w:t></w:r></w:p><w:p><w:r><w:t>Original writing for native editing and save verification.</w:t></w:r></w:p><w:p><w:r><w:t>Open, edit, save and reopen this document in VS Code.</w:t></w:r></w:p><w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/></w:sectPr></w:body></w:document>',
+    })
+
+
+def presentation():
+    parts = {
+        "[Content_Types].xml": '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>' + ''.join(f'<Override PartName="/ppt/slides/slide{i}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>' for i in [1, 2]) + '</Types>',
+        "_rels/.rels": '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/></Relationships>',
+        "ppt/presentation.xml": '<p:presentation xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><p:sldIdLst><p:sldId id="256" r:id="rId1"/><p:sldId id="257" r:id="rId2"/></p:sldIdLst><p:sldSz cx="12192000" cy="6858000"/><p:notesSz cx="6858000" cy="9144000"/></p:presentation>',
+        "ppt/_rels/presentation.xml.rels": '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + ''.join(f'<Relationship Id="rId{i}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide{i}.xml"/>' for i in [1, 2]) + '</Relationships>',
+    }
+    for i, title in [(1, 'Craft presentation fixture'), (2, 'Craft second slide')]:
+        parts[f"ppt/slides/slide{i}.xml"] = f'<p:sld xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><p:cSld name="Slide {i}"><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/><p:sp><p:nvSpPr><p:cNvPr id="2" name="Title"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm><a:off x="914400" y="914400"/><a:ext cx="10058400" cy="1828800"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/></p:spPr><p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:rPr sz="3600" b="1"><a:solidFill><a:srgbClr val="185A8D"/></a:solidFill></a:rPr><a:t>{title}</a:t></a:r></a:p></p:txBody></p:sp></p:spTree></p:cSld></p:sld>'
+    return office_package(parts)
+
+
 if __name__ == "__main__":
     check = "--check" in sys.argv
     ROOT.mkdir(parents=True, exist_ok=True)
-    for name, contents in {"minimal.xlsx": spreadsheet(), "minimal.pdf": pdf(), "rendering.xlsx": spreadsheet(True), "rendering-active.xlsx": spreadsheet(True, 1), "rendering.pdf": pdf(True)}.items():
+    for name, contents in {"minimal.docx": word_document(), "minimal.pptx": presentation(), "minimal.xlsx": spreadsheet(), "minimal.pdf": pdf(), "rendering.xlsx": spreadsheet(True), "rendering-active.xlsx": spreadsheet(True, 1), "rendering.pdf": pdf(True)}.items():
         path = ROOT / name
         if check:
             if not path.exists() or path.read_bytes() != contents:

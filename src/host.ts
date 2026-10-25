@@ -11,7 +11,7 @@ export interface ExtensionDescriptor {
 }
 
 export interface ProbeResult {
-  format: 'xlsx' | 'pdf';
+  format: DocumentFormat;
   byteLength: number;
   verified: boolean;
 }

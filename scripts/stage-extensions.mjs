@@ -6,6 +6,8 @@ export const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const extensions = {
   spreadsheets: { engine: 'grid', format: 'xlsx' },
   pdf: { engine: 'pdf', format: 'pdf' },
+  word: { engine: 'word', format: 'docx' },
+  powerpoint: { engine: 'deck', format: 'pptx' },
   suite: {},
 };
 
@@ -22,7 +24,7 @@ export function stageExtensions({ development = false, allowMissingRenderers = f
     const manifest = JSON.parse(readFileSync(resolve(destination, 'package.json'), 'utf8'));
     const { engine } = extensions[name];
     if (engine) {
-      for (const file of ['host', 'document', 'rendering', ...(name === 'spreadsheets' ? ['editing', 'rpc'] : [])]) copy(`out/src/${file}.js`);
+      for (const file of ['host', 'document', 'rendering', ...(name !== 'pdf' ? ['editing', 'rpc'] : [])]) copy(`out/src/${file}.js`);
       copy(`out/src/entrypoints/${name}.js`);
       copy('out/protocol/probe.js');
       for (const file of ['probe.js', 'probe.css', 'viewer.js', 'viewer.css']) copy(`media/${file}`);
@@ -33,6 +35,8 @@ export function stageExtensions({ development = false, allowMissingRenderers = f
           if (!allowMissingRenderers) throw new Error(`${name}: run npm run renderers:build before packaging.`);
         } else copy(`media/engines/${engine}/${file}`);
       }
+      const snippets = resolve(root, 'media/engines', engine, 'snippets');
+      if (existsSync(snippets)) cpSync(snippets, resolve(destination, 'media/engines', engine, 'snippets'), { recursive: true });
       const notices = resolve(root, 'dist/notices', name);
       if (existsSync(notices)) cpSync(notices, resolve(destination, 'notices'), { recursive: true });
     }

@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { verifySource } from './upstream-patches.mjs';
@@ -18,12 +18,13 @@ if (output('wasm-bindgen', ['--version']) !== 'wasm-bindgen 0.2.129') {
 }
 run('cargo', ['+1.95.0', 'build', '--manifest-path', 'adapters/Cargo.toml', '--release', '--locked', '--target', 'wasm32-unknown-unknown']);
 const artifacts = {};
-for (const id of ['grid', 'pdf']) {
+for (const id of ['grid', 'pdf', 'word', 'deck']) {
   const directory = resolve(root, 'media/engines', id);
+  rmSync(directory, { recursive: true, force: true });
   mkdirSync(directory, { recursive: true });
   run('wasm-bindgen', ['--target', 'web', '--out-dir', directory, '--out-name', 'viewer',
     resolve(root, `adapters/target/wasm32-unknown-unknown/release/craft_${id}_viewer.wasm`)]);
-  for (const name of ['viewer.js', 'viewer_bg.wasm']) {
+  for (const name of readdirSync(directory, { recursive: true }).filter(name => /\.(js|wasm)$/.test(name))) {
     const bytes = readFileSync(resolve(directory, name));
     artifacts[`${id}/${name}`] = { bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') };
   }

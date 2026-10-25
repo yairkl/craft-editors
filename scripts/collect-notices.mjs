@@ -10,7 +10,7 @@ export function collectNotices(selected) {
   const packages = new Map(metadata.packages.map(p => [p.id, p]));
   const nodes = new Map(metadata.resolve.nodes.map(n => [n.id, n]));
   for (const name of selected.filter(name => name !== 'suite')) {
-    const crate = name === 'spreadsheets' ? 'craft-grid-viewer' : 'craft-pdf-viewer';
+    const crate = `craft-${{spreadsheets:'grid',pdf:'pdf',word:'word',powerpoint:'deck'}[name]}-viewer`;
     const entry = metadata.packages.find(p => p.name === crate);
     if (!entry) throw new Error(`Missing crate ${crate}`);
     const reachable = new Set();
@@ -35,7 +35,7 @@ export function collectNotices(selected) {
     }
     // Original source paths are not included in the distributable inventory.
     writeFileSync(join(destination, 'dependencies.json'), JSON.stringify(inventory, null, 2) + '\n');
-    for (const app of name === 'spreadsheets' ? ['gridcraft'] : ['pdfcraft']) {
+    for (const app of [{ spreadsheets: 'gridcraft', pdf: 'pdfcraft', word: 'wordcraft', powerpoint: 'deckcraft' }[name]]) {
       for (const file of ['LICENSE-MIT', 'LICENSE-APACHE']) {
         copyFileSync(resolve(root, 'upstream/checkouts', app, file), join(destination, `${app}-${file}`));
       }

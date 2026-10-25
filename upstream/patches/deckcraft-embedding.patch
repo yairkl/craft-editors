@@ -1,0 +1,60 @@
+diff --git a/crates/ui-egui/src/lib.rs b/crates/ui-egui/src/lib.rs
+index 094d7ab..e228234 100644
+--- a/crates/ui-egui/src/lib.rs
++++ b/crates/ui-egui/src/lib.rs
+@@ -241,6 +241,10 @@ const STATUS_LINGER_MS: f64 = 6000.0;
+ /// Platform services injected by the host (desktop or web).
+ #[derive(Default)]
+ pub struct Services {
++    /// Embedded document host owns file lifecycle and committed undo/redo.
++    pub host_command: Option<Box<dyn Fn(&str) -> bool>>,
++    /// Omit standalone file and window chrome when embedded.
++    pub embedded: bool,
+     /// Open-file dialog for a purpose (`open`, `picture`, `audio`, `video`) → path.
+     pub pick_open: Option<PickFn>,
+     /// Save dialog with a suggested name → path.
+@@ -937,6 +941,7 @@ impl SlideApp {
+     /// Run a command by id (UI commands here, everything else in the engine). Errors show in the
+     /// status bar and are returned.
+     pub fn run(&mut self, id: &str, params: Value) -> Result<Value, String> {
++        if self.services.host_command.as_ref().is_some_and(|host| host(id)) { return Ok(Value::Null); }
+         let r = if UI_COMMANDS.iter().any(|c| c.0 == id) {
+             self.run_ui(id, &params)
+         } else {
+@@ -1668,6 +1673,7 @@ impl SlideApp {
+     }
+ 
+     pub fn save_as_dialog(&mut self, format: &str) {
++        if self.services.host_command.as_ref().is_some_and(|host| host("file.saveAs")) { return; }
+         let name = self.session.active().map(|d| d.title()).unwrap_or_else(|| "Presentation".into());
+         let ext = if format == "pptx" { "pptx" } else { "deckcraft" };
+         let suggested = format!("{name}.{ext}");
+@@ -1707,6 +1713,7 @@ impl SlideApp {
+     }
+ 
+     pub fn save(&mut self) {
++        if self.services.host_command.as_ref().is_some_and(|host| host("file.save")) { return; }
+         if self.session.active().and_then(|d| d.path.clone()).is_some() {
+             match self.session.execute("file.save", &json!({})) {
+                 Ok(_) => self.set_status("Saved"),
+diff --git a/crates/ui-egui/src/ribbon.rs b/crates/ui-egui/src/ribbon.rs
+index 117e08e..88cfb22 100644
+--- a/crates/ui-egui/src/ribbon.rs
++++ b/crates/ui-egui/src/ribbon.rs
+@@ -55,6 +55,7 @@ fn run(app: &mut SlideApp, id: &str, p: Value) {
+ 
+ /// The window's title row: traffic-light space, quick access, centred title, actions.
+ pub fn title_bar(app: &mut SlideApp, ui: &mut Ui) {
++    if app.services.embedded { return; }
+     let t = Tokens::get(ui.ctx());
+     let (height, left, control_h) = title_geometry(app.integrated_titlebar);
+     egui::Panel::top("title_bar").exact_size(height).frame(egui::Frame::NONE.fill(t.chrome)).show(ui, |ui| {
+@@ -171,7 +172,7 @@ pub fn show(app: &mut SlideApp, ui: &mut Ui) {
+         // PowerPoint.
+         let mut x = rect.min.x + 12.0;
+         let y = rect.min.y + 2.0;
+-        {
++        if !app.services.embedded {
+             let w = ui.fonts_mut(|f| f.layout_no_wrap("File".to_string(), theme::font(13.0), t.text).size().x) + 18.0;
+             let r = Rect::from_min_size(pos2(x, y), vec2(w, 24.0));
+             let resp = ui.interact(r, ui.scope_id().with("tab_file"), Sense::click());

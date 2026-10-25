@@ -42,3 +42,17 @@ export async function draftCell(viewer, canvas, row, col) {
   canvas.dispatchEvent(new KeyboardEvent('keyup', { key: '7', code: 'Digit7', bubbles: true }));
   await frame(); await frame();
 }
+
+export async function pasteText(canvas, text) {
+  if (typeof text !== 'string' || text.length > 1000) throw new Error('Invalid test input.');
+  canvas.focus(); await frame();
+  const clipboardData = new DataTransfer(); clipboardData.setData('text/plain', text);
+  canvas.dispatchEvent(new ClipboardEvent('paste', { clipboardData, bubbles: true }));
+  await frame(); await frame();
+}
+
+export async function historyKey(canvas, redo) {
+  canvas.focus(); await frame();
+  for (const type of ['keydown', 'keyup']) canvas.dispatchEvent(new KeyboardEvent(type, { key: 'z', code: 'KeyZ', ctrlKey: true, shiftKey: redo, bubbles: true }));
+  await frame(); await frame();
+}

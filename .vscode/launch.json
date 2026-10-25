@@ -26,12 +26,38 @@
       "preLaunchTask": "npm: compile"
     },
     {
-      "name": "Both Craft extensions",
+      "name": "Craft Word",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/dist/development/word"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/dist/development/*/out/**/*.js"
+      ],
+      "preLaunchTask": "npm: compile"
+    },
+    {
+      "name": "Craft PowerPoint",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/dist/development/powerpoint"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/dist/development/*/out/**/*.js"
+      ],
+      "preLaunchTask": "npm: compile"
+    },
+    {
+      "name": "All Craft extensions",
       "type": "extensionHost",
       "request": "launch",
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}/dist/development/spreadsheets",
-        "--extensionDevelopmentPath=${workspaceFolder}/dist/development/pdf"
+        "--extensionDevelopmentPath=${workspaceFolder}/dist/development/pdf",
+        "--extensionDevelopmentPath=${workspaceFolder}/dist/development/word",
+        "--extensionDevelopmentPath=${workspaceFolder}/dist/development/powerpoint"
       ],
       "outFiles": [
         "${workspaceFolder}/dist/development/*/out/**/*.js"

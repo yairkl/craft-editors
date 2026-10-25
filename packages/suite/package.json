@@ -1,5 +1,5 @@
 {
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "craft-vscode-dev",
   "license": "MIT",
   "preview": true,
@@ -12,12 +12,14 @@
   },
   "name": "craft-suite",
   "displayName": "Craft Suite",
-  "description": "Optional extension pack for Craft Spreadsheets and Craft PDF.",
+  "description": "Optional extension pack for Craft spreadsheet, Word, PowerPoint and PDF editors.",
   "categories": [
     "Extension Packs"
   ],
   "extensionPack": [
     "craft-vscode-dev.craft-spreadsheets",
+    "craft-vscode-dev.craft-word",
+    "craft-vscode-dev.craft-powerpoint",
     "craft-vscode-dev.craft-pdf"
   ],
   "files": [

@@ -1,0 +1,59 @@
+{
+  "version": "0.0.1",
+  "publisher": "craft-vscode-dev",
+  "license": "MIT",
+  "preview": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yairkl/craft-vscode.git"
+  },
+  "engines": {
+    "vscode": "^1.102.0"
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false
+    },
+    "virtualWorkspaces": {
+      "supported": true
+    }
+  },
+  "name": "craft-powerpoint",
+  "displayName": "Craft PowerPoint",
+  "description": "Native DeckCraft PPTX viewing and editing in VS Code.",
+  "categories": [
+    "Other"
+  ],
+  "main": "./out/src/entrypoints/powerpoint.js",
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "craft.powerpoint.preview",
+        "displayName": "Craft PowerPoint",
+        "selector": [
+          {
+            "filenamePattern": "*.pptx"
+          }
+        ],
+        "priority": "default"
+      },
+      {
+        "viewType": "craft.powerpoint.integrationProbe",
+        "displayName": "Craft PowerPoint Integration Probe (development)",
+        "selector": [
+          {
+            "filenamePattern": "*.pptx"
+          }
+        ],
+        "priority": "option"
+      }
+    ]
+  },
+  "files": [
+    "out/**",
+    "media/**",
+    "notices/**",
+    "README.md",
+    "LICENSE"
+  ]
+}

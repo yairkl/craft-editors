@@ -4,7 +4,7 @@ An independent project to bring the Rust-based Crafting Apps into VS Code as doc
 
 Open, view, and edit spreadsheets, documents, presentations, and PDFs in editor tabs, using the existing Craft engines and WebAssembly interfaces. Files remain local to the VS Code session; no document processing service is required.
 
-**Status: independent XLSX editing and PDF viewing extensions.** Craft Spreadsheets embeds GridCraft's native ribbon, formula bar, grid and bottom worksheet tabs. Edit cells and worksheets, then use VS Code Save/Save As, undo/redo and Revert. Craft PDF remains read only. Install either independently, or both through the optional Craft Suite pack. Each package includes only its own engine. DOCX and PPTX remain planned. See [editing behavior and limits](docs/editing.md).
+**Status: independent XLSX, DOCX and PPTX editing extensions, plus read-only PDF viewing.** Craft Spreadsheets, Craft Word and Craft PowerPoint embed their engines' native interfaces, with VS Code Save/Save As, undo/redo, Revert and recovery supplied by one shared editing host. Native editors have no extra host header. Install any application independently or all four through Craft Suite; each extension contains only its own engine. See [editing behavior and limits](docs/editing.md).
 
 Build local installable archives with `npm run package` after building the renderers. See [packaging and installation](docs/packaging.md) for setup, VSIX paths and Suite development-install instructions. Nothing is published to Marketplace yet.
 
@@ -32,9 +32,11 @@ rustup toolchain install 1.95.0 --profile minimal --target wasm32-unknown-unknow
 cargo +1.95.0 install wasm-bindgen-cli --version 0.2.129 --locked
 npm run renderers:build
 npm run test:rendering
+npm run test:editing
+npm run test:office
 ```
 
-Run `npm run compile`, then choose **Craft Spreadsheets**, **Craft PDF**, or **Both Craft extensions** in Run and Debug and press F5. Open `integration-tests/fixtures/rendering.xlsx` or `rendering.pdf` normally; the corresponding extension is the default editor. Explicit user editor associations take precedence; use **Reopen Editor With… → Configure default editor** to change an existing choice. Files up to 32 MiB are read through VS Code filesystem APIs. Each extension also has an optional integration probe.
+Run `npm run compile`, then choose an individual Craft application or **All Craft extensions** in Run and Debug and press F5. Open a matching fixture under `integration-tests/fixtures/` normally; the corresponding extension is the default editor. Explicit user editor associations take precedence; use **Reopen Editor With… → Configure default editor** to change an existing choice. Files up to 32 MiB are read through VS Code filesystem APIs. Each extension also has an optional integration probe.
 
 See [rendering setup and verification](docs/rendering.md) for the adapter boundaries, tested behavior and remaining limits. Generated binaries stay out of git and are built locally or in CI; they are not downloaded at extension runtime.
 

@@ -1,7 +1,7 @@
 /** Diagnostic transport only. Editing will use a separate negotiated protocol. */
 export const PROBE_VERSION = 1;
 export const MAX_DOCUMENT_BYTES = 32 * 1024 * 1024;
-export type DocumentFormat = 'xlsx' | 'pdf';
+export type DocumentFormat = 'xlsx' | 'pdf' | 'docx' | 'pptx';
 
 export interface Receipt {
   byteLength: number;

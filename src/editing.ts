@@ -9,18 +9,18 @@ const digest = (bytes: Uint8Array): string => createHash('sha256').update(bytes)
 const cancelled = (token: vscode.CancellationToken): void => { if (token.isCancellationRequested) throw new vscode.CancellationError(); };
 function bytes(value: unknown): Uint8Array {
   const result = value instanceof Uint8Array ? value : value instanceof ArrayBuffer ? new Uint8Array(value) : undefined;
-  if (!result || result.byteLength > MAX_DOCUMENT_BYTES) throw new Error('Invalid or oversized workbook data.');
+  if (!result || result.byteLength > MAX_DOCUMENT_BYTES) throw new Error('Invalid or oversized document data.');
   return result;
 }
 function integer(value: unknown): value is number { return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 && value <= 0xffff_ffff; }
 function snapshot(value: unknown): { bytes: Uint8Array; token: number } {
-  if (typeof value !== 'object' || value === null) throw new Error('Invalid workbook response.');
+  if (typeof value !== 'object' || value === null) throw new Error('Invalid document response.');
   const result = value as Record<string, unknown>;
-  if (!integer(result.token)) throw new Error('Invalid workbook revision.');
+  if (!integer(result.token)) throw new Error('Invalid document revision.');
   return { bytes: bytes(result.bytes), token: result.token };
 }
 
-export class SpreadsheetDocument implements vscode.CustomDocument {
+export class EditableDocument implements vscode.CustomDocument {
   rpc: WebviewRpc | undefined;
   token = 0;
   savedToken = 0;
@@ -32,7 +32,7 @@ export class SpreadsheetDocument implements vscode.CustomDocument {
   }
   get dirty(): boolean { return this.token !== this.savedToken; }
   request(operation: string, fields: Record<string, unknown> = {}): Promise<unknown> {
-    if (!this.rpc) return Promise.reject(new Error('Open the workbook view before performing this operation.'));
+    if (!this.rpc) return Promise.reject(new Error('Open the document view before performing this operation.'));
     return this.rpc.request(operation, fields);
   }
   enqueue<T>(operation: () => Promise<T>): Promise<T> {
@@ -44,34 +44,36 @@ export class SpreadsheetDocument implements vscode.CustomDocument {
   dispose(): void { this.disposed = true; this.rpc?.dispose(); this.disposables.forEach(item => item.dispose()); }
 }
 
-export class SpreadsheetProvider implements vscode.CustomEditorProvider<SpreadsheetDocument>, vscode.Disposable {
-  private readonly changes = new vscode.EventEmitter<vscode.CustomDocumentEditEvent<SpreadsheetDocument>>();
+export interface EditableDescriptor { format: 'xlsx' | 'docx' | 'pptx'; engine: 'grid' | 'word' | 'deck'; viewType: string; label: string }
+
+export class EditingProvider implements vscode.CustomEditorProvider<EditableDocument>, vscode.Disposable {
+  private readonly changes = new vscode.EventEmitter<vscode.CustomDocumentEditEvent<EditableDocument>>();
   readonly onDidChangeCustomDocument = this.changes.event;
   private readonly renders = new vscode.EventEmitter<RenderResult>();
   readonly onDidRender = this.renders.event;
-  private readonly documents = new Map<string, SpreadsheetDocument>();
-  constructor(private readonly context: vscode.ExtensionContext, private readonly viewType: string) {}
+  private readonly documents = new Map<string, EditableDocument>();
+  constructor(private readonly context: vscode.ExtensionContext, private readonly descriptor: EditableDescriptor) {}
 
-  async openCustomDocument(uri: vscode.Uri, context: vscode.CustomDocumentOpenContext, token: vscode.CancellationToken): Promise<SpreadsheetDocument> {
-    const disk = await readProbeDocument(uri, token, 'xlsx');
+  async openCustomDocument(uri: vscode.Uri, context: vscode.CustomDocumentOpenContext, token: vscode.CancellationToken): Promise<EditableDocument> {
+    const disk = await readProbeDocument(uri, token, this.descriptor.format);
     let cache = disk.bytes;
     let baseline = digest(disk.bytes);
     if (context.backupId) {
       const backup = JSON.parse(Buffer.from(await vscode.workspace.fs.readFile(vscode.Uri.parse(context.backupId))).toString('utf8')) as Record<string, unknown>;
-      if (backup.version !== 1 || typeof backup.bytes !== 'string' || typeof backup.diskDigest !== 'string' || !/^[a-f0-9]{64}$/.test(backup.diskDigest)) throw new Error('This workbook backup is incompatible.');
+      if (backup.version !== 1 || typeof backup.bytes !== 'string' || typeof backup.diskDigest !== 'string' || !/^[a-f0-9]{64}$/.test(backup.diskDigest)) throw new Error('This document backup is incompatible.');
       cache = bytes(Buffer.from(backup.bytes, 'base64'));
       baseline = backup.diskDigest;
     }
     cancelled(token);
-    const doc = new SpreadsheetDocument(uri, cache, disk.bytes, baseline, Boolean(context.backupId));
+    const doc = new EditableDocument(uri, cache, disk.bytes, baseline, Boolean(context.backupId));
     this.documents.set(uri.toString(), doc);
     doc.add(new vscode.Disposable(() => this.documents.delete(uri.toString())));
     return doc;
   }
 
-  async resolveCustomEditor(doc: SpreadsheetDocument, panel: vscode.WebviewPanel, token: vscode.CancellationToken): Promise<void> {
+  async resolveCustomEditor(doc: EditableDocument, panel: vscode.WebviewPanel, token: vscode.CancellationToken): Promise<void> {
     const media = vscode.Uri.joinPath(this.context.extensionUri, 'media');
-    const engine = vscode.Uri.joinPath(media, 'engines', 'grid');
+    const engine = vscode.Uri.joinPath(media, 'engines', this.descriptor.engine);
     await vscode.workspace.fs.stat(vscode.Uri.joinPath(engine, 'viewer_bg.wasm'));
     cancelled(token);
     const sessionId = randomUUID();
@@ -85,7 +87,7 @@ export class SpreadsheetProvider implements vscode.CustomEditorProvider<Spreadsh
     const reportFailure = (failure?: unknown): void => {
       if (rendered) return;
       rendered = true;
-      const result: RenderResult = { format: 'xlsx', rendered: false, width: 0, height: 0, nonBackgroundPixels: 0, units: 0 };
+      const result: RenderResult = { format: this.descriptor.format, rendered: false, width: 0, height: 0, nonBackgroundPixels: 0, units: 0 };
       if (capture && typeof failure === 'string') result.failure = failure.slice(0, 500);
       this.renders.fire(result);
     };
@@ -96,13 +98,13 @@ export class SpreadsheetProvider implements vscode.CustomEditorProvider<Spreadsh
       if (rpc.accept(m)) return;
       if (m.type === 'render:ready' && !ready) {
         ready = true;
-        void panel.webview.postMessage({ type: 'render:open', version: 1, sessionId, format: 'xlsx', editable: true,
+        void panel.webview.postMessage({ type: 'render:open', version: 1, sessionId, format: this.descriptor.format, editable: true,
           bytes: Uint8Array.from(doc.cache).buffer, originalBytes: Uint8Array.from(doc.diskBytes).buffer,
           recovered: doc.dirty, capture });
       } else if (m.type === 'editor:changed' && ready && integer(m.before) && integer(m.after) && m.before !== m.after) {
         const before = m.before, after = m.after;
         doc.token = after;
-        this.changes.fire({ document: doc, label: typeof m.label === 'string' ? m.label.slice(0, 100) : 'Edit workbook',
+        this.changes.fire({ document: doc, label: typeof m.label === 'string' ? m.label.slice(0, 100) : 'Edit document',
           undo: () => this.history(doc, before), redo: () => this.history(doc, after) });
         // Retain the latest committed model for webview reconstruction; only the
         // WASM engine edits the model. This is not a second editable model.
@@ -111,14 +113,14 @@ export class SpreadsheetProvider implements vscode.CustomEditorProvider<Spreadsh
           if (!doc.disposed && cached.token === doc.token) doc.cache = cached.bytes;
         }).catch(() => {});
       } else if (m.type === 'editor:command' && typeof m.command === 'string') {
-        void this.command(doc, panel, m.command).catch(error => vscode.window.showErrorMessage(error instanceof Error ? error.message : 'Workbook operation failed.'));
+        void this.command(doc, panel, m.command).catch(error => vscode.window.showErrorMessage(error instanceof Error ? error.message : 'Document operation failed.'));
       } else if (m.type === 'render:failed') {
         clearTimeout(renderTimer); reportFailure(m.failure);
       } else if (m.type === 'render:result' && !rendered) {
         const { width, height, nonBackgroundPixels, units } = m;
         if (![width, height, nonBackgroundPixels, units].every(integer) || typeof width !== 'number' || typeof height !== 'number' || typeof nonBackgroundPixels !== 'number' || typeof units !== 'number' || width < 1 || height < 1 || width * height > 16_000_000 || nonBackgroundPixels > width * height || units < 1) return;
         rendered = true; clearTimeout(renderTimer);
-        const result: RenderResult = { format: 'xlsx', rendered: true, width, height, nonBackgroundPixels, units };
+        const result: RenderResult = { format: this.descriptor.format, rendered: true, width, height, nonBackgroundPixels, units };
         if (capture && typeof m.screenshot === 'string' && m.screenshot.startsWith('data:image/png;base64,') && m.screenshot.length < 16_000_000) {
           result.screenshot = m.screenshot;
           result.readOnlyVerified = m.readOnlyVerified === true;
@@ -134,26 +136,26 @@ export class SpreadsheetProvider implements vscode.CustomEditorProvider<Spreadsh
     panel.webview.html = renderHtml(panel.webview, media, engine, sessionId, true);
   }
 
-  private async history(doc: SpreadsheetDocument, target: number): Promise<void> {
+  private async history(doc: EditableDocument, target: number): Promise<void> {
     await doc.request('history', { token: target }); doc.token = target;
     const cached = snapshot(await doc.request('serialize', { flush: false }));
     if (cached.token === doc.token) doc.cache = cached.bytes;
   }
-  async saveCustomDocument(doc: SpreadsheetDocument, token: vscode.CancellationToken): Promise<void> {
+  async saveCustomDocument(doc: EditableDocument, token: vscode.CancellationToken): Promise<void> {
     return this.write(doc, doc.uri, token);
   }
-  async saveCustomDocumentAs(doc: SpreadsheetDocument, target: vscode.Uri, token: vscode.CancellationToken): Promise<void> {
-    if (!/\.xlsx$/i.test(target.path)) throw new Error('Save As must use the XLSX format.');
+  async saveCustomDocumentAs(doc: EditableDocument, target: vscode.Uri, token: vscode.CancellationToken): Promise<void> {
+    if (!target.path.toLowerCase().endsWith(`.${this.descriptor.format}`)) throw new Error(`Save As must use the ${this.descriptor.format.toUpperCase()} format.`);
     return this.write(doc, target, token);
   }
-  private write(doc: SpreadsheetDocument, target: vscode.Uri, token: vscode.CancellationToken): Promise<void> {
+  private write(doc: EditableDocument, target: vscode.Uri, token: vscode.CancellationToken): Promise<void> {
     return doc.enqueue(async () => {
       cancelled(token);
       const data = snapshot(await doc.request('serialize', { flush: true }));
       cancelled(token);
       if (target.toString() === doc.uri.toString()) {
         const disk = await vscode.workspace.fs.readFile(doc.uri);
-        if (digest(disk) !== doc.diskDigest) throw new Error('This workbook changed on disk. Use Save As to preserve your edits, or Revert to reload the file.');
+        if (digest(disk) !== doc.diskDigest) throw new Error('This document changed on disk. Use Save As to preserve your edits, or Revert to reload the file.');
       }
       cancelled(token);
       await vscode.workspace.fs.writeFile(target, data.bytes);
@@ -166,33 +168,33 @@ export class SpreadsheetProvider implements vscode.CustomEditorProvider<Spreadsh
       doc.savedToken = data.token;
     });
   }
-  revertCustomDocument(doc: SpreadsheetDocument, token: vscode.CancellationToken): Promise<void> {
+  revertCustomDocument(doc: EditableDocument, token: vscode.CancellationToken): Promise<void> {
     return doc.enqueue(async () => {
-      const data = await readProbeDocument(doc.uri, token, 'xlsx'); cancelled(token);
+      const data = await readProbeDocument(doc.uri, token, this.descriptor.format); cancelled(token);
       const revision = await doc.request('restore', { bytes: Uint8Array.from(data.bytes).buffer });
       if (!integer(revision)) throw new Error('Invalid restored revision.');
       doc.cache = data.bytes; doc.diskBytes = data.bytes; doc.diskDigest = digest(data.bytes);
       doc.token = revision; doc.savedToken = revision;
     });
   }
-  async backupCustomDocument(doc: SpreadsheetDocument, context: vscode.CustomDocumentBackupContext, token: vscode.CancellationToken): Promise<vscode.CustomDocumentBackup> {
+  async backupCustomDocument(doc: EditableDocument, context: vscode.CustomDocumentBackupContext, token: vscode.CancellationToken): Promise<vscode.CustomDocumentBackup> {
     const data = snapshot(await doc.request('serialize', { flush: true })); cancelled(token);
     const body = Buffer.from(JSON.stringify({ version: 1, diskDigest: doc.diskDigest, bytes: Buffer.from(data.bytes).toString('base64') }));
     await vscode.workspace.fs.writeFile(context.destination, body);
     if (data.token === doc.token) doc.cache = data.bytes;
     return { id: context.destination.toString(), delete: () => { void vscode.workspace.fs.delete(context.destination).then(() => {}, () => {}); } };
   }
-  private async command(doc: SpreadsheetDocument, panel: vscode.WebviewPanel, command: string): Promise<void> {
+  private async command(doc: EditableDocument, panel: vscode.WebviewPanel, command: string): Promise<void> {
     switch (command) {
       case 'file.save': await vscode.workspace.save(doc.uri); break;
       case 'file.saveAs': await vscode.workspace.saveAs(doc.uri); break;
       case 'file.open': await vscode.commands.executeCommand('workbench.action.files.openFile'); break;
       case 'file.new': {
-        const target = await vscode.window.showSaveDialog({ filters: { 'Excel workbook': ['xlsx'] }, saveLabel: 'Create workbook' });
+        const target = await vscode.window.showSaveDialog({ filters: { [this.descriptor.label]: [this.descriptor.format] }, saveLabel: 'Create document' });
         if (!target) return;
-        if (!/\.xlsx$/i.test(target.path)) throw new Error('New workbooks must use the XLSX format.');
+        if (!target.path.toLowerCase().endsWith(`.${this.descriptor.format}`)) throw new Error(`New documents must use the ${this.descriptor.format.toUpperCase()} format.`);
         await vscode.workspace.fs.writeFile(target, bytes(await doc.request('new')));
-        await vscode.commands.executeCommand('vscode.openWith', target, this.viewType); break;
+        await vscode.commands.executeCommand('vscode.openWith', target, this.descriptor.viewType); break;
       }
       case 'edit.undo': panel.reveal(); await vscode.commands.executeCommand('undo'); break;
       case 'edit.redo': panel.reveal(); await vscode.commands.executeCommand('redo'); break;
@@ -202,9 +204,9 @@ export class SpreadsheetProvider implements vscode.CustomEditorProvider<Spreadsh
   }
   createRecoveryTestPanel(): vscode.WebviewPanel {
     if (this.context.extensionMode !== vscode.ExtensionMode.Test) throw new Error('Test operation unavailable.');
-    return vscode.window.createWebviewPanel('craft.recovery.test', 'Recovered test workbook', vscode.ViewColumn.Active, { enableScripts: true, retainContextWhenHidden: true });
+    return vscode.window.createWebviewPanel('craft.recovery.test', 'Recovered test document', vscode.ViewColumn.Active, { enableScripts: true, retainContextWhenHidden: true });
   }
   /** Integration tests use the same provider methods that VS Code calls. */
-  getDocument(uri: vscode.Uri): SpreadsheetDocument | undefined { return this.documents.get(uri.toString()); }
+  getDocument(uri: vscode.Uri): EditableDocument | undefined { return this.documents.get(uri.toString()); }
   dispose(): void { this.changes.dispose(); this.renders.dispose(); for (const doc of this.documents.values()) doc.dispose(); }
 }

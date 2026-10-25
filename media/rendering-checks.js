@@ -21,6 +21,16 @@ export async function verifyPreview(viewer, format, canvas, units) {
     await frame();
     return { readOnlyVerified: false, navigationVerified: true, resizeVerified: true };
   }
+  if (format === 'docx' || format === 'pptx') {
+    check(viewer.text().includes('Craft'), 'Expected document text was not parsed');
+    check(units >= 1, 'Document needs visible pages or slides');
+    const viewport = document.getElementById('viewport');
+    const width = canvas.width; viewport.style.width = '500px';
+    await frame(); await frame();
+    check(canvas.width !== width, 'Native editor viewport did not resize');
+    viewport.style.width = ''; await frame();
+    return { readOnlyVerified: false, resizeVerified: true };
+  }
   const zoom = document.getElementById('zoom');
   const width = canvas.width;
   zoom.value = '1.5'; zoom.dispatchEvent(new Event('change'));

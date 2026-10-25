@@ -7,7 +7,7 @@ import { collectNotices } from './collect-notices.mjs';
 const require = createRequire(import.meta.url);
 const { createVSIX } = require('@vscode/vsce');
 const selected = process.argv.slice(2);
-if (selected.some(name => !Object.hasOwn(extensions, name))) throw new Error('Choose spreadsheets, pdf, suite, or no arguments for all.');
+if (selected.some(name => !Object.hasOwn(extensions, name))) throw new Error('Choose spreadsheets, word, powerpoint, pdf, suite, or no arguments for all.');
 const names = selected.length ? selected : Object.keys(extensions);
 if (names.some(name => name !== 'suite')) collectNotices(names);
 const staged = stageExtensions({ selected: names });

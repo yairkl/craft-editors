@@ -11,8 +11,8 @@ export async function readProbeDocument(
   token: vscode.CancellationToken,
   expectedFormat?: DocumentFormat,
 ): Promise<ProbeDocument> {
-  const format = /\.xlsx$/i.test(uri.path) ? 'xlsx' : /\.pdf$/i.test(uri.path) ? 'pdf' : undefined;
-  if (!format) throw new Error('Craft supports XLSX and PDF files.');
+  const format = /\.(xlsx|pdf|docx|pptx)$/i.exec(uri.path)?.[1]?.toLowerCase() as DocumentFormat | undefined;
+  if (!format) throw new Error('Craft supports XLSX, DOCX, PPTX and PDF files.');
   if (expectedFormat && format !== expectedFormat) throw new Error(`This extension supports only ${expectedFormat.toUpperCase()} files.`);
   if (token.isCancellationRequested) throw new vscode.CancellationError();
   const stat = await vscode.workspace.fs.stat(uri);

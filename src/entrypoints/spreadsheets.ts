@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
 import { activateHost } from '../host';
-import { SpreadsheetProvider } from '../editing';
+import { EditingProvider } from '../editing';
 
 export function activate(context: vscode.ExtensionContext) {
   const probe = activateHost(context, {
     format: 'xlsx', previewId: 'craft.spreadsheets.preview', probeId: 'craft.spreadsheets.integrationProbe',
   });
-  const provider = new SpreadsheetProvider(context, 'craft.spreadsheets.preview');
+  const provider = new EditingProvider(context, { format: 'xlsx', engine: 'grid', viewType: 'craft.spreadsheets.preview', label: 'Excel workbook' });
   context.subscriptions.push(provider, vscode.window.registerCustomEditorProvider(
     'craft.spreadsheets.preview', provider, { supportsMultipleEditorsPerDocument: false, webviewOptions: { retainContextWhenHidden: true } },
   ));
