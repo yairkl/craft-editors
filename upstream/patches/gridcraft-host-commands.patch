@@ -1,5 +1,5 @@
 diff --git a/crates/ui-egui/src/grid.rs b/crates/ui-egui/src/grid.rs
-index c4c3888..e3d7a2a 100644
+index c4c3888dcf9782bd9577e947133e3aeccf650139..e3d7a2acf6018dd29308b0ab1705bd0d7488a71f 100644
 --- a/crates/ui-egui/src/grid.rs
 +++ b/crates/ui-egui/src/grid.rs
 @@ -20,27 +20,13 @@ pub const COL_HEADER_H: f32 = 21.0;
@@ -92,7 +92,7 @@ index c4c3888..e3d7a2a 100644
  
      #[test]
 diff --git a/crates/ui-egui/src/keymap.rs b/crates/ui-egui/src/keymap.rs
-index 54058dd..8e6860d 100644
+index 54058dd71c516c3096712eff08a5762a7f28d084..8e6860d6a006f7fd2abbd20a331a81db2d88ebd5 100644
 --- a/crates/ui-egui/src/keymap.rs
 +++ b/crates/ui-egui/src/keymap.rs
 @@ -129,8 +129,8 @@ pub fn lookup(key: Key, physical: Option<Key>, m: Modifiers, mac: bool) -> Optio
@@ -107,7 +107,7 @@ index 54058dd..8e6860d 100644
          R if ctrl_alt && mac => run("view.collapseRibbon"),
          Num0 if ctrl_alt && mac => borders("outside"),
 diff --git a/crates/ui-egui/src/lib.rs b/crates/ui-egui/src/lib.rs
-index 9bea918..1a940dd 100644
+index 9bea918dc3550b94b47ba45a13f3e4dbb3aa4815..1a940dd9ced8256c18aefd00e419c272aa570583 100644
 --- a/crates/ui-egui/src/lib.rs
 +++ b/crates/ui-egui/src/lib.rs
 @@ -178,6 +178,8 @@ pub struct Notice {
@@ -150,7 +150,7 @@ index 9bea918..1a940dd 100644
          // Window title.
          if let Some(d) = self.session.active() {
 diff --git a/crates/ui-egui/src/tabs.rs b/crates/ui-egui/src/tabs.rs
-index 65557ed..05b258f 100644
+index 65557ed15e837dbea5f527e920bc7da3138a98e1..05b258f838f7895bc6bbee80e07443f7a232cfa1 100644
 --- a/crates/ui-egui/src/tabs.rs
 +++ b/crates/ui-egui/src/tabs.rs
 @@ -374,7 +374,7 @@ pub fn status_bar(app: &mut SheetApp, ui: &mut Ui) {
@@ -172,7 +172,7 @@ index 65557ed..05b258f 100644
                      }
                      ui.add_space(10.0);
 diff --git a/crates/ui-egui/tests/it/keyboard_shortcuts.rs b/crates/ui-egui/tests/it/keyboard_shortcuts.rs
-index 4739bd1..58180c6 100644
+index 4739bd14735d1a605cee34ebfd445a1c0102fc50..58180c68333ee4fcefea6227881ff4ff9ae00532 100644
 --- a/crates/ui-egui/tests/it/keyboard_shortcuts.rs
 +++ b/crates/ui-egui/tests/it/keyboard_shortcuts.rs
 @@ -83,7 +83,7 @@ fn copy_formula_from_above_and_function_keys() {
@@ -185,7 +185,7 @@ index 4739bd1..58180c6 100644
  
  #[test]
 diff --git a/crates/ui-egui/tests/it/wheel_zoom.rs b/crates/ui-egui/tests/it/wheel_zoom.rs
-index 397fb6b..4bb2726 100644
+index 397fb6be8d26e9e383f3891c618f2f9041a38855..4bb27263da6d46f4e8b526097798e528958795f8 100644
 --- a/crates/ui-egui/tests/it/wheel_zoom.rs
 +++ b/crates/ui-egui/tests/it/wheel_zoom.rs
 @@ -1,4 +1,4 @@

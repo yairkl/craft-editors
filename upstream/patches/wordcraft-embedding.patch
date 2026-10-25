@@ -1,5 +1,5 @@
 diff --git a/crates/engine/src/lib.rs b/crates/engine/src/lib.rs
-index 0158a60..441a6cc 100644
+index 0158a6054f289c9984d8fc5598bc276dcc5327f1..441a6ccebf30d7c8af50f35e1dc4578ca660de9e 100644
 --- a/crates/engine/src/lib.rs
 +++ b/crates/engine/src/lib.rs
 @@ -18,6 +18,7 @@ pub mod recovery;
@@ -11,7 +11,7 @@ index 0158a60..441a6cc 100644
  
  use std::collections::HashMap;
 diff --git a/crates/engine/src/session.rs b/crates/engine/src/session.rs
-index 4bf1265..5f08e27 100644
+index 4bf1265d30568f660a39d032530cbb9683e1f71d..5f08e272d81dc17f50936c67c55639967894699c 100644
 --- a/crates/engine/src/session.rs
 +++ b/crates/engine/src/session.rs
 @@ -365,6 +365,18 @@ impl EditSnapshot {
@@ -51,7 +51,7 @@ index 4bf1265..5f08e27 100644
          let Session {
              doc,
 diff --git a/crates/ui-egui/src/chrome.rs b/crates/ui-egui/src/chrome.rs
-index 60053a8..c52b9b9 100644
+index 60053a871d360794de6a3a58e9c881d63e2ae51b..c52b9b9e64b3653cc6cea334bf650531f8e6f9e4 100644
 --- a/crates/ui-egui/src/chrome.rs
 +++ b/crates/ui-egui/src/chrome.rs
 @@ -276,6 +276,7 @@ impl MacTitleBar {
@@ -63,7 +63,7 @@ index 60053a8..c52b9b9 100644
      // macOS: shorter, so the system's traffic lights are centred in it; the tallest controls
      // shrink to keep a margin above and below them.
 diff --git a/crates/ui-egui/src/file_dialogs.rs b/crates/ui-egui/src/file_dialogs.rs
-index f40ebf1..c3950fb 100644
+index f40ebf1867dd582238ddd5594107b89682895315..c3950fbda19274de6de8c463ec009de02c9ada0a 100644
 --- a/crates/ui-egui/src/file_dialogs.rs
 +++ b/crates/ui-egui/src/file_dialogs.rs
 @@ -361,6 +361,7 @@ impl WordApp {
@@ -83,7 +83,7 @@ index f40ebf1..c3950fb 100644
              f("document");
              return;
 diff --git a/crates/ui-egui/src/lib.rs b/crates/ui-egui/src/lib.rs
-index ccddf1d..8095dad 100644
+index ccddf1d230c8e0e4f910144677cab8dda3815e1f..8095dad4277094297bdff24654c849366db0efad 100644
 --- a/crates/ui-egui/src/lib.rs
 +++ b/crates/ui-egui/src/lib.rs
 @@ -99,6 +99,10 @@ pub use file_dialogs::{FileDialogAnswer, FileDialogRequest, open_filters};
@@ -115,7 +115,7 @@ index ccddf1d..8095dad 100644
          // close, New or Open counts it as a change (#1348). A draft the document refuses is not
          // part of it: saving and exporting go on without it (the refusal stays on the status
 diff --git a/crates/ui-egui/src/ribbon.rs b/crates/ui-egui/src/ribbon.rs
-index 516d5c7..833b561 100644
+index 516d5c70fd1521796437b333dded6ad626d1fad1..833b56122c453d31d8a47418e09acd77614c0220 100644
 --- a/crates/ui-egui/src/ribbon.rs
 +++ b/crates/ui-egui/src/ribbon.rs
 @@ -292,7 +292,7 @@ pub fn show(app: &mut WordApp, ui: &mut Ui) {

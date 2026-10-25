@@ -24,7 +24,7 @@ export function verifySource(root, app, { apply = false } = {}) {
     git(['apply', file]);
   }
   if (git(['diff', '--cached', '--name-only']) || git(['ls-files', '--others', '--exclude-standard']) ||
-      git(['diff', '--binary']) !== bytes.toString('utf8').trim()) {
+      git(['diff', '--binary', '--full-index']) !== bytes.toString('utf8').trim()) {
     throw new Error(`${app.id}: checkout must contain exactly its declared patch, with no other changes.`);
   }
 }

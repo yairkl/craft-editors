@@ -1,5 +1,5 @@
 diff --git a/crates/ui-egui/src/brand.rs b/crates/ui-egui/src/brand.rs
-index a1ecd3c1..deeba096 100644
+index a1ecd3c1520d900de7698b4446ca9f2db366e062..deeba096894912fbd5298058675e0a5643f4edcb 100644
 --- a/crates/ui-egui/src/brand.rs
 +++ b/crates/ui-egui/src/brand.rs
 @@ -5,17 +5,16 @@
@@ -28,7 +28,7 @@ index a1ecd3c1..deeba096 100644
  
  /// The icon texture, uploaded on first use and kept in the context.
 diff --git a/crates/ui-egui/src/chrome.rs b/crates/ui-egui/src/chrome.rs
-index 98ce5140..8ce1a724 100644
+index 98ce5140804e5304db8fc0402109b905fac9bb38..8ce1a72466857d14fc162868a332ddff11d22423 100644
 --- a/crates/ui-egui/src/chrome.rs
 +++ b/crates/ui-egui/src/chrome.rs
 @@ -40,13 +40,13 @@ pub fn app_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
@@ -56,7 +56,7 @@ index 98ce5140..8ce1a724 100644
      const MORE: f32 = 30.0;
      let t = Tokens::get(ui.ctx());
 diff --git a/crates/ui-egui/src/lib.rs b/crates/ui-egui/src/lib.rs
-index ad594235..86ebb422 100644
+index ad5942358d5b238a021c55c22157916ed0034663..86ebb42238d284493d78cf76cb40f221de6fc6ba 100644
 --- a/crates/ui-egui/src/lib.rs
 +++ b/crates/ui-egui/src/lib.rs
 @@ -253,6 +253,8 @@ pub type RevealFn = Box<dyn FnMut(&str) -> Result<(), String>>;
@@ -79,7 +79,7 @@ index ad594235..86ebb422 100644
          if self.picks.is_entry_free() {
              let entry = picks::Entry::Command(id.to_string(), params.clone());
 diff --git a/crates/ui-egui/src/menus.rs b/crates/ui-egui/src/menus.rs
-index 52f755a8..1bf3a4ea 100644
+index 52f755a8436decc1795a2088377320c4ae045467..1bf3a4ea52c84d109404a14a154cafc427b502b9 100644
 --- a/crates/ui-egui/src/menus.rs
 +++ b/crates/ui-egui/src/menus.rs
 @@ -3427,7 +3427,7 @@ pub fn menu_bar(app: &mut VectorcraftApp, ui: &mut egui::Ui) -> f32 {

@@ -1,5 +1,5 @@
 diff --git a/crates/ui-egui/src/lib.rs b/crates/ui-egui/src/lib.rs
-index 094d7ab..e228234 100644
+index 094d7aba81e7fb138099e24153a57adc0bc4b9d5..e22823460327bace17c60cb3b9815675368eafbd 100644
 --- a/crates/ui-egui/src/lib.rs
 +++ b/crates/ui-egui/src/lib.rs
 @@ -241,6 +241,10 @@ const STATUS_LINGER_MS: f64 = 6000.0;
@@ -38,7 +38,7 @@ index 094d7ab..e228234 100644
              match self.session.execute("file.save", &json!({})) {
                  Ok(_) => self.set_status("Saved"),
 diff --git a/crates/ui-egui/src/ribbon.rs b/crates/ui-egui/src/ribbon.rs
-index 117e08e..88cfb22 100644
+index 117e08e89512627c8c237e15bc6603db14ea814d..88cfb225ef10746cc34dccc6d32e75661f7085fd 100644
 --- a/crates/ui-egui/src/ribbon.rs
 +++ b/crates/ui-egui/src/ribbon.rs
 @@ -55,6 +55,7 @@ fn run(app: &mut SlideApp, id: &str, p: Value) {
