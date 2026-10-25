@@ -3,9 +3,11 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { prepareFontAssets } from './font-assets.mjs';
 import { verifySource } from './upstream-patches.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const fontAssets = await prepareFontAssets(root);
 const manifest = JSON.parse(readFileSync(resolve(root, 'upstream/manifest.json'), 'utf8'));
 if (process.env.CRAFT_FONTS_DIR) throw new Error('Optional external fonts are not pinned for this build. Unset CRAFT_FONTS_DIR.');
 const run = (command, args, cwd = root) => execFileSync(command, args, { cwd, stdio: 'inherit' });
@@ -32,6 +34,7 @@ for (const id of ['grid', 'pdf', 'word', 'deck', 'vector']) {
 writeFileSync(resolve(root, 'media/engines/build.json'), JSON.stringify({
   rust: output('rustc', ['+1.95.0', '--version']), wasmBindgen: '0.2.129',
   adapterLockSha256: createHash('sha256').update(readFileSync(resolve(root, 'adapters/Cargo.lock'))).digest('hex'),
+  fontAssets,
   sources: Object.fromEntries(manifest.applications.map(app => [app.id, app.revision])), artifacts,
   patches: Object.fromEntries(manifest.applications.map(app => [app.id, app.patches ?? []])),
 }, null, 2) + '\n');

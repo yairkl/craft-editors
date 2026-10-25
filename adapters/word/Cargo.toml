@@ -17,3 +17,4 @@ wasm-bindgen-futures = "=0.4.79"
 js-sys = "=0.3.106"
 web-sys = { version = "=0.3.106", features = ["HtmlCanvasElement"] }
 serde_json = "1"
+wordcraft-fonts = { path = "../../upstream/checkouts/wordcraft/crates/fonts" }

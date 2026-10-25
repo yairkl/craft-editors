@@ -12,3 +12,4 @@ artifacts/
 .vscode-test/
 upstream/checkouts/
 media/engines
+upstream/font-assets/

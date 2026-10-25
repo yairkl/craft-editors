@@ -15,6 +15,15 @@ struct Document {
 }
 impl Document {
     fn open(bytes: &[u8], commands: Commands, _format: &str) -> Result<Self, JsValue> {
+        static HEBREW_FONT: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
+        let count = HEBREW_FONT.get_or_init(|| {
+            wordcraft_fonts::FontDb::global().add_font(
+                include_bytes!("../../../upstream/font-assets/NotoSansHebrew.ttf").to_vec(),
+            )
+        });
+        if *count == 0 {
+            return Err(error("The bundled Hebrew font could not be loaded."));
+        }
         let doc = wordcraft_engine::io::open_bytes("Document.docx", bytes)
             .map_err(|_| error("The Word document could not be opened."))?;
         let saved = doc.clone();
@@ -108,7 +117,12 @@ impl Document {
             .plain_text(wordcraft_engine::doc::StoryRef::Body)
     }
     fn inspect(&self) -> serde_json::Value {
-        serde_json::json!({"focused": self.app.canvas.focused})
+        let hebrew_glyphs = ['א', 'ש', 'ל', 'ו', 'ם', 'ָ'].iter().all(|c| {
+            wordcraft_fonts::FontDb::global()
+                .fallback_for(*c, u32::MAX)
+                .is_some()
+        });
+        serde_json::json!({"focused": self.app.canvas.focused, "hebrewGlyphs": hebrew_glyphs})
     }
     fn command(&mut self, id: &str, params: serde_json::Value) -> Result<(), JsValue> {
         self.app

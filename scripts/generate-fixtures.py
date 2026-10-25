@@ -84,6 +84,13 @@ def word_document():
     })
 
 
+def hebrew_document():
+    with ZipFile(BytesIO(word_document())) as source:
+        parts = {name: source.read(name).decode('utf-8') for name in source.namelist()}
+    parts['word/document.xml'] = parts['word/document.xml'].replace('Craft Word fixture', 'שָׁלוֹם עולם — Craft עברית').replace('<w:p><w:r>', '<w:p><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr><w:r>', 1)
+    return office_package(parts)
+
+
 def presentation():
     parts = {
         "[Content_Types].xml": '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>' + ''.join(f'<Override PartName="/ppt/slides/slide{i}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>' for i in [1, 2]) + '</Types>',
@@ -99,7 +106,7 @@ def presentation():
 if __name__ == "__main__":
     check = "--check" in sys.argv
     ROOT.mkdir(parents=True, exist_ok=True)
-    for name, contents in {"minimal.svg": b'<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480" viewBox="0 0 640 480"><rect x="40" y="40" width="240" height="120" fill="#2778c4"/><text x="40" y="220" font-size="28">Craft vector fixture</text></svg>\n', "minimal.docx": word_document(), "minimal.pptx": presentation(), "minimal.xlsx": spreadsheet(), "minimal.pdf": pdf(), "rendering.xlsx": spreadsheet(True), "rendering-active.xlsx": spreadsheet(True, 1), "rendering.pdf": pdf(True)}.items():
+    for name, contents in {"minimal.svg": b'<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480" viewBox="0 0 640 480"><rect x="40" y="40" width="240" height="120" fill="#2778c4"/><text x="40" y="220" font-size="28">Craft vector fixture</text></svg>\n', "minimal.docx": word_document(), "hebrew.docx": hebrew_document(), "minimal.pptx": presentation(), "minimal.xlsx": spreadsheet(), "minimal.pdf": pdf(), "rendering.xlsx": spreadsheet(True), "rendering-active.xlsx": spreadsheet(True, 1), "rendering.pdf": pdf(True)}.items():
         path = ROOT / name
         if check:
             if not path.exists() or path.read_bytes() != contents:

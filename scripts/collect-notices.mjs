@@ -49,6 +49,12 @@ export function collectNotices(selected) {
         mkdirSync(dirname(target), { recursive: true }); copyFileSync(file, target);
       }
     }
+    if (name === 'word') {
+      const fonts = JSON.parse(readFileSync(resolve(root, 'upstream/font-assets.json'), 'utf8'));
+      mkdirSync(join(destination, 'fonts'), { recursive: true });
+      copyFileSync(resolve(root, 'upstream/font-assets/NotoSansHebrew-OFL.txt'), join(destination, 'fonts/NotoSansHebrew-OFL.txt'));
+      writeFileSync(join(destination, 'fonts/attribution.json'), JSON.stringify(fonts, null, 2) + '\n');
+    }
     // Original source paths are not included in the distributable inventory.
     writeFileSync(join(destination, 'dependencies.json'), JSON.stringify(inventory, null, 2) + '\n');
     for (const app of [{ spreadsheets: 'gridcraft', pdf: 'pdfcraft', word: 'wordcraft', powerpoint: 'deckcraft', vector: 'vectorcraft' }[name]]) {

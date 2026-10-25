@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { prepareFontAssets } from './font-assets.mjs';
 import { verifySource } from './upstream-patches.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -33,3 +34,5 @@ for (const app of manifest.applications) {
   verifySource(root, app, { apply: true });
   console.log(`${app.id}: verified ${app.revision}`);
 }
+
+await prepareFontAssets(root, { download: true });

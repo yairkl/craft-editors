@@ -6,4 +6,4 @@ This is an early editing preview. Generated fixtures are tested on Linux; comple
 
 The native interface follows VS Code’s light/dark theme on opening and while the theme changes. Theme changes do not modify document formatting or mark the file dirty.
 
-Undo/Redo preserves document focus so typing can continue without another click.
+Hebrew letters and niqqud are available through a bundled, hash-verified Noto Sans Hebrew fallback (SIL OFL 1.1). Use the native paragraph direction controls for right-to-left paragraphs. This fixes the integration’s missing Hebrew font; it is not a claim that every bidirectional editing case is validated. Undo/Redo preserves document focus so typing can continue without another click.

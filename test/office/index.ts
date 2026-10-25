@@ -32,11 +32,12 @@ export async function run(): Promise<void> {
     await waitText(doc, after);
     assert.equal(await doc.request('test:text'), after);
     if (descriptor.format === 'docx') {
-      const focus = await doc.request('test:focus-state') as { documentFocused: boolean; active?: string; native: { focused: boolean } };
+      const focus = await doc.request('test:focus-state') as { documentFocused: boolean; active?: string; native: { focused: boolean; hebrewGlyphs: boolean } };
       assert.equal(focus.documentFocused, true, 'Undo/Redo must retain webview focus so typing can continue');
       assert.equal(focus.native.focused, true, 'Undo/Redo must retain native document focus');
-      const continued = await doc.request('test:type-focused', { text: 'Q' });
-      assert.ok(String(continued).includes('Q'), `Typing after Undo/Redo must work without a click (active ${focus.active ?? 'unknown'})`);
+      assert.equal(focus.native.hebrewGlyphs, true, 'The bundled Word font database must render Hebrew letters and niqqud');
+      const continued = await doc.request('test:type-focused', { text: 'שלום' });
+      assert.ok(String(continued).includes('שלום'), `Typing Hebrew after Undo/Redo must work without a click (active ${focus.active ?? 'unknown'})`);
       after = continued;
     }
     assert.ok(await vscode.workspace.save(uri)); assert.equal(doc.dirty, false);
@@ -73,6 +74,11 @@ export async function run(): Promise<void> {
     const old = copied.token; await vscode.commands.executeCommand('workbench.action.files.revert');
     await waitFor(() => copied.token !== old);
     await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+    if (descriptor.format === 'docx') {
+      const hebrew = await open(api, fixture('hebrew.docx'));
+      assert.ok(String(await hebrew.request('test:text')).includes('שָׁלוֹם'));
+      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+    }
     console.log(`Native ${descriptor.format}: input, undo/redo, Save/reopen, Save As, Revert and recovery passed.`);
   }
   cancellation.dispose();
