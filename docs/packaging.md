@@ -51,7 +51,20 @@ Run `npm run compile`, then choose **Craft Spreadsheets**, **Craft PDF**, or **B
 
 Both `npm run test:integration` and `npm run test:rendering` run three isolated VS Code sessions: Spreadsheet alone, PDF alone and both together. They assert the other extension and renderer are absent during standalone runs. The rendering checks continue to cover default opening, navigation, read-only input, source preservation and remote-style URIs.
 
-`npm run packages:check` opens the actual ZIP/VSIX archives to verify renderer, entry point, file association and notice isolation; it verifies the Suite has no runtime code or WASM. `npm run test:installed` installs the real archives into disposable test profiles and checks default opening and actual rendering in production extension mode. The Suite is tested with both members preinstalled. Headless Linux runs the VS Code commands with `xvfb-run -a`. CI performs all these checks and retains development VSIX files and fixture screenshots as artifacts.
+`npm run packages:check` opens the actual ZIP/VSIX archives to verify renderer, entry point, file association and notice isolation; it verifies the Suite has no runtime code or WASM. `npm run test:installed` installs the real archives into disposable test profiles and checks default opening and actual rendering in production extension mode. The Suite is tested with both members preinstalled. Headless Linux runs the VS Code commands with `xvfb-run -a`. CI performs all these checks on branch pushes, pull requests and version-tag pushes.
+
+## CI artifact retention
+
+| Artifact | Upload condition | Retention |
+| --- | --- | --- |
+| `craft-release-vsix-<tag>` | Successful push of a version tag matching `v*`, such as `v0.0.1` | 90 days |
+| `rendering-screenshots` | Failed rendering job, if screenshots exist | 1 day |
+
+Successful branch and pull-request runs upload no artifacts. They still build, package and install-test the extensions; local VSIX output does not consume retained artifact storage. Only `v*` tag pushes retain the VSIX archives. Creating or pushing a tag is a release action, not part of ordinary development merges.
+
+To install on a clean computer, open the successful version-tag run in GitHub Actions and download its `craft-release-vsix-<tag>` artifact, extract it, and install the selected VSIX. A GitHub account with repository read access is required for Actions downloads. No version-tag artifact exists until a `v*` tag is pushed. This workflow does not create a GitHub Release or publish to Marketplace, and the package files still use the versions declared in their manifests. Coordinate those versions with the release tag.
+
+Retention is explicitly configured in the workflow and is subject to repository/organization limits. Changes apply to new uploads; they do not shorten existing artifacts' expiry dates. Earlier development artifacts can be deleted without affecting local VSIX files. Action artifacts are temporary downloads; permanent release assets would need a separate publishing workflow.
 
 ## Migration from the earlier development bundle
 

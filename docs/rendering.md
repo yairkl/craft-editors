@@ -49,7 +49,7 @@ Rendering tests run the actual WASM engines and capture GPU/CPU output pixels. T
 - Unchanged workbook-state hashes after attempted clicking, typing, deletion and paste.
 - Unchanged source bytes, a non-file filesystem provider with zero writes, and explicit errors for malformed XLSX/PDF input.
 
-Test-only browser checks and screenshot capture run only in `ExtensionMode.Test`. `artifacts/rendering/*.png` contains the captured documents; these are inspected locally and uploaded by the CI rendering job. They are generated fixtures, not user documents. Screenshots from the initial four fixture renders were visually inspected on Linux.
+Test-only browser checks and screenshot capture run only in `ExtensionMode.Test`. `artifacts/rendering/*.png` contains the captured documents; these are inspected locally. CI uploads screenshots only when the rendering job fails and retains them for one day. They are generated fixtures, not user documents. Screenshots from the initial four fixture renders were visually inspected on Linux.
 
 The transport/rendering suites run each extension alone and then together, asserting that standalone extensions contain no sibling renderer. The separate installed-package suite exercises actual VSIX installations in production mode without the browser test helper; it verifies default opening and rendered pixels. The archive check also verifies that the Suite contains no runtime code. See [packaging verification](packaging.md).
 

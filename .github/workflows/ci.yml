@@ -1,5 +1,9 @@
 name: CI
-on: [push, pull_request]
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
 permissions:
   contents: read
 jobs:
@@ -20,6 +24,7 @@ jobs:
       - run: npm run fixtures:check
       - run: xvfb-run -a npm run test:integration
   rendering:
+    needs: check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -48,12 +53,15 @@ jobs:
       - run: npm run packages:check
       - run: xvfb-run -a npm run test:installed
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: failure()
         with:
           name: rendering-screenshots
           path: artifacts/rendering/*.png
           if-no-files-found: ignore
+          retention-days: 1
       - uses: actions/upload-artifact@v4
+        if: success() && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         with:
-          name: craft-development-vsix
+          name: craft-release-vsix-${{ github.ref_name }}
           path: dist/vsix/*.vsix
+          retention-days: 90

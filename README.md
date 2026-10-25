@@ -8,6 +8,8 @@ Open, view, and edit spreadsheets, documents, presentations, and PDFs in editor 
 
 Build local installable archives with `npm run package` after building the renderers. See [packaging and installation](docs/packaging.md) for setup, VSIX paths and Suite development-install instructions. Nothing is published to Marketplace yet.
 
+CI uploads VSIX archives only for successful version-tag pushes (`v*`), retained for 90 days. Failure screenshots expire after one day; successful branch/PR runs retain no artifacts. See [artifact retention](docs/packaging.md#ci-artifact-retention).
+
 ## Development
 
 Requirements: Node.js 22+, npm, Python 3 for fixtures/package checks, and desktop VS Code 1.102+. The individual extensions have no runtime npm dependencies or required companion extensions.
