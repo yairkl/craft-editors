@@ -1,6 +1,7 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import * as vscode from 'vscode';
 import { readProbeDocument, type ProbeDocument } from './document';
+import type { DocumentFormat } from '../protocol/probe';
 
 export interface RenderResult {
   format: 'xlsx' | 'pdf';
@@ -20,11 +21,11 @@ export class RenderingProvider implements vscode.CustomReadonlyEditorProvider<Pr
   private readonly results = new vscode.EventEmitter<RenderResult>();
   readonly onDidRender = this.results.event;
 
-  constructor(private readonly context: vscode.ExtensionContext) {}
+  constructor(private readonly context: vscode.ExtensionContext, private readonly format: DocumentFormat) {}
 
   openCustomDocument(uri: vscode.Uri, _context: vscode.CustomDocumentOpenContext,
     token: vscode.CancellationToken): Promise<ProbeDocument> {
-    return readProbeDocument(uri, token);
+    return readProbeDocument(uri, token, this.format);
   }
 
   async resolveCustomEditor(document: ProbeDocument, panel: vscode.WebviewPanel,

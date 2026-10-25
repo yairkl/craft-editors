@@ -4,13 +4,13 @@ Status: read-only rendering increment verified; M0/M1 release and editing gates 
 
 ## Current implementation
 
-The extension registers default read-only XLSX/PDF previews as well as an optional transport probe. Actual GridCraft grid rendering and PdfCraft page rasterization run as WASM inside VS Code. Generated styled/multi-sheet and multi-page fixtures pass navigation, zoom/resize, source-preservation, malformed-input and non-file URI tests. Spreadsheet input filtering is checked against attempted edits and an unchanged workbook hash. Captured output was visually inspected. See [rendering validation and limits](rendering.md).
+Independent Craft Spreadsheets and Craft PDF extensions register default read-only previews and optional per-format transport probes. Their common host is maintained once and bundled into each package; neither requires the other. Actual GridCraft grid rendering and PdfCraft page rasterization run as WASM inside VS Code. Generated styled/multi-sheet and multi-page fixtures pass navigation, zoom/resize, source-preservation, malformed-input and non-file URI tests. Spreadsheet input filtering is checked against attempted edits and an unchanged workbook hash. Captured output was visually inspected. See [rendering validation](rendering.md) and [independent packaging](packaging.md).
 
 GridCraft and PdfCraft source revisions are pinned in `upstream/manifest.json`. Rust 1.95.0, wasm-bindgen 0.2.129 and the adapter Cargo lockfile are verified for the read-only wrappers. These use direct Cargo builds, not Trunk or full upstream app builds. Output sizes/hashes are recorded in `upstream/rendering-build.json`; transitive redistribution notices and wider-platform validation remain open.
 
 ## Scope and estimates
 
-Version 1 covers editable XLSX, DOCX, PPTX, and supported PDF modifications through one VS Code extension. Start with GridCraft and PdfCraft. Establish safe save and recovery before expanding the adapters.
+Version 1 covers editable XLSX, DOCX, PPTX, and supported PDF modifications through independently installable extensions sharing the same host implementation. An optional Suite pack groups all published members. Start with GridCraft and PdfCraft. Establish safe save and recovery before expanding the adapters.
 
 Planning estimates assume an experienced TypeScript/VS Code and Rust engineer, reuse of upstream WASM UIs, and limited upstream patches. These are cumulative ranges, not commitments:
 

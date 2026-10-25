@@ -1,0 +1,27 @@
+{
+  "version": "0.0.1",
+  "publisher": "craft-vscode-dev",
+  "license": "MIT",
+  "preview": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yairkl/craft-vscode.git"
+  },
+  "engines": {
+    "vscode": "^1.102.0"
+  },
+  "name": "craft-suite",
+  "displayName": "Craft Suite",
+  "description": "Optional extension pack for Craft Spreadsheets and Craft PDF.",
+  "categories": [
+    "Extension Packs"
+  ],
+  "extensionPack": [
+    "craft-vscode-dev.craft-spreadsheets",
+    "craft-vscode-dev.craft-pdf"
+  ],
+  "files": [
+    "README.md",
+    "LICENSE"
+  ]
+}

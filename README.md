@@ -4,11 +4,13 @@ An independent project to bring the Rust-based Crafting Apps into VS Code as doc
 
 Open, view, and edit spreadsheets, documents, presentations, and PDFs in editor tabs, using the existing Craft engines and WebAssembly interfaces. Files remain local to the VS Code session; no document processing service is required.
 
-**Status: read-only XLSX/PDF rendering.** Craft Preview renders spreadsheets with GridCraft's grid and PDFs with PdfCraft's page renderer inside VS Code. Sheet switching, PDF page navigation and PDF zoom are available. Editing, DOCX and PPTX remain planned. Working repository name: `craft-vscode`.
+**Status: independent read-only XLSX/PDF extensions.** Craft Spreadsheets renders XLSX with GridCraft; Craft PDF renders PDFs with PdfCraft. Install either format independently, or choose both through the optional Craft Suite extension pack. Each package includes only its own renderer. Sheet switching, PDF page navigation and PDF zoom are available. Editing, DOCX and PPTX remain planned.
+
+Build local installable archives with `npm run package` after building the renderers. See [packaging and installation](docs/packaging.md) for setup, VSIX paths and Suite development-install instructions. Nothing is published to Marketplace yet.
 
 ## Development
 
-Requirements: Node.js 22+, npm, Python 3 for fixture generation, and desktop VS Code 1.102+. The extension has no runtime npm dependencies.
+Requirements: Node.js 22+, npm, Python 3 for fixtures/package checks, and desktop VS Code 1.102+. The individual extensions have no runtime npm dependencies or required companion extensions.
 
 ```sh
 npm ci
@@ -30,7 +32,7 @@ npm run renderers:build
 npm run test:rendering
 ```
 
-Open this repository in VS Code and press F5 to launch the development extension. In the new window, open `integration-tests/fixtures/rendering.xlsx` or `rendering.pdf`; **Craft Preview (read only)** is the default editor for `.xlsx` and `.pdf`. Explicit user editor associations take precedence; use **Reopen Editor With… → Configure default editor** to change an existing choice. Files up to 32 MiB are read through VS Code filesystem APIs. **Craft Integration Probe (development)** remains available as a separate transport diagnostic.
+Run `npm run compile`, then choose **Craft Spreadsheets**, **Craft PDF**, or **Both Craft extensions** in Run and Debug and press F5. Open `integration-tests/fixtures/rendering.xlsx` or `rendering.pdf` normally; the corresponding extension is the default editor. Explicit user editor associations take precedence; use **Reopen Editor With… → Configure default editor** to change an existing choice. Files up to 32 MiB are read through VS Code filesystem APIs. Each extension also has an optional integration probe.
 
 See [rendering setup and verification](docs/rendering.md) for the adapter boundaries, tested behavior and remaining limits. Generated binaries stay out of git and are built locally or in CI; they are not downloaded at extension runtime.
 
@@ -49,11 +51,11 @@ Desktop VS Code on Windows, macOS, and Linux is the first release target. WSL an
 
 ## Approach
 
-- One TypeScript extension provides VS Code custom editors and owns file access.
+- A shared TypeScript host provides file access and custom editor behavior behind independent application extensions.
 - Existing Rust/WASM builds provide document processing and the application UI.
 - Small adapters connect each application to a versioned document-host protocol.
 - Embedding improvements belong upstream in each application; temporary patches stay minimal and tracked.
-- Application resources load on demand. Initial packaging and download strategy will be chosen after measuring artifact sizes.
+- Each extension contains only its own renderer. An optional Suite extension pack installs all published members together.
 
 The extension will inherit each engine's file-format limitations. It does not promise Microsoft Office feature parity or lossless round trips for every document.
 
@@ -64,6 +66,7 @@ The extension will inherit each engine's file-format limitations. It does not pr
 - [Contributing](CONTRIBUTING.md): project boundaries and development expectations.
 - [Upstream research](docs/upstream-research.md): inspected source pins, build entry points and embedding gaps.
 - [Read-only rendering](docs/rendering.md): build/run instructions, verification and current limits.
+- [Independent packaging](docs/packaging.md): extension structure, installation, archive verification and migration.
 
 ## Relationship to upstream
 
@@ -75,4 +78,4 @@ Other Office viewers already exist, including [cweijan's Office Viewer](https://
 
 ## License
 
-This repository is licensed under [MIT](LICENSE). Upstream code and bundled assets retain their own licenses and required notices. No upstream application binaries are bundled; the tracked smoke documents are original generated fixtures.
+This repository is licensed under [MIT](LICENSE). Upstream code and bundled assets retain their own licenses and required notices. Generated VSIX files include their selected renderer and dependency notices; binaries stay out of git. The tracked smoke documents are original generated fixtures.

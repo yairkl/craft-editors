@@ -1,11 +1,42 @@
 {
   "version": "0.2.0",
-  "configurations": [{
-    "name": "Run Craft integration probe",
-    "type": "extensionHost",
-    "request": "launch",
-    "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
-    "outFiles": ["${workspaceFolder}/out/**/*.js"],
-    "preLaunchTask": "npm: compile"
-  }]
+  "configurations": [
+    {
+      "name": "Craft Spreadsheets",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/dist/development/spreadsheets"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/dist/development/*/out/**/*.js"
+      ],
+      "preLaunchTask": "npm: compile"
+    },
+    {
+      "name": "Craft PDF",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/dist/development/pdf"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/dist/development/*/out/**/*.js"
+      ],
+      "preLaunchTask": "npm: compile"
+    },
+    {
+      "name": "Both Craft extensions",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/dist/development/spreadsheets",
+        "--extensionDevelopmentPath=${workspaceFolder}/dist/development/pdf"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/dist/development/*/out/**/*.js"
+      ],
+      "preLaunchTask": "npm: compile"
+    }
+  ]
 }

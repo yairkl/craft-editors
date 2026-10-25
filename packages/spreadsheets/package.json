@@ -1,0 +1,59 @@
+{
+  "version": "0.0.1",
+  "publisher": "craft-vscode-dev",
+  "license": "MIT",
+  "preview": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yairkl/craft-vscode.git"
+  },
+  "engines": {
+    "vscode": "^1.102.0"
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false
+    },
+    "virtualWorkspaces": {
+      "supported": true
+    }
+  },
+  "name": "craft-spreadsheets",
+  "displayName": "Craft Spreadsheets",
+  "description": "Read-only XLSX previews with GridCraft.",
+  "categories": [
+    "Other"
+  ],
+  "main": "./out/src/entrypoints/spreadsheets.js",
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "craft.spreadsheets.preview",
+        "displayName": "Craft Spreadsheets (read only)",
+        "selector": [
+          {
+            "filenamePattern": "*.xlsx"
+          }
+        ],
+        "priority": "default"
+      },
+      {
+        "viewType": "craft.spreadsheets.integrationProbe",
+        "displayName": "Craft Spreadsheets Integration Probe (development)",
+        "selector": [
+          {
+            "filenamePattern": "*.xlsx"
+          }
+        ],
+        "priority": "option"
+      }
+    ]
+  },
+  "files": [
+    "out/**",
+    "media/**",
+    "notices/**",
+    "README.md",
+    "LICENSE"
+  ]
+}

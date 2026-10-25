@@ -1,6 +1,6 @@
 # Initial renderer asset inventory
 
-This records the source paths inspected for the read-only wrappers. The wrappers do not copy upstream application icons, splash screens, About dialogs or ArtCraft marks. Their viewports use GridCraft's grid and PdfCraft's rasterizer, not the full upstream application shells. No upstream code is modified. A complete transitive license/NOTICE report remains a prerequisite for a distributed VSIX.
+This records the source paths inspected for the read-only wrappers. The wrappers do not copy upstream application icons, splash screens, About dialogs or ArtCraft marks. Their viewports use GridCraft's grid and PdfCraft's rasterizer, not the full upstream application shells. No upstream code is modified. Independent VSIX packaging now follows each adapter's Cargo graph and collects available license/NOTICE/font texts plus `notices/dependencies.json`. Review that generated inventory, including entries without packaged license texts, before public release.
 
 | Input | Version/source | License and handling |
 | --- | --- | --- |
@@ -15,4 +15,4 @@ This records the source paths inspected for the read-only wrappers. The wrappers
 | Optional craft-fonts | Not enabled | Build script rejects the unpinned environment input |
 | Test documents | `scripts/generate-fixtures.py` | Original synthetic documents under this repository's MIT license; no external corpus or font files embedded |
 
-All additional code dependencies are fixed by `adapters/Cargo.lock`. Source pinning and the above inventory are not a full transitive redistribution notice bundle. Generated binaries remain ignored local build output.
+All additional code dependencies are fixed by `adapters/Cargo.lock`. Source pinning, this inventory and automated notice collection do not replace a release review. Generated binaries and local VSIX files remain ignored build output.

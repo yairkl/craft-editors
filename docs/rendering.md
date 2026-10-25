@@ -1,6 +1,6 @@
 # Read-only rendering
 
-The first rendering increment supports XLSX and PDF through **Craft Preview (read only)**. It uses the pinned upstream engines inside the VS Code webview, without a local server, document-processing service or upstream source patches. It does not implement editing, Save, undo/redo or recovery of changes.
+Read-only rendering is distributed through **Craft Spreadsheets** for XLSX and **Craft PDF** for PDF. The extensions share their host source but each contains only its own renderer. They use the pinned upstream engines inside the VS Code webview, without a local server, document-processing service or upstream source patches. They do not implement editing, Save, undo/redo or recovery of changes. See [packaging](packaging.md) for independent installation and the optional Suite pack.
 
 ## Build and run
 
@@ -19,7 +19,7 @@ The renderer build checks source revisions and refuses dirty upstream checkouts.
 
 Generated JavaScript/WASM stays in ignored `media/engines/`. `media/engines/build.json` records tool versions, input pins, lock hash, output sizes and SHA-256 hashes. The tracked `upstream/rendering-build.json` is the baseline from the verified local build, not a promise of identical bytes on every host. Binaries are not committed or downloaded at extension runtime.
 
-Open the repo in VS Code and press F5. In the development window, open `integration-tests/fixtures/rendering.xlsx` or `rendering.pdf`. **Craft Preview (read only)** is the default for both file types. Existing user editor associations take precedence; use **Reopen Editor With… → Configure default editor** to change a saved preference. The spreadsheet supports wheel scrolling, Shift-wheel horizontal scrolling and sheet selection. The PDF supports Previous/Next and 75–200% zoom.
+Run `npm run compile`, then select **Craft Spreadsheets**, **Craft PDF**, or **Both Craft extensions** in Run and Debug and press F5. In the development window, open the matching `integration-tests/fixtures/rendering.xlsx` or `rendering.pdf` normally. Each extension is the default for its own file type. Existing user editor associations take precedence; use **Reopen Editor With… → Configure default editor** to change a saved preference. The spreadsheet supports wheel scrolling, Shift-wheel horizontal scrolling and sheet selection. The PDF supports Previous/Next and 75–200% zoom.
 
 ## Adapter boundaries
 
@@ -51,10 +51,12 @@ Rendering tests run the actual WASM engines and capture GPU/CPU output pixels. T
 
 Test-only browser checks and screenshot capture run only in `ExtensionMode.Test`. `artifacts/rendering/*.png` contains the captured documents; these are inspected locally and uploaded by the CI rendering job. They are generated fixtures, not user documents. Screenshots from the initial four fixture renders were visually inspected on Linux.
 
+The transport/rendering suites run each extension alone and then together, asserting that standalone extensions contain no sibling renderer. The separate installed-package suite exercises actual VSIX installations in production mode without the browser test helper; it verifies default opening and rendered pixels. The archive check also verifies that the Suite contains no runtime code. See [packaging verification](packaging.md).
+
 ## Current limits
 
 Validation covers the generated fixtures on Linux and a simulated non-file provider. Windows, macOS, actual WSL/SSH sessions, startup/memory benchmarks, large/malformed corpora, full font/script coverage and format fidelity remain release work. Embedded images/charts and complex documents have not been assessed. GridCraft may recalculate formulas while opening, as its native engine does. Rendering inherits upstream behavior and supported formats.
 
 The spreadsheet is a viewing surface: cell selection, copy, scrollbar dragging, editing gestures and touch interaction are intentionally unavailable in this phase. PDF rendering runs synchronously in the webview, so expensive pages can temporarily delay its UI. Password entry is not implemented. Oversized rasters are rejected. No DOCX/PPTX renderer has been integrated yet.
 
-The preview omits upstream app chrome and branding. Full dependency/font notice collection and distribution review remain required before publishing a bundled VSIX; see [the asset inventory](../upstream/rendering-assets.md). This source increment and local build do not publish an extension release.
+The previews omit upstream app chrome and branding. Packaging now collects renderer-specific dependency inventories and available license/font notices. Reviewing that output and the remaining platform/fidelity limits is still required before public release; see [the asset inventory](../upstream/rendering-assets.md). Building local VSIX files does not publish an extension release.

@@ -11,4 +11,4 @@ artifacts/
 !.env.example
 .vscode-test/
 upstream/checkouts/
-media/engines/
+media/engines

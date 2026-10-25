@@ -3,6 +3,13 @@ import * as vscode from 'vscode';
 import { ProbeSession } from '../protocol/probe';
 import { ProbeDocument, readProbeDocument } from './document';
 import { RenderingProvider, type RenderResult } from './rendering';
+import type { DocumentFormat } from '../protocol/probe';
+
+export interface ExtensionDescriptor {
+  format: DocumentFormat;
+  previewId: string;
+  probeId: string;
+}
 
 export interface ProbeResult {
   format: 'xlsx' | 'pdf';
@@ -14,11 +21,11 @@ class ProbeProvider implements vscode.CustomReadonlyEditorProvider<ProbeDocument
   private readonly results = new vscode.EventEmitter<ProbeResult>();
   readonly onDidProbe = this.results.event;
 
-  constructor(private readonly extensionUri: vscode.Uri) {}
+  constructor(private readonly extensionUri: vscode.Uri, private readonly format: DocumentFormat) {}
 
   openCustomDocument(uri: vscode.Uri, _context: vscode.CustomDocumentOpenContext,
     token: vscode.CancellationToken): Promise<ProbeDocument> {
-    return readProbeDocument(uri, token);
+    return readProbeDocument(uri, token, this.format);
   }
 
   resolveCustomEditor(document: ProbeDocument, panel: vscode.WebviewPanel,
@@ -87,14 +94,14 @@ function probeHtml(webview: vscode.Webview, media: vscode.Uri, sessionId: string
 </main><script nonce="${nonce}" src="${script}"></script></body></html>`;
 }
 
-export function activate(context: vscode.ExtensionContext): { onDidProbe: vscode.Event<ProbeResult>; onDidRender: vscode.Event<RenderResult> } {
-  const provider = new ProbeProvider(context.extensionUri);
-  const rendering = new RenderingProvider(context);
+export function activateHost(context: vscode.ExtensionContext, descriptor: ExtensionDescriptor): { onDidProbe: vscode.Event<ProbeResult>; onDidRender: vscode.Event<RenderResult> } {
+  const provider = new ProbeProvider(context.extensionUri, descriptor.format);
+  const rendering = new RenderingProvider(context, descriptor.format);
   context.subscriptions.push(provider, vscode.window.registerCustomEditorProvider(
-    'craft.integrationProbe', provider, { supportsMultipleEditorsPerDocument: false },
+    descriptor.probeId, provider, { supportsMultipleEditorsPerDocument: false },
   ));
   context.subscriptions.push(rendering, vscode.window.registerCustomEditorProvider(
-    'craft.preview', rendering, { supportsMultipleEditorsPerDocument: false },
+    descriptor.previewId, rendering, { supportsMultipleEditorsPerDocument: false },
   ));
   return { onDidProbe: provider.onDidProbe, onDidRender: rendering.onDidRender };
 }

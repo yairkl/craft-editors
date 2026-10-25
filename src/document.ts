@@ -9,9 +9,11 @@ export class ProbeDocument implements vscode.CustomDocument {
 export async function readProbeDocument(
   uri: vscode.Uri,
   token: vscode.CancellationToken,
+  expectedFormat?: DocumentFormat,
 ): Promise<ProbeDocument> {
   const format = /\.xlsx$/i.test(uri.path) ? 'xlsx' : /\.pdf$/i.test(uri.path) ? 'pdf' : undefined;
-  if (!format) throw new Error('The integration probe supports XLSX and PDF files.');
+  if (!format) throw new Error('Craft supports XLSX and PDF files.');
+  if (expectedFormat && format !== expectedFormat) throw new Error(`This extension supports only ${expectedFormat.toUpperCase()} files.`);
   if (token.isCancellationRequested) throw new vscode.CancellationError();
   const stat = await vscode.workspace.fs.stat(uri);
   if ((stat.type & vscode.FileType.Directory) !== 0) throw new Error('Choose a document file.');

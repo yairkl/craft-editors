@@ -3,18 +3,26 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import type { RenderResult } from '../../src/rendering';
+import { assertIsolation, fixture, forFormat, root, selected } from '../environment';
 
 interface RenderingApi { onDidRender: vscode.Event<RenderResult> }
 
 export async function run(): Promise<void> {
-  const extension = vscode.extensions.getExtension<RenderingApi>('craft-vscode-dev.craft-vscode');
-  assert.ok(extension);
-  const api = await extension.activate();
-  const artifacts = path.join(extension.extensionPath, 'artifacts', 'rendering');
+  assertIsolation();
+  const apis = new Map<'xlsx' | 'pdf', RenderingApi>();
+  for (const descriptor of selected) {
+    const extension = vscode.extensions.getExtension<RenderingApi>(descriptor.id);
+    assert.ok(extension);
+    apis.set(descriptor.format, await extension.activate());
+    await assert.rejects(async () => vscode.workspace.fs.stat(vscode.Uri.joinPath(extension.extensionUri, 'media', 'engines', descriptor.format === 'xlsx' ? 'pdf' : 'grid', 'viewer_bg.wasm')));
+  }
+  const artifacts = path.join(root!, 'artifacts', 'rendering');
   await mkdir(artifacts, { recursive: true });
   for (const name of ['minimal.xlsx', 'minimal.pdf', 'rendering.xlsx', 'rendering-active.xlsx', 'rendering.pdf']) {
     const format = name.endsWith('xlsx') ? 'xlsx' : 'pdf';
-    const uri = vscode.Uri.joinPath(extension.extensionUri, 'integration-tests', 'fixtures', name);
+    if (!apis.has(format)) continue;
+    const api = apis.get(format)!;
+    const uri = fixture(name);
     const before = await vscode.workspace.fs.readFile(uri);
     const result = await openAndWait(api, uri, format);
     assert.equal(result.rendered, true, `${format}: renderer must report a completed frame; ${result.failure ?? ''}`);
@@ -33,14 +41,15 @@ export async function run(): Promise<void> {
   }
 
   // Invalid input must be surfaced as a failure, not a successful blank canvas.
-  for (const format of ['xlsx', 'pdf'] as const) {
-    const invalid = vscode.Uri.joinPath(extension.extensionUri, 'artifacts', 'rendering', `invalid.${format}`);
+  for (const { format } of selected) {
+    const invalid = vscode.Uri.file(path.join(artifacts, `invalid.${format}`));
     await vscode.workspace.fs.writeFile(invalid, Buffer.from('not a document'));
-    assert.equal((await openAndWait(api, invalid, format)).rendered, false);
+    assert.equal((await openAndWait(apis.get(format)!, invalid, format)).rendered, false);
     await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
   }
 
-  const remoteBytes = await vscode.workspace.fs.readFile(vscode.Uri.joinPath(extension.extensionUri, 'integration-tests', 'fixtures', 'minimal.pdf'));
+  const remoteFormat = selected[0]!.format;
+  const remoteBytes = await vscode.workspace.fs.readFile(fixture(`minimal.${remoteFormat}`));
   const changes = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
   let writes = 0;
   const registration = vscode.workspace.registerFileSystemProvider('craft-render-test', {
@@ -51,7 +60,7 @@ export async function run(): Promise<void> {
     delete: () => { writes++; }, rename: () => { writes++; },
   });
   try {
-    const result = await openAndWait(api, vscode.Uri.parse('craft-render-test:/remote/minimal.pdf'), 'pdf');
+    const result = await openAndWait(apis.get(remoteFormat)!, vscode.Uri.parse(`craft-render-test:/remote/minimal.${remoteFormat}`), remoteFormat);
     assert.equal(result.rendered, true, 'Non-file URI must render');
     assert.ok(result.nonBackgroundPixels > 100);
     assert.equal(writes, 0);
@@ -70,7 +79,7 @@ async function openAndWait(api: RenderingApi, uri: vscode.Uri, format: 'xlsx' | 
   try {
     await vscode.commands.executeCommand('vscode.open', uri);
     const input = vscode.window.tabGroups.activeTabGroup.activeTab?.input;
-    assert.ok(input instanceof vscode.TabInputCustom && input.viewType === 'craft.preview',
+    assert.ok(input instanceof vscode.TabInputCustom && input.viewType === forFormat(format).preview,
       'Opening a supported file normally must choose Craft Preview');
     return await receipt;
   } finally { clearTimeout(timer); listener?.dispose(); }

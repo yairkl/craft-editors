@@ -6,23 +6,24 @@ The current implementation uses default `CustomReadonlyEditorProvider` previews 
 
 ## Goals and boundaries
 
-Provide one extension for interactive XLSX, DOCX, PPTX, and PDF documents. Reuse upstream Rust engines and their WASM interfaces. Make document edits behave like native VS Code custom editors, including save, recovery, and external changes.
+Provide independently installable application extensions for XLSX, DOCX, PPTX, and PDF documents, maintained in one repository with shared host code. Offer an optional Suite extension pack. Reuse upstream Rust engines and their WASM interfaces. Make document edits behave like native VS Code custom editors, including save, recovery, and external changes. This replaces the initial all-format extension packaging assumption; see [ADR-0001](decisions/0001-independent-extensions.md).
 
 The first release does not include collaboration, Office feature parity, macros, the entire creative suite, or mandatory CLI/MCP services. Browser-hosted VS Code and multiple simultaneous editable views require separate validation. An editor may expose only the modifications its upstream engine supports.
 
 ## Architecture
 
 ```text
-VS Code custom editor provider
-  Document coordinator + workspace.fs + backups
-    Versioned message bridge
-      Webview bootstrap + per-app adapter
-        Pinned upstream WASM application + engine
+Application extension (Spreadsheets / PDF / future programs)
+  Shared VS Code custom editor host (bundled locally in each package)
+    Document coordinator + workspace.fs + backups
+      Versioned message bridge
+        Webview bootstrap + per-app adapter
+          Pinned upstream WASM application + engine
 ```
 
 The extension owns resource URIs, persistence, conflict detection, editor registration, and recovery metadata. The WASM engine owns the live editable document and its history. The adapter translates between the app's services and the common protocol. The extension does not maintain a second independently editable document model.
 
-Use `CustomEditorProvider` for editable binary documents. Register Craft Preview as the default editor for XLSX/PDF while respecting explicit user associations. Keep the integration probe optional. A capability-limited read-only mode may use `CustomReadonlyEditorProvider`; it must also disable mutation in the application UI.
+Use `CustomEditorProvider` for editable binary documents. Each application extension owns unique editor IDs and registers as default for its own formats while respecting explicit user associations. Keep the per-extension integration probes optional. A capability-limited read-only mode may use `CustomReadonlyEditorProvider`; it must also disable mutation in the application UI.
 
 Prefer loading the application directly in the webview with a VS Code bridge. Existing same-origin iframe bridges are useful reference implementations, but cannot be assumed to work unchanged inside VS Code. Avoid a local HTTP server. Test WASM loading, worker requirements, CSP, WebGL/WebGPU fallback, and asset addressing before choosing the bootstrap implementation.
 
@@ -91,7 +92,7 @@ docs/                decisions, support matrix, and plans
 
 Small embedding hooks belong in each upstream app. Keep the common protocol here first; extract a shared Rust crate only after two adapters demonstrate stable common requirements. Do not assume upstream acceptance or make it a prerequisite for the prototype.
 
-Initial packaging should favor reproducibility and offline use. Measure all four artifacts before choosing a single bundled VSIX or optional application packages. Dynamic downloads, if later adopted, require pinned hashes, licensing, failure recovery, and an offline installation path. Load only the selected app at runtime.
+Packaging favors reproducibility, offline use and format selection. Produce a separate VSIX per application, containing shared host code and only that application's renderer; require no sibling or core extension. A Suite extension pack contains member IDs and no executable code or renderers. Shared source and Rust build infrastructure remain in one repository. Stage explicit files, inspect actual VSIX archives for isolation, and test each extension alone and together. Future downloads would require a separate decision covering pinned hashes, licensing, failure recovery and offline provisioning. See [packaging](packaging.md).
 
 MIT covers original integration work. Redistributed upstream code and assets keep their licenses and notices. Remove restricted upstream brand assets from modified builds. Maintain an artifact inventory and license report before release.
 
