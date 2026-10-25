@@ -50,7 +50,15 @@ export async function run(): Promise<void> {
       assert.ok((await doc.request('test:inspect') as State).draft?.includes('Draft text'));
       await doc.request('test:commit');
       assert.ok(String(await doc.request('test:text')).includes('Draft text'), 'Explicit native commit applies PDF text');
+      const textCopy = vscode.Uri.joinPath(directory, 'typed.pdf');
+      await api.editing.saveCustomDocumentAs(doc, textCopy, cancellation.token);
+      assert.deepEqual(await vscode.workspace.fs.readFile(uri), original);
       await api.editing.revertCustomDocument(doc, cancellation.token);
+      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+      const savedText = await open(textCopy);
+      assert.ok(String(await savedText.request('test:text')).includes('Draft text'), 'Native PDF text survives serialization and reopening');
+      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+      doc = await open(uri);
       assert.equal(doc.dirty, false);
     }
     const before = await doc.request('test:text');
