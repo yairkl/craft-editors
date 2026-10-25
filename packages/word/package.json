@@ -55,5 +55,8 @@
     "notices/**",
     "README.md",
     "LICENSE"
+  ],
+  "extensionKind": [
+    "workspace"
   ]
 }
