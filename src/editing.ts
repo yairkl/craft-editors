@@ -180,7 +180,15 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
   revertCustomDocument(doc: EditableDocument, token: vscode.CancellationToken): Promise<void> {
     return doc.enqueue(async () => {
       const data = await readProbeDocument(doc.uri, token, doc.format); cancelled(token);
-      const revision = await doc.request('restore', { bytes: Uint8Array.from(data.bytes).buffer });
+      if (doc.disposed) return;
+      let revision: unknown = 0;
+      if (doc.rpc) {
+        try { revision = await doc.request('restore', { bytes: Uint8Array.from(data.bytes).buffer }); }
+        catch (error) { if (doc.rpc && !doc.disposed) throw error; }
+      }
+      // VS Code can finish Revert after closing a Save As source panel. The
+      // persisted cache still reverts; a future renderer starts at revision zero.
+      if (doc.disposed) return;
       if (!integer(revision)) throw new Error('Invalid restored revision.');
       doc.cache = data.bytes; doc.diskBytes = data.bytes; doc.diskDigest = digest(data.bytes);
       doc.token = revision; doc.savedToken = revision;

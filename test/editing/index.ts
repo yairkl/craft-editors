@@ -14,6 +14,15 @@ export async function run(): Promise<void> {
   const directory = vscode.Uri.file(path.join(root!, 'artifacts/editing'));
   await vscode.workspace.fs.createDirectory(directory);
   const original = await vscode.workspace.fs.readFile(fixture('minimal.xlsx'));
+  const closedUri = vscode.Uri.joinPath(directory, 'revert-without-panel.xlsx');
+  await vscode.workspace.fs.writeFile(closedUri, original);
+  const closedToken = new vscode.CancellationTokenSource();
+  const closedDocument = await api.editing.openCustomDocument(closedUri, { backupId: undefined, untitledDocumentData: undefined }, closedToken.token);
+  await api.editing.revertCustomDocument(closedDocument, closedToken.token);
+  assert.deepEqual(closedDocument.cache, original, 'Revert without a live panel still reloads the source');
+  assert.equal(closedDocument.dirty, false);
+  closedDocument.dispose(); closedToken.dispose();
+
   const uri = vscode.Uri.joinPath(directory, 'roundtrip.xlsx');
   await vscode.workspace.fs.writeFile(uri, original);
   let doc = await open(api, uri);
