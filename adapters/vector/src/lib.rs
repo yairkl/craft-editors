@@ -19,10 +19,15 @@ impl Document {
             vectorcraft_format::load(bytes)
                 .map_err(|_| error("The VectorCraft file could not be opened."))?
         } else {
-            vectorcraft_svg::import(
-                std::str::from_utf8(bytes).map_err(|_| error("Invalid SVG text."))?,
-            )
-            .map_err(|_| error("The SVG could not be opened."))?
+            let svg = std::str::from_utf8(bytes).map_err(|_| error("Invalid SVG text."))?;
+            if let Some(editing) = vectorcraft_svg::editing(svg).filter(|editing| editing.intact) {
+                let native = vectorcraft_format::base64_decode(&editing.data)
+                    .ok_or_else(|| error("The SVG editing data is invalid."))?;
+                vectorcraft_format::load(&native)
+                    .map_err(|_| error("The SVG editing model could not be opened."))?
+            } else {
+                vectorcraft_svg::import(svg).map_err(|_| error("The SVG could not be opened."))?
+            }
         };
         let mut session = Session::new();
         session.add_document(doc, None);
@@ -69,7 +74,12 @@ impl Document {
         Ok(if snapshot.native_format {
             vectorcraft_format::save_file(&snapshot.native.doc)
         } else {
-            vectorcraft_svg::export(&snapshot.native.doc, &Default::default()).into_bytes()
+            let native = vectorcraft_format::save_file(&snapshot.native.doc);
+            let options = vectorcraft_svg::ExportOptions {
+                preserve_editing: true,
+                ..Default::default()
+            };
+            vectorcraft_svg::export_full(&snapshot.native.doc, &options, Some(&native)).take_bytes()
         })
     }
     fn flush(&mut self, _preserve_draft: bool) -> Result<(), JsValue> {
@@ -152,7 +162,7 @@ impl Document {
     }
     fn text(&self) -> String {
         self.app.session.active().map_or_else(String::new, |doc| {
-            vectorcraft_svg::export(&doc.doc, &Default::default())
+            serde_json::to_string(&doc.doc).unwrap_or_default()
         })
     }
     fn inspect(&self) -> serde_json::Value {
