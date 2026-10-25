@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { copyFileSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { root } from './stage-extensions.mjs';
 
@@ -10,7 +10,7 @@ export function collectNotices(selected) {
   const packages = new Map(metadata.packages.map(p => [p.id, p]));
   const nodes = new Map(metadata.resolve.nodes.map(n => [n.id, n]));
   for (const name of selected.filter(name => name !== 'suite')) {
-    const crate = `craft-${{spreadsheets:'grid',pdf:'pdf',word:'word',powerpoint:'deck'}[name]}-viewer`;
+    const crate = `craft-${{spreadsheets:'grid',pdf:'pdf',word:'word',powerpoint:'deck',vector:'vector'}[name]}-viewer`;
     const entry = metadata.packages.find(p => p.name === crate);
     if (!entry) throw new Error(`Missing crate ${crate}`);
     const reachable = new Set();
@@ -19,23 +19,39 @@ export function collectNotices(selected) {
     rmSync(destination, { recursive: true, force: true });
     mkdirSync(destination, { recursive: true });
     const inventory = [];
+    const sourceRoots = new Set();
     for (const id of [...reachable].sort()) {
       const pkg = packages.get(id);
       const source = dirname(pkg.manifest_path);
       const key = `${pkg.name}-${pkg.version}-${createHash('sha256').update(pkg.source ?? pkg.repository ?? 'workspace').digest('hex').slice(0, 8)}`;
       const files = licenseFiles(source);
+      if (pkg.source?.startsWith('git+') || !pkg.source) {
+        try { sourceRoots.add(execFileSync('git', ['rev-parse', '--show-toplevel'], { cwd: source, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim()); } catch { /* Registry packages already carry their notices. */ }
+      }
       if (pkg.license_file) files.push(resolve(source, pkg.license_file));
       for (const file of new Set(files)) {
         const target = join(destination, key, relative(source, file));
         mkdirSync(dirname(target), { recursive: true });
         copyFileSync(file, target);
       }
-      inventory.push({ name: pkg.name, version: pkg.version, license: pkg.license, source: pkg.source,
+      inventory.push({ name: pkg.name, ...(pkg.name === 'self_cell' ? { licenseChoice: 'Apache-2.0' } : {}), version: pkg.version, license: pkg.license, source: pkg.source,
         repository: pkg.repository, notices: [...new Set(files.map(file => `${key}/${relative(source, file)}`))].sort() });
+    }
+    // Workspace license/NOTICE and font assets often live above a crate directory.
+    for (const sourceRoot of [...sourceRoots].sort()) {
+      const key = 'source-' + createHash('sha256').update(sourceRoot.split('/').pop()).digest('hex').slice(0, 12);
+      const files = ['LICENSE', 'LICENSE-MIT', 'LICENSE-APACHE', 'NOTICE', 'ASSETS.md', 'ATTRIBUTION.md', 'ATTRIBUTION.toml']
+        .map(name => join(sourceRoot, name)).filter(existsSync);
+      const assets = join(sourceRoot, 'assets');
+      if (existsSync(assets)) files.push(...licenseFiles(assets, sourceRoot));
+      for (const file of new Set(files)) {
+        const target = join(destination, key, relative(sourceRoot, file));
+        mkdirSync(dirname(target), { recursive: true }); copyFileSync(file, target);
+      }
     }
     // Original source paths are not included in the distributable inventory.
     writeFileSync(join(destination, 'dependencies.json'), JSON.stringify(inventory, null, 2) + '\n');
-    for (const app of [{ spreadsheets: 'gridcraft', pdf: 'pdfcraft', word: 'wordcraft', powerpoint: 'deckcraft' }[name]]) {
+    for (const app of [{ spreadsheets: 'gridcraft', pdf: 'pdfcraft', word: 'wordcraft', powerpoint: 'deckcraft', vector: 'vectorcraft' }[name]]) {
       for (const file of ['LICENSE-MIT', 'LICENSE-APACHE']) {
         copyFileSync(resolve(root, 'upstream/checkouts', app, file), join(destination, `${app}-${file}`));
       }
