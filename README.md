@@ -30,7 +30,7 @@ npm run renderers:build
 npm run test:rendering
 ```
 
-Open this repository in VS Code and press F5 to launch the development extension. In the new window, open `integration-tests/fixtures/rendering.xlsx` or `rendering.pdf`, run **Reopen Editor With…**, and choose **Craft Preview (read only)**. Files up to 32 MiB are read through VS Code filesystem APIs. **Craft Integration Probe (development)** remains available as a separate transport diagnostic.
+Open this repository in VS Code and press F5 to launch the development extension. In the new window, open `integration-tests/fixtures/rendering.xlsx` or `rendering.pdf`; **Craft Preview (read only)** is the default editor for `.xlsx` and `.pdf`. Explicit user editor associations take precedence; use **Reopen Editor With… → Configure default editor** to change an existing choice. Files up to 32 MiB are read through VS Code filesystem APIs. **Craft Integration Probe (development)** remains available as a separate transport diagnostic.
 
 See [rendering setup and verification](docs/rendering.md) for the adapter boundaries, tested behavior and remaining limits. Generated binaries stay out of git and are built locally or in CI; they are not downloaded at extension runtime.
 

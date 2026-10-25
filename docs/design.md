@@ -2,7 +2,7 @@
 
 Status: read-only engine rendering validated; editing architecture remains proposed. Updated: 2026-10-25.
 
-The current implementation uses optional `CustomReadonlyEditorProvider` previews: a small Rust/WASM wrapper draws GridCraft's grid, and another uses PdfCraft's page rasterizer. Upstream app shells, editing controls and command APIs are not exposed. The separate transport probe remains available. Both diagnostic/rendering messages are intentionally separate from the proposed editing protocol below. See [the rendering implementation](rendering.md) and [upstream editing constraints](upstream-research.md).
+The current implementation uses default `CustomReadonlyEditorProvider` previews for XLSX/PDF: a small Rust/WASM wrapper draws GridCraft's grid, and another uses PdfCraft's page rasterizer. Upstream app shells, editing controls and command APIs are not exposed. The separate transport probe remains available. Both diagnostic/rendering messages are intentionally separate from the proposed editing protocol below. See [the rendering implementation](rendering.md) and [upstream editing constraints](upstream-research.md).
 
 ## Goals and boundaries
 
@@ -22,7 +22,7 @@ VS Code custom editor provider
 
 The extension owns resource URIs, persistence, conflict detection, editor registration, and recovery metadata. The WASM engine owns the live editable document and its history. The adapter translates between the app's services and the common protocol. The extension does not maintain a second independently editable document model.
 
-Use `CustomEditorProvider` for editable binary documents. Register editors as an optional Open With choice initially. A capability-limited read-only mode may use `CustomReadonlyEditorProvider`; it must also disable mutation in the application UI.
+Use `CustomEditorProvider` for editable binary documents. Register Craft Preview as the default editor for XLSX/PDF while respecting explicit user associations. Keep the integration probe optional. A capability-limited read-only mode may use `CustomReadonlyEditorProvider`; it must also disable mutation in the application UI.
 
 Prefer loading the application directly in the webview with a VS Code bridge. Existing same-origin iframe bridges are useful reference implementations, but cannot be assumed to work unchanged inside VS Code. Avoid a local HTTP server. Test WASM loading, worker requirements, CSP, WebGL/WebGPU fallback, and asset addressing before choosing the bootstrap implementation.
 

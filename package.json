@@ -40,7 +40,7 @@
             "filenamePattern": "*.pdf"
           }
         ],
-        "priority": "option"
+        "priority": "default"
       },
       {
         "viewType": "craft.integrationProbe",

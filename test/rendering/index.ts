@@ -68,7 +68,10 @@ async function openAndWait(api: RenderingApi, uri: vscode.Uri, format: 'xlsx' | 
   });
   void receipt.catch(() => {});
   try {
-    await vscode.commands.executeCommand('vscode.openWith', uri, 'craft.preview');
+    await vscode.commands.executeCommand('vscode.open', uri);
+    const input = vscode.window.tabGroups.activeTabGroup.activeTab?.input;
+    assert.ok(input instanceof vscode.TabInputCustom && input.viewType === 'craft.preview',
+      'Opening a supported file normally must choose Craft Preview');
     return await receipt;
   } finally { clearTimeout(timer); listener?.dispose(); }
 }

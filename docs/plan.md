@@ -4,7 +4,7 @@ Status: read-only rendering increment verified; M0/M1 release and editing gates 
 
 ## Current implementation
 
-The extension registers optional read-only XLSX/PDF previews as well as the transport probe. Actual GridCraft grid rendering and PdfCraft page rasterization run as WASM inside VS Code. Generated styled/multi-sheet and multi-page fixtures pass navigation, zoom/resize, source-preservation, malformed-input and non-file URI tests. Spreadsheet input filtering is checked against attempted edits and an unchanged workbook hash. Captured output was visually inspected. See [rendering validation and limits](rendering.md).
+The extension registers default read-only XLSX/PDF previews as well as an optional transport probe. Actual GridCraft grid rendering and PdfCraft page rasterization run as WASM inside VS Code. Generated styled/multi-sheet and multi-page fixtures pass navigation, zoom/resize, source-preservation, malformed-input and non-file URI tests. Spreadsheet input filtering is checked against attempted edits and an unchanged workbook hash. Captured output was visually inspected. See [rendering validation and limits](rendering.md).
 
 GridCraft and PdfCraft source revisions are pinned in `upstream/manifest.json`. Rust 1.95.0, wasm-bindgen 0.2.129 and the adapter Cargo lockfile are verified for the read-only wrappers. These use direct Cargo builds, not Trunk or full upstream app builds. Output sizes/hashes are recorded in `upstream/rendering-build.json`; transitive redistribution notices and wider-platform validation remain open.
 
@@ -35,7 +35,7 @@ Done when a fresh checkout has documented build inputs and can produce the first
 
 ## M1 — Two-app feasibility spike
 
-- [x] Register optional custom editors for XLSX and PDF.
+- [x] Register default custom editors for XLSX and PDF.
 - [x] Load both rendering adapters without a desktop process or localhost server.
 - [x] Pass document bytes through the VS Code bridge.
 - [ ] Validate graphics, fonts, CSP, keyboard focus, clipboard, and resizing.

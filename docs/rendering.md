@@ -19,7 +19,7 @@ The renderer build checks source revisions and refuses dirty upstream checkouts.
 
 Generated JavaScript/WASM stays in ignored `media/engines/`. `media/engines/build.json` records tool versions, input pins, lock hash, output sizes and SHA-256 hashes. The tracked `upstream/rendering-build.json` is the baseline from the verified local build, not a promise of identical bytes on every host. Binaries are not committed or downloaded at extension runtime.
 
-Open the repo in VS Code and press F5. In the development window, open `integration-tests/fixtures/rendering.xlsx` or `rendering.pdf`, select **Reopen Editor With…**, then **Craft Preview (read only)**. The spreadsheet supports wheel scrolling, Shift-wheel horizontal scrolling and sheet selection. The PDF supports Previous/Next and 75–200% zoom.
+Open the repo in VS Code and press F5. In the development window, open `integration-tests/fixtures/rendering.xlsx` or `rendering.pdf`. **Craft Preview (read only)** is the default for both file types. Existing user editor associations take precedence; use **Reopen Editor With… → Configure default editor** to change a saved preference. The spreadsheet supports wheel scrolling, Shift-wheel horizontal scrolling and sheet selection. The PDF supports Previous/Next and 75–200% zoom.
 
 ## Adapter boundaries
 
