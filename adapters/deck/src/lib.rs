@@ -114,6 +114,17 @@ impl Document {
             }),
         ));
     }
+    fn set_theme(&mut self, ctx: &egui::Context, dark: bool) {
+        self.app.ui.brightness = if dark {
+            deckcraft_ui_egui::theme::Brightness::Dark
+        } else {
+            deckcraft_ui_egui::theme::Brightness::Light
+        };
+        deckcraft_ui_egui::theme::apply(
+            ctx,
+            &deckcraft_ui_egui::theme::Tokens::for_brightness(self.app.ui.brightness),
+        );
+    }
     fn setup(ctx: &egui::Context) {
         deckcraft_ui_egui::install_ime_pass_hooks(ctx);
     }

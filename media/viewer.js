@@ -63,6 +63,19 @@ function renderPdf() {
   } catch { fail(); }
 }
 
+// VS Code updates these documented webview classes on initial load and live
+// theme changes. Keep the native palette in sync without changing document data.
+let appliedDark;
+function syncTheme() {
+  if (!viewer?.set_theme) return;
+  // High Contrast Light also carries vscode-high-contrast; the light class wins.
+  const dark = !document.body.classList.contains('vscode-high-contrast-light') &&
+    (document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast'));
+  viewer.set_theme(dark); appliedDark = dark;
+}
+const themeObserver = new MutationObserver(() => syncTheme());
+themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class', 'data-vscode-theme-id'] });
+
 previous?.addEventListener('click', () => { if (page > 0) { page--; renderPdf(); } });
 next?.addEventListener('click', () => { if (page + 1 < pages) { page++; renderPdf(); } });
 zoom?.addEventListener('change', renderPdf);
@@ -92,7 +105,7 @@ window.addEventListener('message', async ({ data }) => {
         }
         case 'history': viewer.restore_history(data.token); result = data.token; break;
         case 'ack': viewer.mark_saved(data.token); result = data.token; break;
-        case 'restore': result = viewer.replace(new Uint8Array(data.bytes)); break;
+        case 'restore': result = viewer.replace(new Uint8Array(data.bytes)); syncTheme(); break;
         case 'new': result = (Viewer.blank_document ? Viewer.blank_document() : Viewer.blank_document()).buffer; break;
         case 'test:edit': {
           if (!capture) throw new Error('Test operation unavailable.');
@@ -123,6 +136,14 @@ window.addEventListener('message', async ({ data }) => {
         case 'test:text': {
           if (!capture) throw new Error('Test operation unavailable.');
           result = viewer.text(); break;
+        }
+        case 'test:theme-details': {
+          if (!capture) throw new Error('Test operation unavailable.');
+          result = { classes: document.body.className, nativeDark: viewer.is_dark(), appliedDark }; break;
+        }
+        case 'test:theme': {
+          if (!capture) throw new Error('Test operation unavailable.');
+          result = viewer.is_dark(); break;
         }
         case 'test:history': {
           if (!capture) throw new Error('Test operation unavailable.');
@@ -166,6 +187,7 @@ window.addEventListener('message', async ({ data }) => {
         if (event.kind === 'changed') send('editor:changed', { before: event.before, after: event.after, label: event.label });
         else if (event.kind === 'command') hostCommand(event.command);
       });
+      syncTheme();
       if (data.recovered) viewer.mark_original(new Uint8Array(data.originalBytes));
       engineReadyResolve();
     } else {
@@ -177,5 +199,5 @@ window.addEventListener('message', async ({ data }) => {
     }
   } catch (error) { engineReadyReject(error); fail(error instanceof Error ? error.message : typeof error === 'string' ? error : 'Renderer startup failed.'); }
 });
-window.addEventListener('pagehide', () => { viewer?.destroy?.(); viewer?.free?.(); });
+window.addEventListener('pagehide', () => { themeObserver.disconnect(); viewer?.destroy?.(); viewer?.free?.(); });
 send('render:ready');

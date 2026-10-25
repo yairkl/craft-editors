@@ -28,3 +28,5 @@ For changes to rendering, build the adapters with `npm run renderers:build`, the
 Contributions are provided under the repository's MIT license. Third-party material must retain its applicable licensing and attribution.
 
 For shared host changes, run both `npm run test:editing` and `npm run test:office`, then package/archive/install checks. The Office suite tests native WordCraft/DeckCraft input through the real WASM engines, including save/reopen, history and recovery. `CRAFT_TEST_ONLY=word` or `powerpoint` can narrow local debugging; CI runs the full matrix.
+
+For appearance changes, run `npm run test:theme` against the native engines. It exercises actual workbench theme changes, high-contrast brightness mapping, Revert, unchanged file data and active cell entry.

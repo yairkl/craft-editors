@@ -37,3 +37,11 @@ Save and backup serialization must not dismiss the native cell editor. Valid dra
 An unfinished formula or draft refused by native validation returns a pending-draft result, which the host treats as cancellation. Autosave leaves both the editor and disk bytes alone and retries after further edits. Active text-box drafts also defer background serialization until their native transaction finishes. Backup serialization follows the same rule: incomplete drafts are not yet included in a successful backup, so finish the edit before relying on recovery for that text.
 
 The regression suite enables actual VS Code after-delay autosave, continues typing in the same cell after a write, pauses inside an unfinished formula, completes it, and reopens the file to verify the value. Both manual host Save and background Save preserve live cell entry.
+
+## VS Code theme synchronization
+
+The bootstrap reads VS Code's webview theme classes on startup and observes live class/theme-ID changes. `set_theme` applies the native light/dark palette in GridCraft, WordCraft and DeckCraft, without changing the document model, editor draft, caret or dirty state. Revert preserves the chosen palette. Word/PPTX page and slide colours remain document content.
+
+High-contrast themes map to the corresponding native light/dark palette; this does not implement full VS Code high-contrast tokens or reproduce arbitrary custom-theme colours. High Contrast Light carries both `vscode-high-contrast-light` and `vscode-high-contrast`; its light class takes precedence. PDF controls already inherit VS Code CSS variables, and PDF page colours are unchanged.
+
+`npm run test:theme` changes actual VS Code themes while native editors are open, checks initial/live palettes, verifies Revert and an active spreadsheet draft, and confirms that tokens, dirty state and source bytes do not change. The test uses isolated profiles and restores their previous theme setting.

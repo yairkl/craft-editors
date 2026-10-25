@@ -29,7 +29,8 @@
     "packages:check": "python3 scripts/verify-packages.py",
     "test:installed": "npm run compile && node scripts/test-installed.cjs",
     "test:editing": "npm run compile && node scripts/test-extensions.cjs editing",
-    "test:office": "npm run compile && node scripts/test-extensions.cjs office"
+    "test:office": "npm run compile && node scripts/test-extensions.cjs office",
+    "test:theme": "npm run compile && node scripts/test-extensions.cjs theme"
   },
   "devDependencies": {
     "@types/node": "22.20.5",

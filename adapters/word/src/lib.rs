@@ -85,6 +85,14 @@ impl Document {
     fn request_screenshot(ctx: &egui::Context, _capture: Capture) {
         ctx.send_viewport_cmd(egui::ViewportCommand::Screenshot(Default::default()));
     }
+    fn set_theme(&mut self, ctx: &egui::Context, dark: bool) {
+        self.app.ui.theme = if dark {
+            wordcraft_ui_egui::theme::Appearance::Dark
+        } else {
+            wordcraft_ui_egui::theme::Appearance::Light
+        };
+        wordcraft_ui_egui::theme::apply(ctx, self.app.ui.theme);
+    }
     fn setup(_ctx: &egui::Context) {}
     fn ready(&self) -> bool {
         !self.app.canvas.page_rects.is_empty()

@@ -42,6 +42,7 @@ struct State {
     capture: Capture,
     on_frame: Option<js_sys::Function>,
     on_event: js_sys::Function,
+    dark: bool,
     token: u32,
     next_token: u32,
     snapshots: BTreeMap<u32, Snapshot>,
@@ -154,6 +155,7 @@ impl NativeViewer {
             context: egui::Context::default(),
             on_frame: Some(on_frame),
             on_event,
+            dark: false,
             token: 0,
             next_token: 0,
             snapshots,
@@ -172,6 +174,27 @@ impl NativeViewer {
             )
             .await?;
         Ok(NativeViewer { state, runner })
+    }
+    pub fn set_theme(&self, dark: bool) -> Result<(), JsValue> {
+        let mut state = self
+            .state
+            .try_borrow_mut()
+            .map_err(|_| error("Editor is busy."))?;
+        let context = state.context.clone();
+        state.document.set_theme(&context, dark);
+        state.dark = dark;
+        context.request_repaint();
+        Ok(())
+    }
+    pub fn is_dark(&self) -> Result<bool, JsValue> {
+        Ok(self
+            .state
+            .try_borrow()
+            .map_err(|_| error("Editor is busy."))?
+            .context
+            .global_style()
+            .visuals
+            .dark_mode)
     }
     pub fn commit(&self) -> Result<(), JsValue> {
         self.state
@@ -246,7 +269,8 @@ impl NativeViewer {
             .state
             .try_borrow_mut()
             .map_err(|_| error("Editor is busy."))?;
-        let document = Document::open(&bytes, state.commands.clone())?;
+        let mut document = Document::open(&bytes, state.commands.clone())?;
+        document.set_theme(&state.context, state.dark);
         let token = state
             .next_token
             .checked_add(1)

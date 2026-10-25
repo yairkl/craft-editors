@@ -353,6 +353,27 @@ impl GridViewer {
             .map_err(|_| JsValue::from_str("GridCraft could not start. WebGL is required."))?;
         Ok(Self { runner, state })
     }
+    pub fn set_theme(&self, dark: bool) -> Result<(), JsValue> {
+        let mut state = self
+            .state
+            .try_borrow_mut()
+            .map_err(|_| JsValue::from_str("Renderer is busy."))?;
+        state.app.ui.dark = dark;
+        state.app.ui.system_theme = false;
+        gridcraft_ui_egui::theme::apply(&state.context, dark);
+        state.context.request_repaint();
+        Ok(())
+    }
+    pub fn is_dark(&self) -> Result<bool, JsValue> {
+        Ok(self
+            .state
+            .try_borrow()
+            .map_err(|_| JsValue::from_str("Renderer is busy."))?
+            .context
+            .global_style()
+            .visuals
+            .dark_mode)
+    }
     pub fn draft_text(&self) -> Result<Option<String>, JsValue> {
         let state = self
             .state
@@ -451,7 +472,9 @@ impl GridViewer {
             .state
             .try_borrow_mut()
             .map_err(|_| JsValue::from_str("Renderer is busy."))?;
-        let app = make_app(&bytes, state.commands.clone())?;
+        let mut app = make_app(&bytes, state.commands.clone())?;
+        app.ui.dark = state.app.ui.dark;
+        app.ui.system_theme = false;
         let token = state
             .next_token
             .checked_add(1)

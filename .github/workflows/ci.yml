@@ -51,6 +51,7 @@ jobs:
       - run: xvfb-run -a npm run test:rendering
       - run: xvfb-run -a npm run test:editing
       - run: xvfb-run -a npm run test:office
+      - run: xvfb-run -a npm run test:theme
       - run: npm run package
       - run: npm run packages:check
       - run: xvfb-run -a npm run test:installed
