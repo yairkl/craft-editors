@@ -34,12 +34,12 @@ export async function verifyNativeTabs(viewer, canvas, units) {
   }
   if (viewer.active_sheet() !== initial) throw new Error('Native tabs did not restore the saved active sheet.');
 }
-export async function draftCell(viewer, canvas, row, col) {
+export async function draftCell(viewer, canvas, row, col, text = '7') {
   await frame(); await frame();
   const [left, top, right, bottom] = viewer.cell_bounds(row, col);
   await clickCanvas(canvas, (left + right) / 2, (top + bottom) / 2);
-  canvas.dispatchEvent(new KeyboardEvent('keydown', { key: '7', code: 'Digit7', bubbles: true }));
-  canvas.dispatchEvent(new KeyboardEvent('keyup', { key: '7', code: 'Digit7', bubbles: true }));
+  canvas.dispatchEvent(new KeyboardEvent('keydown', { key: text, code: text === '=' ? 'Equal' : 'Digit7', bubbles: true }));
+  canvas.dispatchEvent(new KeyboardEvent('keyup', { key: text, code: text === '=' ? 'Equal' : 'Digit7', bubbles: true }));
   await frame(); await frame();
 }
 
@@ -54,5 +54,20 @@ export async function pasteText(canvas, text) {
 export async function historyKey(canvas, redo) {
   canvas.focus(); await frame();
   for (const type of ['keydown', 'keyup']) canvas.dispatchEvent(new KeyboardEvent(type, { key: 'z', code: 'KeyZ', ctrlKey: true, shiftKey: redo, bubbles: true }));
+  await frame(); await frame();
+}
+
+export async function continueDraft(text) {
+  const input = document.activeElement;
+  if (!(input instanceof HTMLInputElement)) throw new Error('The native text agent lost focus');
+  input.setRangeText(text, input.selectionStart, input.selectionEnd, 'end');
+  input.dispatchEvent(new InputEvent('input', { inputType: 'insertText', data: text, bubbles: true }));
+  await frame(); await frame();
+}
+
+export async function editorKey(canvas, key) {
+  if (!['Enter', 'ArrowLeft', 'Escape'].includes(key)) throw new Error('Invalid test key');
+  const target = document.activeElement || canvas;
+  for (const type of ['keydown', 'keyup']) target.dispatchEvent(new KeyboardEvent(type, { key, code: key, bubbles: true }));
   await frame(); await frame();
 }

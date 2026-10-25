@@ -6,13 +6,13 @@ GridCraft's worksheet tabs belong to its embedded canvas; VS Code workbench tabs
 
 ## Using the editor
 
-Open an XLSX normally, select a cell and type or paste. Use the native bottom tabs to switch, add, rename or manage worksheets. Save with Ctrl/Cmd+S. Use VS Code’s File: Save As command to write an XLSX copy. The embedded spreadsheet has no extra host header or Save buttons. VS Code's undo/redo and File: Revert File commands operate on committed workbook edits. Pending cell and text-box drafts are committed before serialization; invalid drafts prevent saving.
+Open an XLSX normally, select a cell and type or paste. Use the native bottom tabs to switch, add, rename or manage worksheets. Save with Ctrl/Cmd+S. Use VS Code’s File: Save As command to write an XLSX copy. The embedded spreadsheet has no extra host header or Save buttons. VS Code's undo/redo and File: Revert File commands operate on committed workbook edits. Background serialization preserves the active cell draft, caret, selection and point mode. It saves valid text/formulas without ending entry or accepting autocomplete. Unfinished formulas, validation refusals and active text-box drafts defer saving until the native editor can commit them. Explicit native Save/Enter still commits through the native editor.
 
 ## Host lifecycle
 
 `src/editing.ts` is the shared editable custom-document provider for XLSX, DOCX and PPTX. It reads and writes through `workspace.fs`, so non-file URIs use their filesystem provider. It never accepts arbitrary write destinations from webview messages. File dialogs and document identity belong to VS Code. `src/rpc.ts` correlates requests to one live webview session, rejects disposed requests and bounds response waits.
 
-Each WASM adapter retains native model snapshots for each committed edit. Pending cell and text-box drafts are included in snapshots and mark the document dirty before they are committed. Each edit emits before/after tokens; VS Code receives undo/redo callbacks that restore those snapshots. Worksheet navigation alone does not create a dirty edit. Serializing commits drafts and returns bytes in the document’s registered format plus the exact revision token. Only after a successful filesystem write does the host acknowledge that token as saved. An edit made during the write remains dirty. Failed or cancelled writes do not acknowledge the snapshot.
+Each WASM adapter retains native model snapshots for each committed edit. Pending cell and text-box drafts are included in snapshots and mark the document dirty before they are committed. Each edit emits before/after tokens; VS Code receives undo/redo callbacks that restore those snapshots. Worksheet navigation alone does not create a dirty edit. Serializing preserves active cell entry and returns bytes in the document’s registered format plus the exact revision token. Only after a successful filesystem write does the host acknowledge that token as saved. An edit made during the write remains dirty. Failed or cancelled writes do not acknowledge the snapshot.
 
 Before overwriting the original, Save checks that its SHA-256 still matches the baseline. If another program changed it, Save asks the user to use Save As or Revert. This check is not an atomic compare-and-swap: generic filesystem providers cannot guarantee against a concurrent external write between checking and writing. External changes are checked at Save; automatic file watching/reload is not implemented.
 
@@ -29,3 +29,11 @@ This is an early editing preview. Generated fixtures on Linux and a simulated re
 WordCraft has a small exact-history snapshot hook so VS Code history can restore native undo/redo state without serializing on each edit. DeckCraft clones its public immutable document state. Shared Rust runner code in `adapters/native/runtime.rs` handles both apps; version-specific egui screenshot behavior stays in each adapter.
 
 DeckCraft's native keyboard path reaches the engine directly. Its adapter delegates undo/redo and standard file shortcuts to VS Code before that path runs, so native shortcuts and workbench commands share one history. The Office suite checks keyboard Undo returns to the clean revision and Redo restores the edit.
+
+## Spreadsheet autosave
+
+Save and backup serialization must not dismiss the native cell editor. Valid drafts are applied to the serialized model while the live editor stays active; this is the same logical revision, so saving does not add a separate undo step. The asynchronous save acknowledgment only marks the written revision saved. Later typing keeps its own revision and remains dirty.
+
+An unfinished formula or draft refused by native validation returns a pending-draft result, which the host treats as cancellation. Autosave leaves both the editor and disk bytes alone and retries after further edits. Active text-box drafts also defer background serialization until their native transaction finishes. Backup serialization follows the same rule: incomplete drafts are not yet included in a successful backup, so finish the edit before relying on recovery for that text.
+
+The regression suite enables actual VS Code after-delay autosave, continues typing in the same cell after a write, pauses inside an unfinished formula, completes it, and reopens the file to verify the value. Both manual host Save and background Save preserve live cell entry.

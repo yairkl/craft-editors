@@ -133,11 +133,57 @@ export async function run(): Promise<void> {
   assert.equal(await cell(draft), '42', 'Typing keeps the native draft open until commit');
   assert.ok(await vscode.workspace.save(draftUri));
   assert.equal(await cell(draft), '7', 'Save serializes the pending native cell draft');
+  assert.equal(await draft.request('test:draft-text'), '7', 'Saving must preserve the active native cell draft');
   assert.equal(draft.dirty, false);
   await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
   const reopenedDraft = await open(api, draftUri);
   assert.equal(await cell(reopenedDraft), '7');
   await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+  // Real VS Code afterDelay autosave must leave cell entry and the text agent intact.
+  const files = vscode.workspace.getConfiguration('files');
+  const oldAutoSave = files.inspect<string>('autoSave')?.globalValue;
+  const oldDelay = files.inspect<number>('autoSaveDelay')?.globalValue;
+  const autoUri = vscode.Uri.joinPath(directory, 'autosave.xlsx');
+  await vscode.workspace.fs.writeFile(autoUri, original);
+  let auto = await open(api, autoUri);
+  let finalUri = autoUri;
+  try {
+    await files.update('autoSaveDelay', 300, vscode.ConfigurationTarget.Global);
+    await files.update('autoSave', 'afterDelay', vscode.ConfigurationTarget.Global);
+    await auto.request('test:draft', { row: 1, col: 1 });
+    await waitFor(() => !auto.dirty);
+    assert.equal(await auto.request('test:draft-text'), '7');
+    assert.equal(await auto.request('test:continue-draft', { text: '8' }), '78', 'Typing continues in the same cell after autosave');
+    await waitFor(() => !auto.dirty);
+    assert.equal(await cell(auto), '78');
+    await auto.request('test:editor-key', { key: 'Enter' });
+    await waitFor(() => !auto.dirty);
+    await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+    finalUri = vscode.Uri.joinPath(directory, 'autosave-formula.xlsx');
+    await vscode.workspace.fs.writeFile(finalUri, original);
+    auto = await open(api, finalUri);
+    const savedText = original;
+    await auto.request('test:draft', { row: 1, col: 1, text: '=' });
+    assert.equal(await auto.request('test:continue-draft', { text: '1+' }), '=1+');
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    assert.equal(auto.dirty, true, 'Incomplete formula stays unsaved');
+    assert.equal(await auto.request('test:draft-text'), '=1+');
+    assert.deepEqual(await vscode.workspace.fs.readFile(finalUri), savedText, 'Autosave cannot overwrite the file with an unfinished formula');
+    assert.equal(await auto.request('test:continue-draft', { text: '2' }), '=1+2');
+    await waitFor(() => !auto.dirty);
+    assert.equal(await cell(auto), '3');
+    assert.equal(await auto.request('test:draft-text'), '=1+2');
+    await auto.request('test:editor-key', { key: 'Enter' });
+    await waitFor(() => !auto.dirty);
+  } finally {
+    await files.update('autoSave', oldAutoSave, vscode.ConfigurationTarget.Global);
+    await files.update('autoSaveDelay', oldDelay, vscode.ConfigurationTarget.Global);
+  }
+  await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+  const autoReopened = await open(api, finalUri);
+  assert.equal(await cell(autoReopened), '3');
+  await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+  console.log('Autosave preserves native cell input, continued typing and incomplete formulas.');
   console.log('Native editing: cell/formula round trip, Undo/Redo, Save As, Revert, failed/cancelled saves, edits during write, and backup recovery passed.');
 }
 async function open(api: EditorApi, uri: vscode.Uri): Promise<EditableDocument> {

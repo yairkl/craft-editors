@@ -167,14 +167,85 @@ impl State {
             ],
         );
     }
-    fn flush(&mut self) -> Result<(), JsValue> {
-        if self.app.editor.is_some() && !self.app.commit_edit(0, 0, false, false) {
-            return Err(JsValue::from_str("The cell edit failed validation."));
-        }
-        self.app
-            .commit_text_box_edit()
-            .map_err(|_| JsValue::from_str("The text edit could not be committed."))?;
+    fn flush(&mut self, preserve_draft: bool) -> Result<(), JsValue> {
         self.observe();
+        let editor = self.app.editor.clone();
+        let text_box_editor = self.app.text_box_editor.clone();
+        let has_draft = editor.is_some() || text_box_editor.is_some();
+        // Text-box drafts compare against their original text internally. Let the
+        // native editor finish that transaction before a background save commits it.
+        if preserve_draft && text_box_editor.is_some() {
+            return Err(JsValue::from_str("DRAFT_PENDING"));
+        }
+        // An unfinished formula belongs to the editor, not to an autosaved cell.
+        if preserve_draft
+            && let Some(ed) = &editor
+            && let Some(doc) = self.app.session.active()
+        {
+            let text_format = doc.wb.sheet(ed.sheet).is_some_and(|sheet| {
+                doc.wb.styles.get(sheet.style_id(ed.cell)).num_fmt.as_str() == "@"
+            });
+            let formula = ed.text.starts_with('=')
+                || ((ed.text.starts_with('+') || ed.text.starts_with('-'))
+                    && ed
+                        .text
+                        .chars()
+                        .nth(1)
+                        .is_some_and(|c| c.is_ascii_alphabetic() || c == '('));
+            if formula
+                && !text_format
+                && gridcraft_engine::formula::parse_input(&ed.text, ed.locale, |name| {
+                    doc.wb.name(name, ed.sheet).is_some() || doc.wb.table(name).is_some()
+                })
+                .is_err()
+            {
+                return Err(JsValue::from_str("DRAFT_PENDING"));
+            }
+        }
+        let mode = self.app.session.mode;
+        let message = self.app.message.clone();
+        let selection = self
+            .app
+            .session
+            .active()
+            .map(|doc| (doc.selection.clone(), doc.wb.active_sheet));
+        // Serialize exactly what was typed; autosave must not accept an autocomplete suggestion.
+        if preserve_draft && let Some(ed) = self.app.editor.as_mut() {
+            ed.completion = None;
+        }
+        let cell_ok = self.app.editor.is_none() || self.app.commit_edit(0, 0, false, false);
+        let text_ok = cell_ok && self.app.commit_text_box_edit().is_ok();
+        if preserve_draft {
+            self.app.editor = editor;
+            self.app.text_box_editor = text_box_editor;
+            self.app.session.mode = mode;
+            self.app.message = message;
+            if let Some((selection, sheet)) = selection
+                && let Some(doc) = self.app.session.active_mut()
+            {
+                doc.selection = selection;
+                if doc.wb.active_sheet != sheet {
+                    std::sync::Arc::make_mut(&mut doc.wb).active_sheet = sheet;
+                }
+            }
+        }
+        if !text_ok {
+            return Err(JsValue::from_str(if preserve_draft {
+                "DRAFT_PENDING"
+            } else {
+                "The edit could not be committed."
+            }));
+        }
+        if preserve_draft && has_draft {
+            // Committing for serialization is the same logical edit, not another undo step.
+            // The live editor (text, caret, selection and point mode) stays in place.
+            if let Some(doc) = self.app.session.active() {
+                self.snapshots
+                    .insert(self.token, Snapshot::capture(doc, &self.app));
+            }
+        } else {
+            self.observe();
+        }
         Ok(())
     }
 }
@@ -282,11 +353,18 @@ impl GridViewer {
             .map_err(|_| JsValue::from_str("GridCraft could not start. WebGL is required."))?;
         Ok(Self { runner, state })
     }
+    pub fn draft_text(&self) -> Result<Option<String>, JsValue> {
+        let state = self
+            .state
+            .try_borrow()
+            .map_err(|_| JsValue::from_str("Renderer is busy."))?;
+        Ok(state.app.editor.as_ref().map(|editor| editor.text.clone()))
+    }
     pub fn commit(&self) -> Result<(), JsValue> {
         self.state
             .try_borrow_mut()
             .map_err(|_| JsValue::from_str("Renderer is busy."))?
-            .flush()
+            .flush(false)
     }
     pub fn mark_original(&self, bytes: Vec<u8>) -> Result<(), JsValue> {
         let (wb, _) = gridcraft_xlsx::read_xlsx(&bytes)
@@ -306,7 +384,7 @@ impl GridViewer {
             .try_borrow_mut()
             .map_err(|_| JsValue::from_str("Renderer is busy."))?;
         if flush {
-            state.flush()?;
+            state.flush(true)?;
         } else {
             state.observe();
         }

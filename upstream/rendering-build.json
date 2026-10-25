@@ -10,12 +10,12 @@
   },
   "artifacts": {
     "grid/viewer.js": {
-      "bytes": 79455,
-      "sha256": "4cc95bc666538d06750f5b42b39ce52eba2f5ec1d750b4e5b7838392b7ec9cfb"
+      "bytes": 79863,
+      "sha256": "1951313ef36ef0f9cd2f35273ed4b54bb859fcff9f77ac8770286f127d00e4dc"
     },
     "grid/viewer_bg.wasm": {
-      "bytes": 18739859,
-      "sha256": "0ac58e402a3d837e4fb1e80f45155e55129b7b716e53085a7ff15a9fb9a4b612"
+      "bytes": 18747974,
+      "sha256": "f3269552942c3a40640c3899120cc20888465085000f0210b36d69769228f061"
     },
     "pdf/viewer.js": {
       "bytes": 7545,

@@ -148,10 +148,18 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
     if (!target.path.toLowerCase().endsWith(`.${this.descriptor.format}`)) throw new Error(`Save As must use the ${this.descriptor.format.toUpperCase()} format.`);
     return this.write(doc, target, token);
   }
+  private async serialize(doc: EditableDocument): Promise<{ bytes: Uint8Array; token: number }> {
+    try { return snapshot(await doc.request('serialize', { flush: true })); }
+    catch (error) {
+      // Cancellation defers autosave without a validation dialog or a false saved acknowledgment.
+      if (error instanceof Error && error.message === 'DRAFT_PENDING') throw new vscode.CancellationError();
+      throw error;
+    }
+  }
   private write(doc: EditableDocument, target: vscode.Uri, token: vscode.CancellationToken): Promise<void> {
     return doc.enqueue(async () => {
       cancelled(token);
-      const data = snapshot(await doc.request('serialize', { flush: true }));
+      const data = await this.serialize(doc);
       cancelled(token);
       if (target.toString() === doc.uri.toString()) {
         const disk = await vscode.workspace.fs.readFile(doc.uri);
@@ -178,7 +186,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
     });
   }
   async backupCustomDocument(doc: EditableDocument, context: vscode.CustomDocumentBackupContext, token: vscode.CancellationToken): Promise<vscode.CustomDocumentBackup> {
-    const data = snapshot(await doc.request('serialize', { flush: true })); cancelled(token);
+    const data = await this.serialize(doc); cancelled(token);
     const body = Buffer.from(JSON.stringify({ version: 1, diskDigest: doc.diskDigest, bytes: Buffer.from(data.bytes).toString('base64') }));
     await vscode.workspace.fs.writeFile(context.destination, body);
     if (data.token === doc.token) doc.cache = data.bytes;

@@ -100,10 +100,24 @@ window.addEventListener('message', async ({ data }) => {
           result = await checks.editCell(viewer, canvas, data.row, data.col, data.text);
           break;
         }
+        case 'test:editor-key': {
+          if (!capture) throw new Error('Test operation unavailable.');
+          const checks = await import('./editing-checks.js');
+          await checks.editorKey(canvas, data.key); result = true; break;
+        }
+        case 'test:continue-draft': {
+          if (!capture) throw new Error('Test operation unavailable.');
+          const checks = await import('./editing-checks.js');
+          await checks.continueDraft(data.text); result = viewer.draft_text(); break;
+        }
+        case 'test:draft-text': {
+          if (!capture) throw new Error('Test operation unavailable.');
+          result = viewer.draft_text(); break;
+        }
         case 'test:draft': {
           if (!capture) throw new Error('Test operation unavailable.');
           const checks = await import('./editing-checks.js');
-          await checks.draftCell(viewer, canvas, data.row, data.col);
+          await checks.draftCell(viewer, canvas, data.row, data.col, data.text);
           result = true; break;
         }
         case 'test:text': {
