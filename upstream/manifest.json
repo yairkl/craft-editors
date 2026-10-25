@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "inspectedOn": "2026-10-25",
+  "status": "source-inspected; WASM builds and VS Code embedding not yet validated",
+  "toolchain": {
+    "rust": "1.95.0",
+    "rustTarget": "wasm32-unknown-unknown",
+    "trunk": "0.21.14",
+    "rustPinStatus": "candidate; meets inspected workspace minimum versions, not build-tested",
+    "trunkSource": "https://github.com/storytold/craft-common-actions/blob/2b4eb2c6d94880d926c934ec3736c92cde30086b/.github/workflows/release.yml"
+  },
+  "applications": [
+    {
+      "id": "gridcraft",
+      "repository": "https://github.com/storytold/gridcraft",
+      "revision": "17b9f6ff0125209fe707efc919690632ff49cb0b",
+      "version": "0.11.1",
+      "minimumRust": "1.90",
+      "license": "MIT OR Apache-2.0",
+      "webDirectory": "apps/gridcraft-web",
+      "outputDirectory": "dist/web",
+      "canvasId": "gridcraft_canvas",
+      "renderer": "wgpu: WebGPU or WebGL2; ?webgl forces GL",
+      "bridgeSource": "apps/gridcraft-web/src/host.rs",
+      "buildCommand": "trunk build --release",
+      "artifact": null
+    },
+    {
+      "id": "pdfcraft",
+      "repository": "https://github.com/storytold/pdfcraft",
+      "revision": "418ac6a2af49b7ac2fed44ca2cae8d5d1d2cec0d",
+      "version": "0.13.0",
+      "minimumRust": "1.95",
+      "license": "MIT OR Apache-2.0",
+      "webDirectory": "apps/pdfcraft-web",
+      "outputDirectory": "dist/web",
+      "canvasId": "pdfcraft",
+      "renderer": "eframe Glow (WebGL), explicitly selected by source",
+      "bridgeSource": "apps/pdfcraft-web/src/main.rs",
+      "buildCommand": "trunk build --release",
+      "artifact": null
+    }
+  ],
+  "optionalBuildInputs": {
+    "craftFonts": {
+      "enabled": false,
+      "reason": "Initial Latin-only feasibility build omits optional external fonts; pin and audit before enabling. This limits script coverage."
+    }
+  },
+  "redistribution": {
+    "approved": false,
+    "requirements": [
+      "Remove restricted ArtCraft marks from modified distributed builds",
+      "Inventory embedded assets and dependency licenses",
+      "Retain applicable LICENSE, NOTICE and font notices",
+      "Record artifact hashes after successful builds"
+    ]
+  },
+  "blockers": [
+    "Rust toolchain absent in initial environment",
+    "Existing same-origin iframe bridges do not implement VS Code acquisition or host-triggered serialization",
+    "Existing bridge save delivery lacks persisted-revision acknowledgment",
+    "No host-driven undo/redo or per-document revision messages",
+    "Trunk-generated bootstrap/CSP and VS Code asset loading remain untested"
+  ]
+}

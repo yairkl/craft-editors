@@ -1,6 +1,12 @@
 # Initial implementation plan
 
-Status: proposed. Date: 2026-10-17. No implementation milestones are complete.
+Status: M0 in progress. Updated: 2026-10-25. No full milestone is complete.
+
+## Current implementation
+
+The TypeScript extension registers an optional read-only XLSX/PDF integration probe. A session-scoped handshake transfers binary data and verifies its SHA-256 digest in the real webview. Unit tests cover invalid/stale/duplicate messages and integrity mismatches; VS Code integration tests cover both fixtures, non-file URI transport, cancellation, size limits and unchanged source files. This is transport validation, not a document viewer or editing prototype.
+
+GridCraft and PdfCraft source revisions are pinned in `upstream/manifest.json`. A source-fetch command checks out those exact revisions without replacing dirty work. Rust 1.95.0 / Trunk 0.21.14 are recorded candidates, but WASM builds, tool-download pins and artifacts are still unverified. See [the source inspection](upstream-research.md) for the bridge and licensing constraints.
 
 ## Scope and estimates
 
@@ -19,11 +25,11 @@ Budget approximately 3–5 months for one full-time engineer, including integrat
 
 ## M0 — Establish reproducible inputs
 
-- [ ] Recheck upstream embedding APIs and contributor requirements.
+- [x] Recheck upstream embedding APIs and contributor requirements.
 - [ ] Pin source revisions and toolchains for GridCraft and PdfCraft.
 - [ ] Record licensing, required assets/fonts, and restricted branding.
-- [ ] Collect redistributable or generated document fixtures.
-- [ ] Scaffold TypeScript extension tooling and meaningful CI checks.
+- [x] Collect redistributable or generated document fixtures.
+- [x] Scaffold TypeScript extension tooling and meaningful CI checks.
 
 Done when a fresh checkout has documented build inputs and can produce the first WASM artifacts reproducibly enough for the spike. Do not rely on floating branches.
 
@@ -91,4 +97,4 @@ CLI/MCP integration, multiple synchronized editable views, browser-hosted VS Cod
 
 ## Immediate next task
 
-Complete M0 and start the GridCraft/PdfCraft webview spike. Keep implementation focused on measurable embedding and document-lifecycle evidence. A new public repository is the intended home; current files can be reviewed and developed locally before remote publication.
+Finish M0 by validating the pinned WASM builds, recording auxiliary tool versions and artifact hashes, and inventorying compiled assets/licenses. Then implement a small GridCraft direct-host adapter: one document per session, host-triggered serialization and explicit persisted-save acknowledgment. Prove open → edit → export to a separate file → reopen before enabling original-file Save. The public repository and extension/CI foundation now exist.

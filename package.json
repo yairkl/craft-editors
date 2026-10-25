@@ -1,0 +1,63 @@
+{
+  "name": "craft-vscode",
+  "displayName": "Craft for VS Code",
+  "description": "Development foundation for embedding Craft document editors in VS Code.",
+  "version": "0.0.1",
+  "private": true,
+  "publisher": "craft-vscode-dev",
+  "license": "MIT",
+  "preview": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yairkl/craft-vscode.git"
+  },
+  "engines": {
+    "vscode": "^1.102.0",
+    "node": ">=22"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./out/src/extension.js",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false
+    },
+    "virtualWorkspaces": {
+      "supported": true
+    }
+  },
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "craft.integrationProbe",
+        "displayName": "Craft Integration Probe (development)",
+        "selector": [
+          {
+            "filenamePattern": "*.xlsx"
+          },
+          {
+            "filenamePattern": "*.pdf"
+          }
+        ],
+        "priority": "option"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p .",
+    "check": "tsc -p . --noEmit",
+    "test": "npm run compile && node --test out/test/unit/*.test.js",
+    "test:integration": "npm run compile && node scripts/test-integration.cjs",
+    "fixtures": "python3 scripts/generate-fixtures.py",
+    "fixtures:check": "python3 scripts/generate-fixtures.py --check",
+    "upstream:fetch": "node scripts/fetch-upstream.mjs",
+    "vscode:prepublish": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "@types/vscode": "1.102.0",
+    "@vscode/test-electron": "3.1.0",
+    "typescript": "5.9.3"
+  }
+}

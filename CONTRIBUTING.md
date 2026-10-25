@@ -1,6 +1,6 @@
 # Contributing
 
-The project is currently in the design stage. Start with [the design](docs/design.md) and [the plan](docs/plan.md).
+The project has an extension foundation and a read-only transport probe. Start with [the design](docs/design.md), [the plan](docs/plan.md), and [upstream findings](docs/upstream-research.md). Rendering and editing are not implemented yet.
 
 ## Ownership boundaries
 
@@ -17,6 +17,8 @@ Propose embedding changes upstream when practical. Record temporary patches with
 - Include applicable license and asset notices when adding dependencies or artifacts.
 - Document supported formats and fidelity limits without claiming unsupported compatibility.
 
-Build and test commands will be documented when the extension scaffold lands. There are no runtime checks to run in this documentation-only revision.
+Run `npm ci`, `npm run check`, `npm test`, and `npm run fixtures:check` before committing. Changes to the provider, webview, or transport also require `npm run test:integration` (on headless Linux, prefix with `xvfb-run -a`). CI runs these checks against VS Code 1.102.0. The integration suite exercises local and non-file URI transport, cancellation, file-size limits, and unchanged source bytes. It does not yet test upstream rendering or editing.
+
+Keep generated output, downloaded test hosts, upstream checkouts and application artifacts out of git. Regenerate original smoke files with `npm run fixtures`. Fetch source pins with `npm run upstream:fetch`; do not replace immutable pins with branch names. Update the manifest and research notes together when upstream inputs change.
 
 Contributions are provided under the repository's MIT license. Third-party material must retain its applicable licensing and attribution.

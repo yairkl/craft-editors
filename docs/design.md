@@ -1,6 +1,8 @@
 # Design: a shared Craft document host for VS Code
 
-Status: proposed; runtime validation pending. Date: 2026-10-17.
+Status: proposed architecture; host/webview binary transport validated, engine embedding pending. Updated: 2026-10-25.
+
+The initial implementation is an optional `CustomReadonlyEditorProvider` transport probe, with no mutation UI or engine. It checks binary transfer and source-file preservation before the editable provider is introduced. The diagnostic protocol is intentionally separate from the proposed editing protocol below. See [current upstream constraints](upstream-research.md).
 
 ## Goals and boundaries
 
