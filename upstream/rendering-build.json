@@ -83,7 +83,7 @@
     "gridcraft": [
       {
         "path": "upstream/patches/gridcraft-host-commands.patch",
-        "sha256": "07306cc27a7f3ea71a680b70a3f28c52065bd4649841bbea3b085ff4c8470bf0",
+        "sha256": "3284ecc895ca94ec6b04131ee8cb9c0b185fbaefeeab1704c91b9f55d3339581",
         "purpose": "Delegate native file lifecycle and committed undo/redo to VS Code without acknowledging writes early. Use consistent five-percentage-point spreadsheet zoom steps.",
         "removalCondition": "Remove when the pinned upstream Services interface supplies the equivalent host-command hook."
       }
@@ -91,7 +91,7 @@
     "pdfcraft": [
       {
         "path": "upstream/patches/pdfcraft-embedding.patch",
-        "sha256": "e914c73f2715a701ba699c3936c5726c4e21690f7c60973b88404b939343ed2c",
+        "sha256": "c70a0c756b32b3b46c257bd2b13432f64c431ca9229515169e80938ed9202c10",
         "purpose": "Delegate file lifecycle and history to VS Code; omit standalone chrome and restricted branding.",
         "removalCondition": "Remove when upstream exposes equivalent embedding services."
       }
@@ -99,7 +99,7 @@
     "wordcraft": [
       {
         "path": "upstream/patches/wordcraft-embedding.patch",
-        "sha256": "965121e4f6193656176dcbe9d788b4dbc59cfaee6c3c77ec81532234f3ef0d9f",
+        "sha256": "6e3ebc360d59ad3786d588e6a0c81dbc03c875628bd7aa53962a4c7ea0bfd354",
         "purpose": "Delegate file lifecycle and history to the embedding host and omit standalone chrome.",
         "removalCondition": "Remove when upstream exposes equivalent embedding services and host snapshots."
       }
@@ -107,7 +107,7 @@
     "deckcraft": [
       {
         "path": "upstream/patches/deckcraft-embedding.patch",
-        "sha256": "a2f1bd70a72e0bb4db0afc41763e6b7099c5de26d982f92400328528ba5ce314",
+        "sha256": "e19eb042ee3617c93a09f28caff6202f1417dc8050913b8da87a5ff248bcf949",
         "purpose": "Delegate file lifecycle and history to the embedding host and omit standalone chrome.",
         "removalCondition": "Remove when upstream exposes equivalent embedding services and host snapshots."
       }
@@ -115,7 +115,7 @@
     "vectorcraft": [
       {
         "path": "upstream/patches/vectorcraft-embedding.patch",
-        "sha256": "642e2cb99fc4ded1f0ea8e25344abf657f7d9881ccf15846a5d8d504d2e84020",
+        "sha256": "799090be607cb12f6a96881b900c27a0646775ed60782980f6712b12b76b48d3",
         "purpose": "Delegate file lifecycle and history to VS Code; omit standalone chrome and restricted branding.",
         "removalCondition": "Remove when upstream exposes equivalent embedding services."
       }
