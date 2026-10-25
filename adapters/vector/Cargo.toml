@@ -20,3 +20,4 @@ web-sys = { version = "=0.3.106", features = ["HtmlCanvasElement"] }
 serde_json = "1"
 vectorcraft-format = { path = "../../upstream/checkouts/vectorcraft/crates/format" }
 vectorcraft-doc = { path = "../../upstream/checkouts/vectorcraft/crates/doc" }
+vectorcraft-text = { path = "../../upstream/checkouts/vectorcraft/crates/text" }

@@ -1,6 +1,7 @@
 // Shared native editor runner; each application supplies document operations.
 use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
 use wasm_bindgen::prelude::*;
+include!("fonts.rs");
 type Capture = std::sync::Arc<std::sync::Mutex<Option<egui::ColorImage>>>;
 type Commands = Rc<RefCell<Vec<String>>>;
 fn error(message: &str) -> JsValue {
@@ -119,6 +120,9 @@ impl eframe::App for Shell {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         if let Ok(mut state) = self.0.try_borrow_mut() {
             state.document.ui(ui, _frame);
+            if state.document.ready() {
+                install_language_fallback(ui.ctx());
+            }
             state.observe();
             let commands = std::mem::take(&mut *state.commands.borrow_mut());
             for command in commands {
@@ -311,7 +315,9 @@ impl NativeViewer {
             .state
             .try_borrow()
             .map_err(|_| error("Editor is busy."))?;
-        Ok(state.document.inspect().to_string())
+        let mut details = state.document.inspect();
+        details["uiHebrewGlyphs"] = ui_has_hebrew(&state.context).into();
+        Ok(details.to_string())
     }
     pub fn command(&self, id: &str, params: &str) -> Result<(), JsValue> {
         let mut state = self

@@ -28,7 +28,7 @@ for name in [*PROGRAMS, 'suite']:
             assert all(f.startswith(prefix) for f in files if f.startswith('extension/media/engines/'))
             assert all(f.endswith(f'/{name}.js') for f in files if '/entrypoints/' in f)
             assert 'extension/' + installed['main'].removeprefix('./') in files
-            if name == 'word':
+            if name in PROGRAMS:
                 assert 'extension/notices/fonts/NotoSansHebrew-OFL.txt' in files
             dependencies = json.loads(z.read('extension/notices/dependencies.json'))
             for other_name, (_, _, other_program) in PROGRAMS.items():

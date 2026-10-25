@@ -5,6 +5,7 @@ use gridcraft_ui_egui::{Services, SheetApp};
 use sha2::Digest;
 use std::{cell::RefCell, collections::BTreeMap, rc::Rc, sync::Arc};
 use wasm_bindgen::prelude::*;
+include!("../../native/fonts.rs");
 
 #[derive(Clone)]
 struct Snapshot {
@@ -284,6 +285,9 @@ impl eframe::App for GridShell {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         if let Ok(mut state) = self.0.try_borrow_mut() {
             state.app.ui(ui);
+            if state.app.grid.rect.is_some() {
+                install_language_fallback(ui.ctx());
+            }
             state.observe();
             let queued = state
                 .commands
@@ -517,6 +521,13 @@ impl GridViewer {
             }
         }
         Ok(array)
+    }
+    pub fn inspect(&self) -> Result<String, JsValue> {
+        let state = self
+            .state
+            .try_borrow()
+            .map_err(|_| JsValue::from_str("Renderer busy"))?;
+        Ok(serde_json::json!({"hebrewGlyphs": ui_has_hebrew(&state.context)}).to_string())
     }
     pub fn zoom_percent(&self) -> Result<u16, JsValue> {
         let state = self

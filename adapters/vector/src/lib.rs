@@ -14,6 +14,10 @@ struct Document {
 }
 impl Document {
     fn open(bytes: &[u8], commands: Commands, _format: &str) -> Result<Self, JsValue> {
+        static FONT: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
+        FONT.get_or_init(|| {
+            vectorcraft_text::FontDb::global().add_font(HEBREW_FONT_BYTES.to_vec())
+        });
         let native = _format == "vectorcraft";
         let doc = if native {
             vectorcraft_format::load(bytes)
@@ -166,7 +170,7 @@ impl Document {
         })
     }
     fn inspect(&self) -> serde_json::Value {
-        serde_json::json!({"zoom": self.app.view().map(|v| v.zoom), "rect": self.app.canvas_rect.map(|r| [r.min.x,r.min.y,r.max.x,r.max.y])})
+        serde_json::json!({"hebrewGlyphs": vectorcraft_text::FontDb::global().face_covering('ש').is_some(), "zoom": self.app.view().map(|v| v.zoom), "rect": self.app.canvas_rect.map(|r| [r.min.x,r.min.y,r.max.x,r.max.y])})
     }
     fn command(&mut self, id: &str, params: serde_json::Value) -> Result<(), JsValue> {
         self.app

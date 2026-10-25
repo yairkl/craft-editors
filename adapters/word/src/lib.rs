@@ -16,11 +16,8 @@ struct Document {
 impl Document {
     fn open(bytes: &[u8], commands: Commands, _format: &str) -> Result<Self, JsValue> {
         static HEBREW_FONT: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
-        let count = HEBREW_FONT.get_or_init(|| {
-            wordcraft_fonts::FontDb::global().add_font(
-                include_bytes!("../../../upstream/font-assets/NotoSansHebrew.ttf").to_vec(),
-            )
-        });
+        let count = HEBREW_FONT
+            .get_or_init(|| wordcraft_fonts::FontDb::global().add_font(HEBREW_FONT_BYTES.to_vec()));
         if *count == 0 {
             return Err(error("The bundled Hebrew font could not be loaded."));
         }

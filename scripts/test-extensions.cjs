@@ -3,7 +3,7 @@ const { runTests } = require('@vscode/test-electron');
 
 const root = path.resolve(__dirname, '..');
 const suite = process.argv[2];
-if (!['integration', 'rendering', 'editing', 'office', 'theme', 'graphics'].includes(suite)) throw new Error('Choose integration, rendering, editing, office, or theme.');
+if (!['integration', 'rendering', 'editing', 'office', 'theme', 'graphics', 'languages'].includes(suite)) throw new Error('Choose integration, rendering, editing, office, or theme.');
 // Each member is first run without the other extension, then together to catch ID collisions.
 async function main() {
   for (const selected of [['spreadsheets'], ['pdf'], ['word'], ['powerpoint'], ['vector'], ['spreadsheets', 'pdf', 'word', 'powerpoint', 'vector']]) {

@@ -12,6 +12,8 @@ struct Document {
 }
 impl Document {
     fn open(bytes: &[u8], commands: Commands, _format: &str) -> Result<Self, JsValue> {
+        static FONT: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
+        FONT.get_or_init(|| deckcraft_fonts::FontDb::global().add_font(HEBREW_FONT_BYTES.to_vec()));
         let doc = deckcraft_pptx::import(bytes)
             .map_err(|_| error("The presentation could not be opened."))?;
         let mut session = Session::new();
@@ -158,7 +160,7 @@ impl Document {
             .unwrap_or_default()
     }
     fn inspect(&self) -> serde_json::Value {
-        serde_json::json!({})
+        serde_json::json!({"hebrewGlyphs": deckcraft_fonts::FontDb::global().fallback_for('ש', u32::MAX).is_some()})
     }
     fn command(&mut self, id: &str, params: serde_json::Value) -> Result<(), JsValue> {
         self.app

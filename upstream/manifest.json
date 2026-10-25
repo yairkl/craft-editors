@@ -64,7 +64,7 @@
       "patches": [
         {
           "path": "upstream/patches/pdfcraft-embedding.patch",
-          "sha256": "9aedbc6e882b803dc5dcf195396fa7ccd33b2e63ba142b0ce0ca01817330cca7",
+          "sha256": "e914c73f2715a701ba699c3936c5726c4e21690f7c60973b88404b939343ed2c",
           "purpose": "Delegate file lifecycle and history to VS Code; omit standalone chrome and restricted branding.",
           "removalCondition": "Remove when upstream exposes equivalent embedding services."
         }
@@ -122,7 +122,7 @@
   "optionalBuildInputs": {
     "craftFonts": {
       "enabled": false,
-      "reason": "Initial Latin-only feasibility build omits optional external fonts; pin and audit before enabling. This limits script coverage."
+      "reason": "Unpinned external craft-fonts remains disabled. All five apps include the separately pinned OFL Hebrew fallback in font-assets.json. Other script coverage remains limited."
     }
   },
   "redistribution": {
@@ -136,7 +136,7 @@
   },
   "blockers": [
     "Complex document fidelity and larger-file memory/startup validation pending.",
-    "Windows/macOS and actual WSL/SSH validation pending.",
+    "Windows/macOS, WSL and wider SSH network/authentication validation pending; Linux-container Remote SSH lifecycle tests pass.",
     "Uncommitted PDF text/form and incomplete spreadsheet drafts cannot be crash-recovered until serializable.",
     "Advanced printing, signing, external pickers, combine/export and synchronized views are outside validated integration."
   ]

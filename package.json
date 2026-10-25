@@ -31,7 +31,8 @@
     "test:editing": "npm run compile && node scripts/test-extensions.cjs editing",
     "test:office": "npm run compile && node scripts/test-extensions.cjs office",
     "test:theme": "npm run compile && node scripts/test-extensions.cjs theme",
-    "test:graphics": "npm run compile && node scripts/test-extensions.cjs graphics"
+    "test:graphics": "npm run compile && node scripts/test-extensions.cjs graphics",
+    "test:languages": "npm run compile && node scripts/test-extensions.cjs languages"
   },
   "devDependencies": {
     "@types/node": "22.20.5",

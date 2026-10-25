@@ -49,7 +49,7 @@ export function collectNotices(selected) {
         mkdirSync(dirname(target), { recursive: true }); copyFileSync(file, target);
       }
     }
-    if (name === 'word') {
+    if (name !== 'suite') {
       const fonts = JSON.parse(readFileSync(resolve(root, 'upstream/font-assets.json'), 'utf8'));
       mkdirSync(join(destination, 'fonts'), { recursive: true });
       copyFileSync(resolve(root, 'upstream/font-assets/NotoSansHebrew-OFL.txt'), join(destination, 'fonts/NotoSansHebrew-OFL.txt'));
