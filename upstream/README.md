@@ -1,6 +1,6 @@
 # Pinned upstream inputs
 
-`manifest.json` records inspected source revisions and tool versions. The GridCraft adapter embeds the native editable UI, while PdfCraft remains a read-only rasterizer. The declared host-command patch is hash-verified and applied by the build; unrelated upstream changes are refused. Adapter dependencies are pinned by `adapters/Cargo.lock`. The verified local build's tool versions, sizes and hashes are recorded in `rendering-build.json`.
+`manifest.json` records inspected source revisions and tool versions. The GridCraft adapter embeds the native editable UI, while PdfCraft remains a read-only rasterizer. The declared host-command patch is hash-verified and applied during source preparation and rechecked by the build; unrelated upstream changes are refused. Adapter dependencies are pinned by `adapters/Cargo.lock`. The verified local build's tool versions, sizes and hashes are recorded in `rendering-build.json`.
 
 Fetch exactly the inspected commits (requires Git and network access):
 

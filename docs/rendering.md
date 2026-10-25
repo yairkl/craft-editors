@@ -15,7 +15,7 @@ npm run renderers:build
 npm run compile
 ```
 
-The renderer build checks source revisions and accepts only clean upstream checkouts or the exact hash-verified patches declared in `upstream/manifest.json`. It uses `adapters/Cargo.lock`, including PdfCraft's vendored renderer patches and GridCraft's pinned `craft-libs` dependency. Optional `CRAFT_FONTS_DIR` input is deliberately rejected until it has its own source pin and audit. Trunk and wasm-opt are not used by these wrappers.
+Source preparation applies the declared patches before Rust checks; the renderer build rechecks source revisions and accepts only clean upstream checkouts or the exact hash-verified patches declared in `upstream/manifest.json`. It uses `adapters/Cargo.lock`, including PdfCraft's vendored renderer patches and GridCraft's pinned `craft-libs` dependency. Optional `CRAFT_FONTS_DIR` input is deliberately rejected until it has its own source pin and audit. Trunk and wasm-opt are not used by these wrappers.
 
 Generated JavaScript/WASM stays in ignored `media/engines/`. `media/engines/build.json` records tool versions, input pins, lock hash, output sizes and SHA-256 hashes. The tracked `upstream/rendering-build.json` is the baseline from the verified local build, not a promise of identical bytes on every host. Binaries are not committed or downloaded at extension runtime.
 

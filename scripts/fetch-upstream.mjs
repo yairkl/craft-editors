@@ -18,7 +18,7 @@ for (const app of manifest.applications) {
       !/^[a-f0-9]{40}$/.test(app.revision)) throw new Error('Invalid source pin.');
   const directory = resolve(root, 'upstream/checkouts', app.id);
   if (existsSync(directory)) {
-    // Never reset, clean, or change an existing checkout, including local patches.
+    // Refuse unrelated local changes; only the declared patch may be applied.
     verifySource(root, app);
   } else {
     mkdirSync(directory, { recursive: true });
@@ -30,5 +30,6 @@ for (const app of manifest.applications) {
   if (git(directory, ['rev-parse', 'HEAD']) !== app.revision || !existsSync(resolve(directory, 'Cargo.lock'))) {
     throw new Error(`${app.id}: source verification failed.`);
   }
+  verifySource(root, app, { apply: true });
   console.log(`${app.id}: verified ${app.revision}`);
 }
