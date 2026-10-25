@@ -4,7 +4,7 @@ An independent project to bring the Rust-based Crafting Apps into VS Code as doc
 
 Open, view, and edit spreadsheets, documents, presentations, and PDFs in editor tabs, using the existing Craft engines and WebAssembly interfaces. Files remain local to the VS Code session; no document processing service is required.
 
-**Status: independent XLSX, DOCX and PPTX editing extensions, plus read-only PDF viewing.** Craft Spreadsheets, Craft Word and Craft PowerPoint embed their engines' native interfaces, with VS Code Save/Save As, undo/redo, Revert and recovery supplied by one shared editing host. Native editors have no extra host header and follow VS Code’s light/dark theme live. Install any application independently or all four through Craft Suite; each extension contains only its own engine. See [editing behavior and limits](docs/editing.md).
+**Status: independent XLSX, DOCX and PPTX editing extensions, plus native PDF editing.** Craft Spreadsheets, Craft Word and Craft PowerPoint and Craft PDF embed their engines' native interfaces, with VS Code Save/Save As, undo/redo, Revert and recovery supplied by one shared editing host. Native editors have no extra host header and follow VS Code’s light/dark theme live. Install any application independently or all four through Craft Suite; each extension contains only its own engine. See [editing behavior and limits](docs/editing.md).
 
 Build local installable archives with `npm run package` after building the renderers. See [packaging and installation](docs/packaging.md) for setup, VSIX paths and Suite development-install instructions. Nothing is published to Marketplace yet.
 

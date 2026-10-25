@@ -14,7 +14,7 @@ struct Document {
     observed: std::cell::Cell<u64>,
 }
 impl Document {
-    fn open(bytes: &[u8], commands: Commands) -> Result<Self, JsValue> {
+    fn open(bytes: &[u8], commands: Commands, _format: &str) -> Result<Self, JsValue> {
         let doc = wordcraft_engine::io::open_bytes("Document.docx", bytes)
             .map_err(|_| error("The Word document could not be opened."))?;
         let saved = doc.clone();
@@ -44,12 +44,13 @@ impl Document {
         }
         self.app.session.doc != old.doc
     }
-    fn restore(&mut self, snapshot: &Snapshot) {
+    fn restore(&mut self, snapshot: &Snapshot) -> Result<(), JsValue> {
         self.app
             .session
             .restore_host_snapshot(snapshot.native.clone());
         self.app.session.dirty = self.app.session.doc != self.saved;
         self.observed.set(self.app.session.rev());
+        Ok(())
     }
     fn mark_saved(&mut self, snapshot: &Snapshot) {
         self.saved = snapshot.doc.clone();
@@ -59,7 +60,7 @@ impl Document {
         wordcraft_engine::io::save_bytes("Document.docx", &snapshot.doc)
             .map_err(|_| error("The Word document could not be serialized."))
     }
-    fn flush(&mut self) -> Result<(), JsValue> {
+    fn flush(&mut self, _preserve_draft: bool) -> Result<(), JsValue> {
         self.app
             .host_flush()
             .map_err(|_| error("The document draft could not be committed."))
@@ -67,10 +68,10 @@ impl Document {
     fn raw_input(&mut self, _ctx: &egui::Context, raw: &mut egui::RawInput) {
         self.app.raw_input_hook(raw);
     }
-    fn logic(&mut self, ctx: &egui::Context) {
+    fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.app.logic(ctx);
     }
-    fn ui(&mut self, ui: &mut egui::Ui) {
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         self.app.ui(ui);
     }
     fn screenshot_events(raw: &egui::RawInput, capture: &Capture) {
@@ -105,6 +106,15 @@ impl Document {
             .session
             .doc
             .plain_text(wordcraft_engine::doc::StoryRef::Body)
+    }
+    fn inspect(&self) -> serde_json::Value {
+        serde_json::json!({})
+    }
+    fn command(&mut self, id: &str, params: serde_json::Value) -> Result<(), JsValue> {
+        self.app
+            .run(id, params)
+            .map(|_| ())
+            .map_err(|_| error("Native command was refused."))
     }
     fn blank() -> Result<Vec<u8>, JsValue> {
         let doc = wordcraft_engine::blank_document(&wordcraft_engine::Region::from_tag("en-US"));

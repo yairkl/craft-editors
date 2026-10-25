@@ -71,3 +71,25 @@ export async function editorKey(canvas, key) {
   for (const type of ['keydown', 'keyup']) target.dispatchEvent(new KeyboardEvent(type, { key, code: key, bubbles: true }));
   await frame(); await frame();
 }
+
+export async function wheelZoom(viewer, canvas, delta) {
+  const area = JSON.parse(viewer.inspect()).rect;
+  const [x, y] = [(area[0] + area[2]) / 2, (area[1] + area[3]) / 2];
+  await clickCanvas(canvas, x, y);
+  canvas.dispatchEvent(new KeyboardEvent('keydown', { key: 'Control', code: 'ControlLeft', ctrlKey: true, bubbles: true }));
+  await frame();
+  const bounds = canvas.getBoundingClientRect();
+  canvas.dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true,
+    clientX: bounds.left + x, clientY: bounds.top + y, ctrlKey: true, deltaMode: 1, deltaY: delta }));
+  await new Promise(resolve => setTimeout(resolve, 500));
+  canvas.dispatchEvent(new KeyboardEvent('keyup', { key: 'Control', code: 'ControlLeft', bubbles: true }));
+  await frame();
+}
+
+export async function pdfDraft(viewer, canvas, text) {
+  viewer.command('edit.text', '{}'); await frame(); await frame();
+  const area = JSON.parse(viewer.inspect()).pageRect;
+  await clickCanvas(canvas, area[0] + (area[2] - area[0]) * 0.2, area[1] + (area[3] - area[1]) * 0.4);
+  await pasteText(canvas, text);
+  await frame(); await frame();
+}

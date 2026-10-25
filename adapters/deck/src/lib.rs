@@ -11,7 +11,7 @@ struct Document {
     app: SlideApp,
 }
 impl Document {
-    fn open(bytes: &[u8], commands: Commands) -> Result<Self, JsValue> {
+    fn open(bytes: &[u8], commands: Commands, _format: &str) -> Result<Self, JsValue> {
         let doc = deckcraft_pptx::import(bytes)
             .map_err(|_| error("The presentation could not be opened."))?;
         let mut session = Session::new();
@@ -38,7 +38,7 @@ impl Document {
             .active()
             .is_some_and(|doc| !std::sync::Arc::ptr_eq(&doc.doc, &old.native.doc))
     }
-    fn restore(&mut self, snapshot: &Snapshot) {
+    fn restore(&mut self, snapshot: &Snapshot) -> Result<(), JsValue> {
         if let Some(doc) = self.app.session.active_mut() {
             doc.doc = snapshot.native.doc.clone();
             doc.selection = snapshot.native.selection.clone();
@@ -47,6 +47,7 @@ impl Document {
             doc.interaction = None;
             doc.composition = None;
         }
+        Ok(())
     }
     fn mark_saved(&mut self, snapshot: &Snapshot) {
         if let Some(doc) = self.app.session.active_mut() {
@@ -57,7 +58,7 @@ impl Document {
         deckcraft_pptx::export(&snapshot.native.doc)
             .map_err(|_| error("The presentation could not be serialized."))
     }
-    fn flush(&mut self) -> Result<(), JsValue> {
+    fn flush(&mut self, _preserve_draft: bool) -> Result<(), JsValue> {
         Ok(())
     }
     fn raw_input(&mut self, ctx: &egui::Context, raw: &mut egui::RawInput) {
@@ -98,10 +99,10 @@ impl Document {
         });
         self.app.raw_input_hook(ctx, raw);
     }
-    fn logic(&mut self, ctx: &egui::Context) {
+    fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.app.logic(ctx);
     }
-    fn ui(&mut self, ui: &mut egui::Ui) {
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         self.app.ui(ui);
     }
     fn screenshot_events(_raw: &egui::RawInput, _capture: &Capture) {}
@@ -155,6 +156,15 @@ impl Document {
                     .join("\n")
             })
             .unwrap_or_default()
+    }
+    fn inspect(&self) -> serde_json::Value {
+        serde_json::json!({})
+    }
+    fn command(&mut self, id: &str, params: serde_json::Value) -> Result<(), JsValue> {
+        self.app
+            .run(id, params)
+            .map(|_| ())
+            .map_err(|_| error("Native command was refused."))
     }
     fn blank() -> Result<Vec<u8>, JsValue> {
         let mut session = Session::new();

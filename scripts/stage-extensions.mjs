@@ -24,7 +24,7 @@ export function stageExtensions({ development = false, allowMissingRenderers = f
     const manifest = JSON.parse(readFileSync(resolve(destination, 'package.json'), 'utf8'));
     const { engine } = extensions[name];
     if (engine) {
-      for (const file of ['host', 'document', 'rendering', ...(name !== 'pdf' ? ['editing', 'rpc'] : [])]) copy(`out/src/${file}.js`);
+      for (const file of ['host', 'document', 'rendering', 'editing', 'rpc']) copy(`out/src/${file}.js`);
       copy(`out/src/entrypoints/${name}.js`);
       copy('out/protocol/probe.js');
       for (const file of ['probe.js', 'probe.css', 'viewer.js', 'viewer.css']) copy(`media/${file}`);

@@ -9,7 +9,7 @@ interface RenderingApi { onDidRender: vscode.Event<RenderResult> }
 
 export async function run(): Promise<void> {
   assertIsolation();
-  const apis = new Map<'xlsx' | 'pdf' | 'docx' | 'pptx', RenderingApi>();
+  const apis = new Map<'xlsx' | 'pdf' | 'docx' | 'pptx' | 'svg', RenderingApi>();
   for (const descriptor of selected) {
     const extension = vscode.extensions.getExtension<RenderingApi>(descriptor.id);
     assert.ok(extension);
@@ -18,8 +18,8 @@ export async function run(): Promise<void> {
   }
   const artifacts = path.join(root!, 'artifacts', 'rendering');
   await mkdir(artifacts, { recursive: true });
-  for (const name of ['minimal.xlsx', 'minimal.pdf', 'rendering.xlsx', 'rendering-active.xlsx', 'rendering.pdf']) {
-    const format = name.endsWith('xlsx') ? 'xlsx' : 'pdf';
+  for (const name of ['minimal.xlsx', 'minimal.pdf', 'minimal.svg', 'rendering.xlsx', 'rendering-active.xlsx', 'rendering.pdf']) {
+    const format = name.endsWith('xlsx') ? 'xlsx' : name.endsWith('svg') ? 'svg' : 'pdf';
     if (!apis.has(format)) continue;
     const api = apis.get(format)!;
     const uri = fixture(name);
@@ -29,8 +29,8 @@ export async function run(): Promise<void> {
     assert.ok(result.width >= 300 && result.height >= 200, 'Canvas must have useful dimensions');
     assert.ok(result.nonBackgroundPixels > 100, 'Rendered output must contain visible content');
     assert.equal(result.units, name.startsWith('minimal') ? 1 : 2);
-    assert.equal(result.readOnlyVerified, format === 'pdf', 'PDF stays read-only; Spreadsheet exposes native editing');
-    assert.equal(result.navigationVerified, true, 'Sheet/page navigation must work');
+    assert.equal(result.readOnlyVerified, false, 'Native document editors expose editing');
+    assert.equal(result.navigationVerified, format === 'xlsx', 'Worksheet navigation checks run for spreadsheets');
     assert.equal(result.resizeVerified, true, 'Resize/zoom must work');
     assert.ok(result.screenshot, 'Test mode must capture real rendered pixels');
     await writeFile(path.join(artifacts, `${name}.png`), Buffer.from(result.screenshot.split(',')[1] ?? '', 'base64'));
@@ -68,7 +68,7 @@ export async function run(): Promise<void> {
   } finally { registration.dispose(); changes.dispose(); }
 }
 
-async function openAndWait(api: RenderingApi, uri: vscode.Uri, format: 'xlsx' | 'pdf' | 'docx' | 'pptx'): Promise<RenderResult> {
+async function openAndWait(api: RenderingApi, uri: vscode.Uri, format: 'xlsx' | 'pdf' | 'docx' | 'pptx' | 'svg'): Promise<RenderResult> {
   let listener: vscode.Disposable | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
   const receipt = new Promise<RenderResult>((resolve, reject) => {
@@ -77,7 +77,7 @@ async function openAndWait(api: RenderingApi, uri: vscode.Uri, format: 'xlsx' | 
   });
   void receipt.catch(() => {});
   try {
-    await vscode.commands.executeCommand('vscode.open', uri);
+    await vscode.commands.executeCommand(format === 'svg' ? 'vscode.openWith' : 'vscode.open', uri, ...(format === 'svg' ? [forFormat(format).preview] : []));
     const input = vscode.window.tabGroups.activeTabGroup.activeTab?.input;
     assert.ok(input instanceof vscode.TabInputCustom && input.viewType === forFormat(format).preview,
       'Opening a supported file normally must choose Craft Preview');

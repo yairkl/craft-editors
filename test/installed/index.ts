@@ -22,7 +22,7 @@ export async function run(): Promise<void> {
     const uri = fixture(`minimal.${descriptor.format}`);
     const before = await vscode.workspace.fs.readFile(uri);
     try {
-      await vscode.commands.executeCommand('vscode.open', uri);
+      await vscode.commands.executeCommand(descriptor.format === 'svg' ? 'vscode.openWith' : 'vscode.open', uri, ...(descriptor.format === 'svg' ? [descriptor.preview] : []));
       const result = await receipt;
       assert.equal(result.rendered, true);
       assert.ok(result.nonBackgroundPixels > 100);

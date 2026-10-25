@@ -1,11 +1,9 @@
-# Craft PDF
+# Craft PDF (beta)
 
-Read PDF files inside VS Code using PdfCraft. This extension contains only its own renderer and does not require the other Craft extensions.
+View, annotate and edit PDF documents inside VS Code using PdfCraft's native UI. This extension contains only its own renderer and requires no companion extension.
 
-It opens supported files by default unless you have saved another editor preference. Viewing is read only; editing and Save are not implemented. Files stay local to the VS Code session.
+Use the native editing/comment/page tools, with VS Code **Save**, **Save As**, **Undo/Redo**, **Revert** and backup recovery. **Ctrl+mouse wheel** zooms in/out; ordinary wheel scrolling moves through the document. The UI follows VS Code's light/dark theme and has no extra save header.
 
-Use Previous/Next to navigate pages and the zoom selector to resize the preview.
+The beta verifies page rotation and persistence, native keyboard history, viewport zoom and recovery on original synthetic files. It does not guarantee every PdfCraft feature or arbitrary PDF round-trip fidelity. Use copies of valuable files. Password-protected files, signing/printing, external file pickers, combining multiple files and export workflows are outside the validated integration. Live text/form drafts defer autosave and backup until committed; finish them or use explicit native Save before closing. Drafts do not yet survive a process crash.
 
-This is a development build. Supports desktop VS Code 1.102+, files up to 32 MiB, and the engine's supported formats/features. Complex document fidelity and full script/font coverage remain under validation.
-
-Code and asset licenses are included under `notices/`.
+Desktop VS Code 1.102+, files up to 32 MiB. Linux is tested; Windows/macOS and actual SSH/WSL need beta testing. All processing stays local to the VS Code session. Licenses and notices are included under `notices/`.

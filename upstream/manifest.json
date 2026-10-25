@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "inspectedOn": "2026-10-25",
-  "status": "Native GridCraft, WordCraft and DeckCraft editing plus read-only PdfCraft rendering; pinned source and per-program host patches",
+  "status": "Native GridCraft, WordCraft, DeckCraft and PdfCraft editing; pinned sources and host patches.",
   "toolchain": {
     "rust": "1.95.0",
     "rustTarget": "wasm32-unknown-unknown",
@@ -60,7 +60,15 @@
         "buildCommand": "npm run renderers:build",
         "verification": "npm run test:rendering",
         "baseline": "upstream/rendering-build.json"
-      }
+      },
+      "patches": [
+        {
+          "path": "upstream/patches/pdfcraft-embedding.patch",
+          "sha256": "9aedbc6e882b803dc5dcf195396fa7ccd33b2e63ba142b0ce0ca01817330cca7",
+          "purpose": "Delegate file lifecycle and history to VS Code; omit standalone chrome and restricted branding.",
+          "removalCondition": "Remove when upstream exposes equivalent embedding services."
+        }
+      ]
     },
     {
       "id": "wordcraft",
@@ -111,11 +119,9 @@
     ]
   },
   "blockers": [
-    "Existing same-origin iframe bridges do not implement VS Code acquisition or host-triggered serialization",
-    "Existing bridge save delivery lacks persisted-revision acknowledgment",
-    "No host-driven undo/redo or per-document revision messages",
-    "Trunk-generated bootstrap/CSP and VS Code asset loading remain untested",
-    "Full platform, real WSL/SSH and complex document/fidelity coverage pending",
-    "Transitive distribution notices and font/license inventory incomplete"
+    "Complex document fidelity and larger-file memory/startup validation pending.",
+    "Windows/macOS and actual WSL/SSH validation pending.",
+    "Uncommitted PDF text/form and incomplete spreadsheet drafts cannot be crash-recovered until serializable.",
+    "Advanced printing, signing, external pickers, combine/export and synchronized views are outside validated integration."
   ]
 }

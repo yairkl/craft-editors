@@ -9,7 +9,5 @@ button:disabled { opacity: 0.45; }
 button:focus-visible, select:focus-visible { outline: 1px solid var(--vscode-focusBorder); }
 #status { padding: 8px 16px; margin: 0; }
 #viewport { flex: 1; min-height: 0; position: relative; overflow: auto; }
-body:not([data-format="pdf"]) #viewport { overflow: hidden; background: white; }
-body:not([data-format="pdf"]) canvas { display: block; width: 100%; height: 100%; outline: none; }
-body[data-format="pdf"] #viewport { background: #454545; padding: 20px; text-align: center; }
-body[data-format="pdf"] canvas { display: inline-block; background: white; box-shadow: 0 2px 12px #0006; }
+#viewport { overflow: hidden; }
+canvas { display: block; width: 100%; height: 100%; outline: none; }

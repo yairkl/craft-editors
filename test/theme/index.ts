@@ -15,12 +15,12 @@ export async function run(): Promise<void> {
   const cancellation = new vscode.CancellationTokenSource();
   try {
     await config.update('colorTheme', 'Default Dark Modern', vscode.ConfigurationTarget.Global);
-    for (const descriptor of selected.filter(item => item.format !== 'pdf')) {
+    for (const descriptor of selected) {
       const extension = vscode.extensions.getExtension<Api>(descriptor.id); assert.ok(extension);
       const api = await extension.activate();
       const uri = fixture(`minimal.${descriptor.format}`);
       const bytes = await vscode.workspace.fs.readFile(uri);
-      const rendered = receipt(api); await vscode.commands.executeCommand('vscode.open', uri);
+      const rendered = receipt(api); await vscode.commands.executeCommand(descriptor.format === 'svg' ? 'vscode.openWith' : 'vscode.open', uri, ...(descriptor.format === 'svg' ? [descriptor.preview] : []));
       const frame = await rendered; assert.equal(frame.rendered, true);
       if (frame.screenshot) {
         const directory = path.join(root!, 'artifacts/rendering'); await mkdir(directory, { recursive: true });

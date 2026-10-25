@@ -9,7 +9,7 @@ interface ProbeApi { onDidProbe: vscode.Event<ProbeResult> }
 
 export async function run(): Promise<void> {
   assertIsolation();
-  const apis = new Map<'xlsx' | 'pdf' | 'docx' | 'pptx', ProbeApi>();
+  const apis = new Map<'xlsx' | 'pdf' | 'docx' | 'pptx' | 'svg', ProbeApi>();
   for (const descriptor of selected) {
     const extension = vscode.extensions.getExtension<ProbeApi>(descriptor.id);
     assert.ok(extension, 'Selected extension must be installed');
@@ -58,7 +58,7 @@ export async function run(): Promise<void> {
   }
 }
 
-async function verifyWebview(api: ProbeApi, uri: vscode.Uri, format: 'xlsx' | 'pdf' | 'docx' | 'pptx'): Promise<void> {
+async function verifyWebview(api: ProbeApi, uri: vscode.Uri, format: 'xlsx' | 'pdf' | 'docx' | 'pptx' | 'svg'): Promise<void> {
   const before = await vscode.workspace.fs.readFile(uri);
   const hashBefore = createHash('sha256').update(before).digest('hex');
   let subscription: vscode.Disposable | undefined;

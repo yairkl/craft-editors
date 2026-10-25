@@ -9,6 +9,7 @@ export const descriptors = {
     preview: 'craft.spreadsheets.preview', probe: 'craft.spreadsheets.integrationProbe' },
   word: { id: 'craft-vscode-dev.craft-word', format: 'docx' as const, preview: 'craft.word.preview', probe: 'craft.word.integrationProbe' },
   powerpoint: { id: 'craft-vscode-dev.craft-powerpoint', format: 'pptx' as const, preview: 'craft.powerpoint.preview', probe: 'craft.powerpoint.integrationProbe' },
+  vector: { id: 'craft-vscode-dev.craft-vector', format: 'svg' as const, preview: 'craft.vector.preview', probe: 'craft.vector.integrationProbe' },
   pdf: { id: 'craft-vscode-dev.craft-pdf', format: 'pdf' as const,
     preview: 'craft.pdf.preview', probe: 'craft.pdf.integrationProbe' },
 };
@@ -18,7 +19,7 @@ assert.ok(selected.length > 0);
 export function fixture(name: string): vscode.Uri {
   return vscode.Uri.file(path.join(root!, 'integration-tests', 'fixtures', name));
 }
-export function forFormat(format: 'xlsx' | 'pdf' | 'docx' | 'pptx') {
+export function forFormat(format: 'xlsx' | 'pdf' | 'docx' | 'pptx' | 'svg') {
   const descriptor = Object.values(descriptors).find(item => item.format === format);
   assert.ok(descriptor); return descriptor;
 }

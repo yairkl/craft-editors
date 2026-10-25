@@ -1,0 +1,300 @@
+diff --git a/crates/engine/src/lib.rs b/crates/engine/src/lib.rs
+index f11671b..a29c07e 100644
+--- a/crates/engine/src/lib.rs
++++ b/crates/engine/src/lib.rs
+@@ -395,6 +395,12 @@ impl Editor {
+     }
+ }
+ 
++/// Exact in-memory state for an embedding host's revision history.
++#[derive(Clone)]
++pub struct HostSnapshot {
++    editor: Option<Editor>,
++    pub bytes: Arc<Vec<u8>>,
++}
+ pub struct Document {
+     pub id: DocId,
+     pub name: String,
+@@ -4155,6 +4161,30 @@ impl Session {
+         Ok(())
+     }
+ 
++    pub fn host_snapshot(&self, id: DocId) -> HostSnapshot {
++        let Some(doc) = self.get(id) else {
++            return HostSnapshot { editor: None, bytes: Arc::new(Vec::new()) };
++        };
++        HostSnapshot { editor: doc.editor.clone(), bytes: doc.bytes.clone() }
++    }
++    pub fn host_matches(&self, id: DocId, snapshot: &HostSnapshot) -> bool {
++        self.get(id).is_some_and(|doc| Arc::ptr_eq(&doc.bytes, &snapshot.bytes) || doc.bytes == snapshot.bytes)
++    }
++    pub fn host_restore(&mut self, id: DocId, snapshot: &HostSnapshot) -> Result<(), EditError> {
++        let doc = self.doc_mut(id)?;
++        let previous = doc.editor.clone();
++        doc.editor = snapshot.editor.clone();
++        Self::adopt_keys(doc);
++        if let Err(error) = Self::refresh(doc) {
++            doc.editor = previous;
++            Self::adopt_keys(doc);
++            if Self::refresh(doc).is_err() { Self::show_released(doc); }
++            return Err(error);
++        }
++        Self::sync_dirty(doc);
++        doc.generation = doc.generation.saturating_add(1);
++        Ok(())
++    }
+     pub fn undo(&mut self, id: DocId) -> Result<Label, EditError> {
+         let doc = self.doc_mut(id)?;
+         let editor = doc.editor.as_mut().ok_or(EditError::NothingToUndo)?;
+diff --git a/crates/render/src/raster.rs b/crates/render/src/raster.rs
+index e906144..72471ce 100644
+--- a/crates/render/src/raster.rs
++++ b/crates/render/src/raster.rs
+@@ -408,7 +408,6 @@ fn warning_settings(settings: &InterpreterSettings, warnings: Arc<Mutex<Vec<Rend
+             // exhausted budget, or the colours that fell back: once per page is enough.
+             let warning = match warning {
+                 InterpreterWarning::ContentTruncated => RenderWarning::ContentTruncated,
+-                InterpreterWarning::ColorFallback => RenderWarning::ColourFallback,
+                 InterpreterWarning::UnsupportedFont | InterpreterWarning::ImageDecodeFailure => return,
+             };
+             let mut warnings = lock(&target);
+diff --git a/crates/ui-egui/src/chrome.rs b/crates/ui-egui/src/chrome.rs
+index 2723d16..fc44da9 100644
+--- a/crates/ui-egui/src/chrome.rs
++++ b/crates/ui-egui/src/chrome.rs
+@@ -521,10 +521,12 @@ pub fn mode_bar(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
+                         if print.clicked() {
+                             app.run_command("print.dialog");
+                         }
++                        if !app.embedded {
+                         let tip = crate::commands::command_tip(ui.ctx(), tl!("Save ({key})"), "file.save");
+                         if icons::button(ui, "save", 32.0, false, &tip).clicked() {
+                             app.run_command("file.save");
+                         }
++                        }
+                         let tip = crate::commands::command_tip(ui.ctx(), tl!("Document properties ({key})"), "file.properties");
+                         if icons::button(ui, "info", 32.0, false, &tip).clicked() {
+                             app.dialog = Some(Dialog::Properties(PropsTab::Description));
+diff --git a/crates/ui-egui/src/commands.rs b/crates/ui-egui/src/commands.rs
+index c0e12d5..e5f746d 100644
+--- a/crates/ui-egui/src/commands.rs
++++ b/crates/ui-egui/src/commands.rs
+@@ -104,6 +104,9 @@ impl PdfCraftApp {
+     /// Last-resort guard (AGENTS.md §4): a command that panics is reported and the app, with its
+     /// open documents, keeps running. Edits are applied to a copy, so the document is unchanged.
+     pub fn execute(&mut self, id: &str) -> bool {
++        if self.host_command.as_mut().is_some_and(|host| host(id)) {
++            return true;
++        }
+         match pdfcraft_engine::guard(|| self.execute_unguarded(id)) {
+             Ok(done) => done,
+             Err(m) => {
+diff --git a/crates/ui-egui/src/create_ui.rs b/crates/ui-egui/src/create_ui.rs
+index 6dceb50..51a0e2b 100644
+--- a/crates/ui-egui/src/create_ui.rs
++++ b/crates/ui-egui/src/create_ui.rs
+@@ -98,6 +98,7 @@ impl PdfCraftApp {
+     }
+ 
+     fn open_created_bytes(&mut self, name: &str, created: Result<Arc<Vec<u8>>, String>) -> Result<(), String> {
++        if self.embedded { return Err("Create a separate PDF using VS Code or the standalone application.".into()); }
+         let bytes = created?;
+         let id = self.session.open_new(name, bytes).map_err(|e| e.to_string())?;
+         // The reading-colours preference is app-wide: the newly created document starts with it.
+diff --git a/crates/ui-egui/src/editing.rs b/crates/ui-egui/src/editing.rs
+index 9a13d57..9e0f277 100644
+--- a/crates/ui-egui/src/editing.rs
++++ b/crates/ui-egui/src/editing.rs
+@@ -210,6 +210,7 @@ impl PdfCraftApp {
+ 
+     /// Undo the last change: to the Combine files list while its tab shows, else the document.
+     pub fn undo(&mut self) {
++        if self.host_command.as_mut().is_some_and(|host| host("edit.undo")) { return; }
+         // While a polygon, cloud or run of connected lines is being drawn, Undo takes back its
+         // last point instead of the last finished edit.
+         if let Some((i, _)) = self.active_ids()
+@@ -225,6 +226,7 @@ impl PdfCraftApp {
+     }
+ 
+     pub fn redo(&mut self) {
++        if self.host_command.as_mut().is_some_and(|host| host("edit.redo")) { return; }
+         if self.combine_showing() {
+             self.combine_history_step(false);
+         } else {
+@@ -646,7 +648,43 @@ impl PdfCraftApp {
+     }
+ 
+     /// Save the active document. Returns `true` if it was written.
++    pub fn host_draft(&self) -> Option<crate::HostDraftSnapshot> {
++        let v = self.active.and_then(|i| self.views.get(i))?;
++        Some(crate::HostDraftSnapshot {
++            content: v.content.clone(),
++            line: v.line_editor.clone(),
++            form: v.forms.clone(),
++            fill: v.fill_text.clone(),
++            pending: v.pending_edit.clone(),
++        })
++    }
++    pub fn host_restore_draft(&mut self, draft: &Option<crate::HostDraftSnapshot>) {
++        if let (Some(v), Some(d)) = (self.active.and_then(|i| self.views.get_mut(i)), draft) {
++            v.content = d.content.clone();
++            v.line_editor = d.line.clone();
++            v.forms = d.form.clone();
++            v.fill_text = d.fill.clone();
++            v.pending_edit = d.pending.clone();
++        }
++    }
++    /// Host saves must not end a live text/form draft during autosave.
++    pub fn host_pending(&self) -> bool {
++        self.active.and_then(|i| self.views.get(i)).is_some_and(|v| {
++            v.pending_edit.is_some()
++                || v.forms.focus.is_some()
++                || v.content.draft.is_some()
++                || v.line_editor.as_ref().is_some_and(|ed| ed.has_changes())
++                || v.fill_text.as_ref().is_some_and(|t| !t.text.trim().is_empty())
++        })
++    }
++    pub fn host_flush(&mut self) -> bool {
++        self.active_ids().is_none_or(|(_, id)| self.commit_typing_in(id))
++    }
+     pub fn save_active(&mut self, target: SaveTarget) -> bool {
++        let command = if matches!(target, SaveTarget::As) { "file.save_as" } else { "file.save" };
++        if self.host_command.as_mut().is_some_and(|host| host(command)) {
++            return false;
++        }
+         match self.active {
+             Some(i) => self.save_view(i, target),
+             None => false,
+diff --git a/crates/ui-egui/src/files.rs b/crates/ui-egui/src/files.rs
+index 0b031c8..77b1773 100644
+--- a/crates/ui-egui/src/files.rs
++++ b/crates/ui-egui/src/files.rs
+@@ -845,6 +845,7 @@ impl PdfCraftApp {
+     }
+ 
+     pub(crate) fn open_created(&mut self, name: &str, bytes: Arc<Vec<u8>>, message: &str) {
++        if self.embedded { self.notify("Opening a generated second document is not supported in this beta. Use the standalone app for this workflow."); return; }
+         match self.session.open_new(name, bytes) {
+             Ok(id) => {
+                 // The reading-colours preference is app-wide: the newly created document starts with it.
+diff --git a/crates/ui-egui/src/lib.rs b/crates/ui-egui/src/lib.rs
+index 0300afd..d7f5e96 100644
+--- a/crates/ui-egui/src/lib.rs
++++ b/crates/ui-egui/src/lib.rs
+@@ -622,7 +622,29 @@ pub struct RecentFile {
+     pub size: usize,
+ }
+ 
++/// Live text/form drafts retained alongside the host's committed model snapshots.
++#[derive(Clone)]
++pub struct HostDraftSnapshot {
++    content: content_ui::ContentView,
++    line: Option<edit_text_ui::LineEditor>,
++    form: forms_ui::FormView,
++    fill: Option<fill_sign::TypeBox>,
++    pending: Option<pdfcraft_engine::Edit>,
++}
++impl HostDraftSnapshot {
++    pub fn text(&self) -> String {
++        [
++            self.content.draft.as_ref().map(|d| d.text.as_str()).unwrap_or_default(),
++            self.line.as_ref().filter(|d| d.has_changes()).map(|d| d.text.as_str()).unwrap_or_default(),
++            self.form.focus.as_ref().map(|d| d.text.as_str()).unwrap_or_default(),
++            self.fill.as_ref().map(|d| d.text.as_str()).unwrap_or_default(),
++        ]
++        .join("\u{0}")
++    }
++}
+ pub struct PdfCraftApp {
++    pub embedded: bool,
++    pub host_command: Option<Box<dyn FnMut(&str) -> bool>>,
+     pub docking: docking::Workspace,
+     pub(crate) pending_panel_reveals: Vec<docking::Panel>,
+     pub session: Session,
+@@ -1179,6 +1201,8 @@ impl PdfCraftApp {
+             unsaved_flag: Default::default(),
+             os_events: None,
+             host_save: None,
++            embedded: false,
++            host_command: None,
+             host_dirty: None,
+             close_request: None,
+             save_prompt_button: Default::default(),
+@@ -1384,6 +1408,7 @@ impl PdfCraftApp {
+     }
+ 
+     fn open_bytes_with_focus(&mut self, name: &str, path: Option<String>, bytes: Vec<u8>, activate: bool) -> Result<(), String> {
++        if self.embedded && !self.views.is_empty() { return Err("Open additional documents in VS Code editor tabs.".into()); }
+         // Images and text files become new, unsaved PDFs (Create a PDF).
+         let active = self.active;
+         if let Some(r) = self.open_converted(name, &bytes) {
+@@ -2197,6 +2222,9 @@ impl PdfCraftApp {
+     }
+ 
+     pub fn open_dialog(&mut self) {
++        if self.host_command.as_mut().is_some_and(|host| host("file.open")) {
++            return;
++        }
+         self.startup_superseded = true;
+         #[cfg(not(target_arch = "wasm32"))]
+         self.pick(
+@@ -2230,6 +2258,7 @@ impl PdfCraftApp {
+     }
+ 
+     pub fn close_tab(&mut self, index: usize) {
++        if self.embedded && self.host_command.as_mut().is_some_and(|host| host("file.close")) { return; }
+         if index >= self.views.len() {
+             return;
+         }
+@@ -3694,7 +3723,9 @@ impl eframe::App for PdfCraftApp {
+         if self.draws_window_frame() {
+             window_controls::resize_edges(&ctx);
+         }
+-        chrome::tab_strip(self, ui);
++        if !self.embedded {
++            chrome::tab_strip(self, ui);
++        }
+         chrome::mode_bar(self, ui);
+         if self.active.is_some() {
+             chrome::right_rail(self, ui);
+diff --git a/crates/ui-egui/src/sign_ui.rs b/crates/ui-egui/src/sign_ui.rs
+index 6d09115..9bb13eb 100644
+--- a/crates/ui-egui/src/sign_ui.rs
++++ b/crates/ui-egui/src/sign_ui.rs
+@@ -626,6 +626,7 @@ impl PdfCraftApp {
+     /// Open the signed version of a signature as a new document (View signed version).
+     /// A repeat reuses the tab: every click used to open another identical one.
+     pub fn view_signed_version(&mut self, len: usize, revision: usize) {
++        if self.embedded { self.notify("Open saved versions in separate VS Code tabs."); return; }
+         let Some((_, id)) = self.active_ids() else { return };
+         let Some(doc) = self.session.get(id) else { return };
+         let end = len.min(doc.bytes.len());
+diff --git a/crates/ui-egui/src/widgets.rs b/crates/ui-egui/src/widgets.rs
+index 2d1f639..93bb83a 100644
+--- a/crates/ui-egui/src/widgets.rs
++++ b/crates/ui-egui/src/widgets.rs
+@@ -515,19 +515,19 @@ pub fn progress_notice(app: &PdfCraftApp, ctx: &egui::Context) -> bool {
+ pub fn artcraft_logo(ui: &mut egui::Ui, height: f32) -> Response {
+     let dark = ui.visuals().dark_mode;
+     let (uri, bytes): (&str, &'static [u8]) = if dark {
+-        ("bytes://artcraft-logo-white.svg", include_bytes!("../../../docs/brand/artcraft-logo-white.svg"))
++        ("bytes://craft-integration-logo-white.svg", b"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" fill=\"#418fd8\"/></svg>")
+     } else {
+-        ("bytes://artcraft-logo.svg", include_bytes!("../../../docs/brand/artcraft-logo.svg"))
++        ("bytes://craft-integration-logo.svg", b"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" fill=\"#418fd8\"/></svg>")
+     };
+-    ui.add(egui::Image::from_bytes(uri, bytes).max_height(height).alt_text("ArtCraft"))
++    ui.add(egui::Image::from_bytes(uri, bytes).max_height(height).alt_text("Craft integration"))
+ }
+ 
+ /// The ArtCraft mark (brand blue, works on light and dark), `size` points square.
+ pub fn artcraft_mark(ui: &mut egui::Ui, size: f32) -> Response {
+     ui.add(
+-        egui::Image::from_bytes("bytes://artcraft-mark.svg", include_bytes!("../../../docs/brand/artcraft-mark.svg"))
++        egui::Image::from_bytes("bytes://craft-integration-mark.svg", b"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" fill=\"#418fd8\"/></svg>")
+             .fit_to_exact_size(vec2(size, size))
+-            .alt_text("ArtCraft"),
++            .alt_text("Craft integration"),
+     )
+ }
+ 

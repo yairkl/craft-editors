@@ -9,17 +9,17 @@ codegen-units = 8
 strip = "debuginfo"
 
 [patch.crates-io]
-hayro = { path = "../upstream/checkouts/pdfcraft/vendor/hayro" }
-hayro-interpret = { path = "../upstream/checkouts/pdfcraft/vendor/hayro-interpret" }
-hayro-syntax = { path = "../upstream/checkouts/pdfcraft/vendor/hayro-syntax" }
-hayro-cmap = { path = "../upstream/checkouts/pdfcraft/vendor/hayro-cmap" }
-hayro-postscript = { path = "../upstream/checkouts/pdfcraft/vendor/hayro-postscript" }
-hayro-jbig2 = { path = "../upstream/checkouts/pdfcraft/vendor/hayro-jbig2" }
+hayro = { git = "https://github.com/storytold/craft-libs", rev = "a0916808f7d78bed8c7b90cdf937176015454a7f" }
+hayro-interpret = { git = "https://github.com/storytold/craft-libs", rev = "a0916808f7d78bed8c7b90cdf937176015454a7f" }
+hayro-syntax = { git = "https://github.com/storytold/craft-libs", rev = "a0916808f7d78bed8c7b90cdf937176015454a7f" }
+hayro-cmap = { git = "https://github.com/storytold/craft-libs", rev = "a0916808f7d78bed8c7b90cdf937176015454a7f" }
+hayro-postscript = { git = "https://github.com/storytold/craft-libs", rev = "a0916808f7d78bed8c7b90cdf937176015454a7f" }
+hayro-jbig2 = { git = "https://github.com/storytold/craft-libs", rev = "a0916808f7d78bed8c7b90cdf937176015454a7f" }
 lopdf = { path = "../upstream/checkouts/pdfcraft/vendor/lopdf" }
 vello_common = { path = "../upstream/checkouts/pdfcraft/vendor/vello_common" }
 
 # WordCraft requires the print/optional-content APIs in this pinned Krilla fork.
-krilla = { git = "https://github.com/storytold/craft-libs", rev = "17744430be327d0257496a6a31c8d38fe20a6756" }
+krilla = { git = "https://github.com/storytold/craft-libs", rev = "a0916808f7d78bed8c7b90cdf937176015454a7f" }
 
 # Preserve DeckCraft’s pinned egui embedding/IME fixes (0.37; 0.36 stays separate).
 ecolor = { git = "https://github.com/storytold/egui.git", rev = "6d518fc799681571963842f95b55a6b68431b15a" }

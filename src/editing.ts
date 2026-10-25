@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import * as vscode from 'vscode';
 import { readProbeDocument } from './document';
-import { MAX_DOCUMENT_BYTES } from '../protocol/probe';
+import { MAX_DOCUMENT_BYTES, type DocumentFormat } from '../protocol/probe';
 import { renderHtml, type RenderResult } from './rendering';
 import { WebviewRpc } from './rpc';
 
@@ -27,7 +27,7 @@ export class EditableDocument implements vscode.CustomDocument {
   disposed = false;
   private tail: Promise<unknown> = Promise.resolve();
   private readonly disposables: vscode.Disposable[] = [];
-  constructor(readonly uri: vscode.Uri, public cache: Uint8Array, public diskBytes: Uint8Array, public diskDigest: string, readonly recovered: boolean) {
+  constructor(readonly uri: vscode.Uri, public cache: Uint8Array, public diskBytes: Uint8Array, public diskDigest: string, readonly recovered: boolean, readonly format: DocumentFormat) {
     if (recovered) this.savedToken = -1;
   }
   get dirty(): boolean { return this.token !== this.savedToken; }
@@ -44,7 +44,7 @@ export class EditableDocument implements vscode.CustomDocument {
   dispose(): void { this.disposed = true; this.rpc?.dispose(); this.disposables.forEach(item => item.dispose()); }
 }
 
-export interface EditableDescriptor { format: 'xlsx' | 'docx' | 'pptx'; engine: 'grid' | 'word' | 'deck'; viewType: string; label: string }
+export interface EditableDescriptor { format: 'xlsx' | 'docx' | 'pptx' | 'pdf' | 'svg' | 'vectorcraft'; engine: 'grid' | 'word' | 'deck' | 'pdf' | 'vector'; viewType: string; label: string; additionalFormats?: DocumentFormat[] }
 
 export class EditingProvider implements vscode.CustomEditorProvider<EditableDocument>, vscode.Disposable {
   private readonly changes = new vscode.EventEmitter<vscode.CustomDocumentEditEvent<EditableDocument>>();
@@ -55,7 +55,8 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
   constructor(private readonly context: vscode.ExtensionContext, private readonly descriptor: EditableDescriptor) {}
 
   async openCustomDocument(uri: vscode.Uri, context: vscode.CustomDocumentOpenContext, token: vscode.CancellationToken): Promise<EditableDocument> {
-    const disk = await readProbeDocument(uri, token, this.descriptor.format);
+    const disk = await readProbeDocument(uri, token, this.descriptor.additionalFormats ? undefined : this.descriptor.format);
+    if (disk.format !== this.descriptor.format && !this.descriptor.additionalFormats?.includes(disk.format)) throw new Error('Unsupported document format.');
     let cache = disk.bytes;
     let baseline = digest(disk.bytes);
     if (context.backupId) {
@@ -65,7 +66,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
       baseline = backup.diskDigest;
     }
     cancelled(token);
-    const doc = new EditableDocument(uri, cache, disk.bytes, baseline, Boolean(context.backupId));
+    const doc = new EditableDocument(uri, cache, disk.bytes, baseline, Boolean(context.backupId), disk.format);
     this.documents.set(uri.toString(), doc);
     doc.add(new vscode.Disposable(() => this.documents.delete(uri.toString())));
     return doc;
@@ -87,7 +88,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
     const reportFailure = (failure?: unknown): void => {
       if (rendered) return;
       rendered = true;
-      const result: RenderResult = { format: this.descriptor.format, rendered: false, width: 0, height: 0, nonBackgroundPixels: 0, units: 0 };
+      const result: RenderResult = { format: doc.format, rendered: false, width: 0, height: 0, nonBackgroundPixels: 0, units: 0 };
       if (capture && typeof failure === 'string') result.failure = failure.slice(0, 500);
       this.renders.fire(result);
     };
@@ -98,7 +99,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
       if (rpc.accept(m)) return;
       if (m.type === 'render:ready' && !ready) {
         ready = true;
-        void panel.webview.postMessage({ type: 'render:open', version: 1, sessionId, format: this.descriptor.format, editable: true,
+        void panel.webview.postMessage({ type: 'render:open', version: 1, sessionId, format: doc.format, editable: true,
           bytes: Uint8Array.from(doc.cache).buffer, originalBytes: Uint8Array.from(doc.diskBytes).buffer,
           recovered: doc.dirty, capture });
       } else if (m.type === 'editor:changed' && ready && integer(m.before) && integer(m.after) && m.before !== m.after) {
@@ -120,7 +121,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
         const { width, height, nonBackgroundPixels, units } = m;
         if (![width, height, nonBackgroundPixels, units].every(integer) || typeof width !== 'number' || typeof height !== 'number' || typeof nonBackgroundPixels !== 'number' || typeof units !== 'number' || width < 1 || height < 1 || width * height > 16_000_000 || nonBackgroundPixels > width * height || units < 1) return;
         rendered = true; clearTimeout(renderTimer);
-        const result: RenderResult = { format: this.descriptor.format, rendered: true, width, height, nonBackgroundPixels, units };
+        const result: RenderResult = { format: doc.format, rendered: true, width, height, nonBackgroundPixels, units };
         if (capture && typeof m.screenshot === 'string' && m.screenshot.startsWith('data:image/png;base64,') && m.screenshot.length < 16_000_000) {
           result.screenshot = m.screenshot;
           result.readOnlyVerified = m.readOnlyVerified === true;
@@ -145,7 +146,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
     return this.write(doc, doc.uri, token);
   }
   async saveCustomDocumentAs(doc: EditableDocument, target: vscode.Uri, token: vscode.CancellationToken): Promise<void> {
-    if (!target.path.toLowerCase().endsWith(`.${this.descriptor.format}`)) throw new Error(`Save As must use the ${this.descriptor.format.toUpperCase()} format.`);
+    if (!target.path.toLowerCase().endsWith(`.${doc.format}`)) throw new Error(`Save As must use the ${doc.format.toUpperCase()} format.`);
     return this.write(doc, target, token);
   }
   private async serialize(doc: EditableDocument): Promise<{ bytes: Uint8Array; token: number }> {
@@ -178,7 +179,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
   }
   revertCustomDocument(doc: EditableDocument, token: vscode.CancellationToken): Promise<void> {
     return doc.enqueue(async () => {
-      const data = await readProbeDocument(doc.uri, token, this.descriptor.format); cancelled(token);
+      const data = await readProbeDocument(doc.uri, token, doc.format); cancelled(token);
       const revision = await doc.request('restore', { bytes: Uint8Array.from(data.bytes).buffer });
       if (!integer(revision)) throw new Error('Invalid restored revision.');
       doc.cache = data.bytes; doc.diskBytes = data.bytes; doc.diskDigest = digest(data.bytes);
@@ -196,6 +197,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
     switch (command) {
       case 'file.save': await vscode.workspace.save(doc.uri); break;
       case 'file.saveAs': await vscode.workspace.saveAs(doc.uri); break;
+      case 'file.revert': await vscode.commands.executeCommand('workbench.action.files.revert'); break;
       case 'file.open': await vscode.commands.executeCommand('workbench.action.files.openFile'); break;
       case 'file.new': {
         const target = await vscode.window.showSaveDialog({ filters: { [this.descriptor.label]: [this.descriptor.format] }, saveLabel: 'Create document' });

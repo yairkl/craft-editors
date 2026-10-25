@@ -20,7 +20,7 @@
   },
   "name": "craft-pdf",
   "displayName": "Craft PDF",
-  "description": "Read-only PDF previews with PdfCraft.",
+  "description": "Edit and annotate PDF documents with PdfCraft inside VS Code.",
   "categories": [
     "Other"
   ],

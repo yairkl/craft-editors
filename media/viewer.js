@@ -7,15 +7,10 @@ let engineReadyResolve;
 let engineReadyReject;
 const engineReady = new Promise((resolve, reject) => { engineReadyResolve = resolve; engineReadyReject = reject; });
 void engineReady.catch(() => {});
-const previous = document.getElementById('previous');
-const next = document.getElementById('next');
-const zoom = document.getElementById('zoom');
 let viewer;
 let Viewer;
 let opened = false;
 let capture = false;
-let page = 0;
-let pages = 0;
 let firstResult = true;
 const send = (type, fields = {}) => vscode.postMessage({ type, version: 1, sessionId, ...fields });
 
@@ -52,17 +47,6 @@ async function report(width, height, rgba, units) {
   send('render:result', result);
 }
 
-function renderPdf() {
-  try {
-    const pixels = viewer.render(page, Number(zoom.value));
-    canvas.width = viewer.width(); canvas.height = viewer.height();
-    canvas.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(pixels), canvas.width, canvas.height), 0, 0);
-    document.getElementById('page-label').textContent = `${page + 1} / ${pages}`;
-    previous.disabled = page === 0; next.disabled = page + 1 >= pages;
-    report(canvas.width, canvas.height, pixels, pages);
-  } catch { fail(); }
-}
-
 // VS Code updates these documented webview classes on initial load and live
 // theme changes. Keep the native palette in sync without changing document data.
 let appliedDark;
@@ -76,9 +60,6 @@ function syncTheme() {
 const themeObserver = new MutationObserver(() => syncTheme());
 themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class', 'data-vscode-theme-id'] });
 
-previous?.addEventListener('click', () => { if (page > 0) { page--; renderPdf(); } });
-next?.addEventListener('click', () => { if (page + 1 < pages) { page++; renderPdf(); } });
-zoom?.addEventListener('change', renderPdf);
 function hostCommand(command) {
   queueMicrotask(() => {
     try {
@@ -106,7 +87,7 @@ window.addEventListener('message', async ({ data }) => {
         case 'history': viewer.restore_history(data.token); result = data.token; break;
         case 'ack': viewer.mark_saved(data.token); result = data.token; break;
         case 'restore': result = viewer.replace(new Uint8Array(data.bytes)); syncTheme(); break;
-        case 'new': result = (Viewer.blank_document ? Viewer.blank_document() : Viewer.blank_document()).buffer; break;
+        case 'new': result = (Viewer.blank_document ? Viewer.blank_document() : Viewer.blank_workbook()).buffer; break;
         case 'test:edit': {
           if (!capture) throw new Error('Test operation unavailable.');
           const checks = await import('./editing-checks.js');
@@ -132,6 +113,36 @@ window.addEventListener('message', async ({ data }) => {
           const checks = await import('./editing-checks.js');
           await checks.draftCell(viewer, canvas, data.row, data.col, data.text);
           result = true; break;
+        }
+        case 'test:commit': {
+          if (!capture) throw new Error('Test operation unavailable.');
+          viewer.commit(); await new Promise(resolve => setTimeout(resolve, 100)); result = true; break;
+        }
+        case 'test:pdf-draft': {
+          if (!capture) throw new Error('Test operation unavailable.');
+          const checks = await import('./editing-checks.js');
+          await checks.pdfDraft(viewer, canvas, data.text);
+          result = JSON.parse(viewer.inspect()); break;
+        }
+        case 'test:native-bytes': {
+          if (!capture) throw new Error('Test operation unavailable.');
+          result = viewer.native_bytes().buffer; break;
+        }
+        case 'test:inspect': {
+          if (!capture) throw new Error('Test operation unavailable.');
+          result = JSON.parse(viewer.inspect()); break;
+        }
+        case 'test:command': {
+          if (!capture) throw new Error('Test operation unavailable.');
+          viewer.command(data.command, JSON.stringify(data.params ?? {}));
+          await new Promise(resolve => setTimeout(resolve, 100));
+          result = JSON.parse(viewer.inspect()); break;
+        }
+        case 'test:wheel': {
+          if (!capture) throw new Error('Test operation unavailable.');
+          const checks = await import('./editing-checks.js');
+          await checks.wheelZoom(viewer, canvas, data.delta);
+          result = JSON.parse(viewer.inspect()); break;
         }
         case 'test:text': {
           if (!capture) throw new Error('Test operation unavailable.');
@@ -170,7 +181,7 @@ window.addEventListener('message', async ({ data }) => {
   }
   if (data.type === 'render:timeout') { fail(); return; }
   if (data.type !== 'render:open' || opened || !(data.bytes instanceof ArrayBuffer) ||
-      !['xlsx', 'pdf', 'docx', 'pptx'].includes(data.format)) return;
+      !['xlsx', 'pdf', 'docx', 'pptx', 'svg', 'vectorcraft'].includes(data.format)) return;
   opened = true;
   capture = data.capture === true;
   document.body.dataset.format = data.format;
@@ -179,23 +190,17 @@ window.addEventListener('message', async ({ data }) => {
     const module = await import(document.body.dataset.module);
     await module.default({ module_or_path: document.body.dataset.wasm });
     const bytes = new Uint8Array(data.bytes);
-    if (data.format !== 'pdf') {
+    {
       Viewer = data.format === 'xlsx' ? module.GridViewer : module.NativeViewer;
       viewer = await Viewer.start(canvas, bytes, (width, height, pixels) => {
         queueMicrotask(() => report(width, height, pixels, data.format === 'xlsx' ? viewer.sheets().length || 1 : viewer.unit_count() || 1));
       }, event => {
         if (event.kind === 'changed') send('editor:changed', { before: event.before, after: event.after, label: event.label });
         else if (event.kind === 'command') hostCommand(event.command);
-      });
+      }, data.format);
       syncTheme();
       if (data.recovered) viewer.mark_original(new Uint8Array(data.originalBytes));
       engineReadyResolve();
-    } else {
-      viewer = new module.PdfViewer(bytes);
-      engineReadyResolve();
-      pages = viewer.page_count();
-      document.getElementById('pdf-controls').hidden = false;
-      renderPdf();
     }
   } catch (error) { engineReadyReject(error); fail(error instanceof Error ? error.message : typeof error === 'string' ? error : 'Renderer startup failed.'); }
 });

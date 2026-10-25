@@ -22,6 +22,7 @@ fn host_command(commands: &Commands, id: &str) -> bool {
             | "file.open"
             | "file.new"
             | "file.close"
+            | "file.revert"
             | "edit.undo"
             | "edit.redo"
             | "app.quit"
@@ -43,6 +44,7 @@ struct State {
     on_frame: Option<js_sys::Function>,
     on_event: js_sys::Function,
     dark: bool,
+    format: String,
     token: u32,
     next_token: u32,
     snapshots: BTreeMap<u32, Snapshot>,
@@ -73,8 +75,8 @@ impl State {
             ],
         );
     }
-    fn flush(&mut self) -> Result<(), JsValue> {
-        self.document.flush()?;
+    fn flush(&mut self, preserve_draft: bool) -> Result<(), JsValue> {
+        self.document.flush(preserve_draft)?;
         self.observe();
         Ok(())
     }
@@ -111,12 +113,12 @@ impl eframe::App for Shell {
     }
     fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         if let Ok(mut state) = self.0.try_borrow_mut() {
-            state.document.logic(ctx);
+            state.document.logic(ctx, _frame);
         }
     }
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         if let Ok(mut state) = self.0.try_borrow_mut() {
-            state.document.ui(ui);
+            state.document.ui(ui, _frame);
             state.observe();
             let commands = std::mem::take(&mut *state.commands.borrow_mut());
             for command in commands {
@@ -141,12 +143,13 @@ impl NativeViewer {
         bytes: Vec<u8>,
         on_frame: js_sys::Function,
         on_event: js_sys::Function,
+        format: String,
     ) -> Result<NativeViewer, JsValue> {
         if bytes.len() > 32 * 1024 * 1024 {
             return Err(error("Document exceeds 32 MiB."));
         }
         let commands = Commands::default();
-        let document = Document::open(&bytes, commands.clone())?;
+        let document = Document::open(&bytes, commands.clone(), &format)?;
         let snapshots = BTreeMap::from([(0, document.snapshot())]);
         let state = Rc::new(RefCell::new(State {
             document,
@@ -156,6 +159,7 @@ impl NativeViewer {
             on_frame: Some(on_frame),
             on_event,
             dark: false,
+            format,
             token: 0,
             next_token: 0,
             snapshots,
@@ -200,7 +204,7 @@ impl NativeViewer {
         self.state
             .try_borrow_mut()
             .map_err(|_| error("Editor is busy."))?
-            .flush()
+            .flush(false)
     }
     pub fn serialize(&self, flush: bool) -> Result<JsValue, JsValue> {
         let mut state = self
@@ -208,7 +212,7 @@ impl NativeViewer {
             .try_borrow_mut()
             .map_err(|_| error("Editor is busy."))?;
         if flush {
-            state.flush()?;
+            state.flush(true)?;
         } else {
             state.observe();
         }
@@ -245,7 +249,7 @@ impl NativeViewer {
             .state
             .try_borrow_mut()
             .map_err(|_| error("Editor is busy."))?;
-        let original = Document::open(&bytes, Commands::default())?;
+        let original = Document::open(&bytes, Commands::default(), &state.format)?;
         state.document.mark_saved(&original.snapshot());
         Ok(())
     }
@@ -259,7 +263,7 @@ impl NativeViewer {
             .get(&token)
             .ok_or_else(|| error("History revision is unavailable."))?
             .clone();
-        state.document.restore(&snapshot);
+        state.document.restore(&snapshot)?;
         state.token = token;
         state.context.request_repaint();
         Ok(())
@@ -269,7 +273,7 @@ impl NativeViewer {
             .state
             .try_borrow_mut()
             .map_err(|_| error("Editor is busy."))?;
-        let mut document = Document::open(&bytes, state.commands.clone())?;
+        let mut document = Document::open(&bytes, state.commands.clone(), &state.format)?;
         document.set_theme(&state.context, state.dark);
         let token = state
             .next_token
@@ -301,6 +305,25 @@ impl NativeViewer {
             .map_err(|_| error("Editor is busy."))?
             .document
             .text())
+    }
+    pub fn inspect(&self) -> Result<String, JsValue> {
+        let state = self
+            .state
+            .try_borrow()
+            .map_err(|_| error("Editor is busy."))?;
+        Ok(state.document.inspect().to_string())
+    }
+    pub fn command(&self, id: &str, params: &str) -> Result<(), JsValue> {
+        let mut state = self
+            .state
+            .try_borrow_mut()
+            .map_err(|_| error("Editor is busy."))?;
+        let params =
+            serde_json::from_str(params).map_err(|_| error("Invalid command parameters."))?;
+        state.document.command(id, params)?;
+        state.observe();
+        state.context.request_repaint();
+        Ok(())
     }
     pub fn destroy(&self) {
         self.runner.destroy();
