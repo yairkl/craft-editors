@@ -20,7 +20,7 @@ export async function run(): Promise<void> {
     let doc = await open(api, uri);
     const before = await doc.request('test:text'); assert.equal(typeof before, 'string');
     assert.ok(String(before).includes('Craft'));
-    const after = await doc.request('test:paste', { text: 'Native edit verified ' });
+    let after = await doc.request('test:paste', { text: 'Native edit verified ' });
     assert.ok(String(after).includes('Native edit verified'), `${descriptor.format}: native paste must edit document text`);
     assert.equal(doc.dirty, true);
     assert.deepEqual(await vscode.workspace.fs.readFile(uri), original);
@@ -31,6 +31,14 @@ export async function run(): Promise<void> {
     await doc.request('test:history', { redo: true });
     await waitText(doc, after);
     assert.equal(await doc.request('test:text'), after);
+    if (descriptor.format === 'docx') {
+      const focus = await doc.request('test:focus-state') as { documentFocused: boolean; active?: string; native: { focused: boolean } };
+      assert.equal(focus.documentFocused, true, 'Undo/Redo must retain webview focus so typing can continue');
+      assert.equal(focus.native.focused, true, 'Undo/Redo must retain native document focus');
+      const continued = await doc.request('test:type-focused', { text: 'Q' });
+      assert.ok(String(continued).includes('Q'), `Typing after Undo/Redo must work without a click (active ${focus.active ?? 'unknown'})`);
+      after = continued;
+    }
     assert.ok(await vscode.workspace.save(uri)); assert.equal(doc.dirty, false);
     await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
     doc = await open(api, uri);

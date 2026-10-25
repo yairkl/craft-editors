@@ -108,7 +108,7 @@ impl Document {
             .plain_text(wordcraft_engine::doc::StoryRef::Body)
     }
     fn inspect(&self) -> serde_json::Value {
-        serde_json::json!({})
+        serde_json::json!({"focused": self.app.canvas.focused})
     }
     fn command(&mut self, id: &str, params: serde_json::Value) -> Result<(), JsValue> {
         self.app

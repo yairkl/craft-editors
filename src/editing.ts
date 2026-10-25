@@ -206,8 +206,8 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
         await vscode.workspace.fs.writeFile(target, bytes(await doc.request('new')));
         await vscode.commands.executeCommand('vscode.openWith', target, this.descriptor.viewType); break;
       }
-      case 'edit.undo': panel.reveal(); await vscode.commands.executeCommand('undo'); break;
-      case 'edit.redo': panel.reveal(); await vscode.commands.executeCommand('redo'); break;
+      case 'edit.undo': panel.reveal(panel.viewColumn, true); await vscode.commands.executeCommand('undo'); break;
+      case 'edit.redo': panel.reveal(panel.viewColumn, true); await vscode.commands.executeCommand('redo'); break;
       case 'file.close': case 'app.quit': panel.reveal(); await vscode.commands.executeCommand('workbench.action.closeActiveEditor'); break;
       case 'view.newWindow': panel.reveal(); await vscode.commands.executeCommand('workbench.action.splitEditor'); break;
     }

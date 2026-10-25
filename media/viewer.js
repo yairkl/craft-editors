@@ -128,6 +128,15 @@ window.addEventListener('message', async ({ data }) => {
           if (!capture) throw new Error('Test operation unavailable.');
           result = viewer.native_bytes().buffer; break;
         }
+        case 'test:type-focused': {
+          if (!capture) throw new Error('Test operation unavailable.');
+          const checks = await import('./editing-checks.js');
+          await checks.typeWithoutRefocus(data.text); result = viewer.text(); break;
+        }
+        case 'test:focus-state': {
+          if (!capture) throw new Error('Test operation unavailable.');
+          result = { documentFocused: document.hasFocus(), active: document.activeElement?.tagName, native: JSON.parse(viewer.inspect()) }; break;
+        }
         case 'test:inspect': {
           if (!capture) throw new Error('Test operation unavailable.');
           result = JSON.parse(viewer.inspect()); break;

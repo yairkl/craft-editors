@@ -93,3 +93,17 @@ export async function pdfDraft(viewer, canvas, text) {
   await pasteText(canvas, text);
   await frame(); await frame();
 }
+
+export async function typeWithoutRefocus(text) {
+  if (!document.hasFocus()) throw new Error('The webview lost focus');
+  const target = document.activeElement;
+  target.dispatchEvent(new KeyboardEvent('keyup', { key: 'Control', code: 'ControlLeft', bubbles: true }));
+  await frame();
+  if (target instanceof HTMLInputElement) {
+    await continueDraft(text); return;
+  }
+  for (const key of text) {
+    for (const type of ['keydown', 'keyup']) target.dispatchEvent(new KeyboardEvent(type, { key, bubbles: true }));
+    await frame();
+  }
+}
