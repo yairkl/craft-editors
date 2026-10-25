@@ -82,19 +82,23 @@ export class RenderingProvider implements vscode.CustomReadonlyEditorProvider<Pr
     });
     const cancel = token.onCancellationRequested(() => { disposed = true; clearTimeout(timer); listener.dispose(); });
     panel.onDidDispose(() => { disposed = true; clearTimeout(timer); listener.dispose(); cancel.dispose(); });
-    const nonce = randomBytes(24).toString('hex');
-    const uri = (path: string): vscode.Uri => panel.webview.asWebviewUri(vscode.Uri.joinPath(media, path));
-    panel.webview.html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}' ${panel.webview.cspSource} 'wasm-unsafe-eval'; style-src ${panel.webview.cspSource}; connect-src ${panel.webview.cspSource}; img-src data: ${panel.webview.cspSource};">
-<link rel="stylesheet" href="${uri('viewer.css')}"><title>Craft preview</title></head>
-<body data-session="${sessionId}" data-module="${panel.webview.asWebviewUri(vscode.Uri.joinPath(engine, 'viewer.js'))}" data-wasm="${panel.webview.asWebviewUri(vscode.Uri.joinPath(engine, 'viewer_bg.wasm'))}">
-<header><strong>Craft preview</strong><span>Read only</span><label id="sheet-control" hidden>Sheet <select id="sheet"></select></label>
-<nav id="pdf-controls" hidden aria-label="PDF navigation"><button id="previous" type="button">Previous</button><span id="page-label"></span><button id="next" type="button">Next</button>
-<label>Zoom <select id="zoom"><option value="0.75">75%</option><option value="1" selected>100%</option><option value="1.5">150%</option><option value="2">200%</option></select></label></nav></header>
-<p id="status" role="status">Loading renderer…</p><main id="viewport"><canvas id="document" aria-label="Read-only document preview"></canvas></main>
-<script type="module" nonce="${nonce}" src="${uri('viewer.js')}"></script></body></html>`;
+    panel.webview.html = renderHtml(panel.webview, media, engine, sessionId);
   }
 
   dispose(): void { this.results.dispose(); }
+}
+
+export function renderHtml(webview: vscode.Webview, media: vscode.Uri, engine: vscode.Uri, sessionId: string, editable = false): string {
+  const nonce = randomBytes(24).toString('hex');
+  const uri = (path: string): vscode.Uri => webview.asWebviewUri(vscode.Uri.joinPath(media, path));
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}' ${webview.cspSource} 'wasm-unsafe-eval'; style-src ${webview.cspSource}; connect-src ${webview.cspSource}; img-src data: ${webview.cspSource};">
+<link rel="stylesheet" href="${uri('viewer.css')}"><title>Craft preview</title></head>
+<body data-session="${sessionId}" data-module="${webview.asWebviewUri(vscode.Uri.joinPath(engine, 'viewer.js'))}" data-wasm="${webview.asWebviewUri(vscode.Uri.joinPath(engine, 'viewer_bg.wasm'))}">
+<header><strong>Craft</strong><span id="mode">${editable ? 'Editing' : 'Read only'}</span><nav id="file-controls" ${editable ? '' : 'hidden'} aria-label="Workbook file actions"><button id="save" type="button">Save</button><button id="save-as" type="button">Save As…</button></nav>
+<nav id="pdf-controls" hidden aria-label="PDF navigation"><button id="previous" type="button">Previous</button><span id="page-label"></span><button id="next" type="button">Next</button>
+<label>Zoom <select id="zoom"><option value="0.75">75%</option><option value="1" selected>100%</option><option value="1.5">150%</option><option value="2">200%</option></select></label></nav></header>
+<p id="status" role="status">Loading renderer…</p><main id="viewport"><canvas id="document" aria-label="${editable ? 'Spreadsheet editor' : 'Read-only document preview'}"></canvas></main>
+<script type="module" nonce="${nonce}" src="${uri('viewer.js')}"></script></body></html>`;
 }

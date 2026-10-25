@@ -49,6 +49,7 @@ jobs:
       - run: cargo +1.95.0 clippy --manifest-path adapters/Cargo.toml --locked --target wasm32-unknown-unknown --no-deps -- -D warnings
       - run: npm run renderers:build
       - run: xvfb-run -a npm run test:rendering
+      - run: xvfb-run -a npm run test:editing
       - run: npm run package
       - run: npm run packages:check
       - run: xvfb-run -a npm run test:installed

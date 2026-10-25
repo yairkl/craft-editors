@@ -1,0 +1,43 @@
+diff --git a/crates/ui-egui/src/lib.rs b/crates/ui-egui/src/lib.rs
+index 9bea918..1a940dd 100644
+--- a/crates/ui-egui/src/lib.rs
++++ b/crates/ui-egui/src/lib.rs
+@@ -178,6 +178,8 @@ pub struct Notice {
+ /// Host services the platform shell provides (file pickers, opening URLs).
+ #[derive(Default)]
+ pub struct Services {
++    /// Embedding host owns file actions and committed-document undo/redo.
++    pub host_command: Option<Box<dyn Fn(&str) -> bool>>,
+     /// Desktop: discover configured printers on a worker.
+     pub printers: Option<printing::Discover>,
+     /// Desktop: submit the PDF with the chosen settings on a worker.
+@@ -396,6 +398,9 @@ impl SheetApp {
+     }
+ 
+     fn run_command(&mut self, id: &str, params: Json) -> Result<Json, String> {
++        if self.services.host_command.as_ref().is_some_and(|host| host(id)) {
++            return Ok(Json::Null);
++        }
+         if matches!(id, "file.save" | "file.saveAs" | "file.saveBytes") {
+             self.store_view_state();
+         }
+@@ -770,6 +775,10 @@ impl SheetApp {
+     }
+ 
+     pub fn open_dialog(&mut self, name: &str, params: Json) {
++        let action = match name { "open" => Some("file.open"), "saveAs" => Some("file.saveAs"), _ => None };
++        if action.is_some_and(|id| self.services.host_command.as_ref().is_some_and(|host| host(id))) {
++            return;
++        }
+         if let Err(e) = self.commit_text_box_edit() {
+             self.message = Some(("Text Box".into(), clean_error(&e)));
+             return;
+@@ -1351,7 +1360,7 @@ impl SheetApp {
+         {
+             self.grid.last_autosave = now;
+             self.store_view_state();
+-            let _ = self.session.run("file.save", json!({}));
++            let _ = self.run("file.save", json!({}));
+         }
+         // Window title.
+         if let Some(d) = self.session.active() {

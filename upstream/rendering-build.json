@@ -8,20 +8,31 @@
   },
   "artifacts": {
     "grid/viewer.js": {
-      "bytes": 76921,
-      "sha256": "9fcbeee2fcf50df702d2b55f4a2e673c7919b5b1680b6911dc605122ea1049b3"
+      "bytes": 79455,
+      "sha256": "b45cea83ea42a50c174cca4716447b5712e2749918591e8620eb059b2ea8c129"
     },
     "grid/viewer_bg.wasm": {
-      "bytes": 16399310,
-      "sha256": "e4ee83ab89695b1b86cacc8411dfba9a9d7d2e47a643a9406b6ea3614d874619"
+      "bytes": 17755124,
+      "sha256": "3825baf109d09305ddc22bab5078c9a13f3cd3dcef84ceac4d40fba128a81903"
     },
     "pdf/viewer.js": {
       "bytes": 7545,
       "sha256": "19d6157e37a8a6de5b15ed1d03bf2c2e212e96ee94e4d8d0e84eefc207bae051"
     },
     "pdf/viewer_bg.wasm": {
-      "bytes": 5689609,
-      "sha256": "e3aaf116969d1226356df516785dc181e34f101cbecf55cf2415ede892bb75c3"
+      "bytes": 5690195,
+      "sha256": "593c5c5161febfbb66a79147498cae57bad11c15709443239e75612431ac77df"
     }
+  },
+  "patches": {
+    "gridcraft": [
+      {
+        "path": "upstream/patches/gridcraft-host-commands.patch",
+        "sha256": "b993b7aaea6a78ab4635275057c70fe07c939767cbe8d42e5520b1dcf25d893c",
+        "purpose": "Delegate native file lifecycle and committed undo/redo to VS Code without acknowledging writes early.",
+        "removalCondition": "Remove when the pinned upstream Services interface supplies the equivalent host-command hook."
+      }
+    ],
+    "pdfcraft": []
   }
 }

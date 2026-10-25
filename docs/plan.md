@@ -1,12 +1,15 @@
 # Initial implementation plan
 
-Status: read-only rendering increment verified; M0/M1 release and editing gates remain open. Updated: 2026-10-25.
+Status: native XLSX editing and read-only PDF rendering implemented; broader release gates remain open. Updated: 2026-10-25.
+
+See [editing lifecycle](editing.md) for native UI, Save/Save As, undo/redo, Revert and recovery, and [rendering](rendering.md) for independent engines.
+
 
 ## Current implementation
 
-Independent Craft Spreadsheets and Craft PDF extensions register default read-only previews and optional per-format transport probes. Their common host is maintained once and bundled into each package; neither requires the other. Actual GridCraft grid rendering and PdfCraft page rasterization run as WASM inside VS Code. Generated styled/multi-sheet and multi-page fixtures pass navigation, zoom/resize, source-preservation, malformed-input and non-file URI tests. Spreadsheet input filtering is checked against attempted edits and an unchanged workbook hash. Captured output was visually inspected. See [rendering validation](rendering.md) and [independent packaging](packaging.md).
+Independent Craft Spreadsheets and Craft PDF extensions register default editors (editable XLSX, read-only PDF) and optional per-format transport probes. Their common host is maintained once and bundled into each package; neither requires the other. Actual GridCraft grid rendering and PdfCraft page rasterization run as WASM inside VS Code. Generated styled/multi-sheet and multi-page fixtures pass navigation, zoom/resize, source-preservation, malformed-input and non-file URI tests. Native spreadsheet input and persistence are covered by the editing suite. Captured output was visually inspected. See [rendering validation](rendering.md) and [independent packaging](packaging.md).
 
-GridCraft and PdfCraft source revisions are pinned in `upstream/manifest.json`. Rust 1.95.0, wasm-bindgen 0.2.129 and the adapter Cargo lockfile are verified for the read-only wrappers. These use direct Cargo builds, not Trunk or full upstream app builds. Output sizes/hashes are recorded in `upstream/rendering-build.json`; transitive redistribution notices and wider-platform validation remain open.
+GridCraft and PdfCraft source revisions are pinned in `upstream/manifest.json`. Rust 1.95.0, wasm-bindgen 0.2.129 and the adapter Cargo lockfile are verified for the adapters. These use direct Cargo builds, not Trunk or full upstream app builds. Output sizes/hashes are recorded in `upstream/rendering-build.json`; transitive redistribution notices and wider-platform validation remain open.
 
 ## Scope and estimates
 
@@ -97,4 +100,4 @@ CLI/MCP integration, multiple synchronized editable views, browser-hosted VS Cod
 
 ## Immediate next task
 
-Keep the rendering increment read-only for user verification. Broaden representative-document/platform coverage and complete the distribution inventory before release. Editing follows as a separate phase: add explicit revision tracking, host-triggered serialization and persisted-save acknowledgment, then prove open → edit → export to a separate file → reopen before enabling original-file Save. Actual WSL/SSH and platform checks, performance measurements and editable lifecycle acceptance criteria remain incomplete.
+Broaden representative-document and platform coverage, measure memory/startup behavior and validate complex workbook fidelity before public release. Editing lifecycle acceptance now covers generated fixtures; actual WSL/SSH, Windows/macOS and larger corpora remain incomplete.

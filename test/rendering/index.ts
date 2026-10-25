@@ -29,7 +29,7 @@ export async function run(): Promise<void> {
     assert.ok(result.width >= 300 && result.height >= 200, 'Canvas must have useful dimensions');
     assert.ok(result.nonBackgroundPixels > 100, 'Rendered output must contain visible content');
     assert.equal(result.units, name.startsWith('minimal') ? 1 : 2);
-    assert.equal(result.readOnlyVerified, true, 'Document mutation input must be blocked');
+    assert.equal(result.readOnlyVerified, format === 'pdf', 'PDF stays read-only; Spreadsheet exposes native editing');
     assert.equal(result.navigationVerified, true, 'Sheet/page navigation must work');
     assert.equal(result.resizeVerified, true, 'Resize/zoom must work');
     assert.ok(result.screenshot, 'Test mode must capture real rendered pixels');
@@ -37,7 +37,7 @@ export async function run(): Promise<void> {
     assert.deepEqual(await vscode.workspace.fs.readFile(uri), before, 'Rendering must not change the source');
     assert.equal(vscode.window.activeTextEditor?.document.isDirty ?? false, false);
     await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
-    console.log(`Verified ${name}: ${result.width}x${result.height}, ${result.nonBackgroundPixels} content pixels; navigation and read-only checks passed.`);
+    console.log(`Verified ${name}: ${result.width}x${result.height}, ${result.nonBackgroundPixels} content pixels; navigation and input checks passed.`);
   }
 
   // Invalid input must be surfaced as a failure, not a successful blank canvas.

@@ -1,6 +1,6 @@
 # Initial renderer asset inventory
 
-This records the source paths inspected for the read-only wrappers. The wrappers do not copy upstream application icons, splash screens, About dialogs or ArtCraft marks. Their viewports use GridCraft's grid and PdfCraft's rasterizer, not the full upstream application shells. No upstream code is modified. Independent VSIX packaging now follows each adapter's Cargo graph and collects available license/NOTICE/font texts plus `notices/dependencies.json`. Review that generated inventory, including entries without packaged license texts, before public release.
+This records sources inspected for the adapters. GridCraft now supplies its native ribbon, formula bar, grid, tabs and dialogs; its title bar and File tab are hidden. PdfCraft supplies its rasterizer. No upstream icons or splash assets are copied separately. The declared GridCraft service patch is recorded in `manifest.json`. Independent VSIX packaging follows each adapter's Cargo graph and collects available license/NOTICE/font texts plus `notices/dependencies.json`. Review the generated inventory, including entries without packaged license texts, before public release.
 
 | Input | Version/source | License and handling |
 | --- | --- | --- |

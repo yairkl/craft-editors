@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
   "inspectedOn": "2026-10-25",
-  "status": "Read-only GridCraft/PdfCraft WASM adapters built and verified in VS Code 1.102.0 on Linux; editing and full app embedding pending",
+  "status": "Native GridCraft XLSX editing and read-only PdfCraft WASM adapters; Linux VS Code lifecycle verification",
   "toolchain": {
     "rust": "1.95.0",
     "rustTarget": "wasm32-unknown-unknown",
     "trunk": "0.21.14",
-    "rustPinStatus": "validated for the locked read-only adapters",
+    "rustPinStatus": "validated for locked adapters",
     "trunkSource": "https://github.com/storytold/craft-common-actions/blob/2b4eb2c6d94880d926c934ec3736c92cde30086b/.github/workflows/release.yml",
     "wasmBindgen": "0.2.129",
-    "trunkStatus": "not used by read-only adapters; full-app build candidate only"
+    "trunkStatus": "not used by adapters"
   },
   "applications": [
     {
@@ -31,7 +31,15 @@
         "buildCommand": "npm run renderers:build",
         "verification": "npm run test:rendering",
         "baseline": "upstream/rendering-build.json"
-      }
+      },
+      "patches": [
+        {
+          "path": "upstream/patches/gridcraft-host-commands.patch",
+          "sha256": "b993b7aaea6a78ab4635275057c70fe07c939767cbe8d42e5520b1dcf25d893c",
+          "purpose": "Delegate native file lifecycle and committed undo/redo to VS Code without acknowledging writes early.",
+          "removalCondition": "Remove when the pinned upstream Services interface supplies the equivalent host-command hook."
+        }
+      ]
     },
     {
       "id": "pdfcraft",

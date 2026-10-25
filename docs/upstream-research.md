@@ -1,6 +1,6 @@
 # Upstream embedding research
 
-Inspected 2026-10-25. The initial research below describes the full upstream application shells. A subsequent implementation built separate read-only adapters from these pins and verified actual rendering in VS Code; see [rendering](rendering.md). The full apps and editing bridges remain unvalidated. Rust 1.95.0 was installed in an isolated build directory. Machine-readable pins and outstanding gates are in [the manifest](../upstream/manifest.json).
+Inspected 2026-10-25. The initial research below describes the full upstream application shells. A subsequent implementation built separate read-only adapters from these pins and verified actual rendering in VS Code; see [rendering](rendering.md). Subsequent work embeds GridCraft native UI with a tracked host-command hook and explicit serialize/ack lifecycle; see [editing](editing.md). The original observations below remain historical source analysis. Rust 1.95.0 was installed in an isolated build directory. Machine-readable pins and outstanding gates are in [the manifest](../upstream/manifest.json).
 
 ## Pinned inputs
 
@@ -44,7 +44,7 @@ The current bridges are useful reference code, but are insufficient for the prop
 - PdfCraft sends `saveAs`, but the callback completes when `postMessage` succeeds. There is no asynchronous persistence acknowledgment.
 - Dirty notifications report a boolean across the app's documents, not a specific VS Code document revision. Both apps can open multiple internal documents, which requires limiting or adapting for one resource per editor.
 
-These are source-derived constraints, not measured runtime failures. The first adapter should implement a direct VS Code transport, one-document session identity and explicit serialize/ack operations in a small tracked upstream patch. Until then, original-file Save must remain unavailable; a proof-of-concept export must use a distinct destination and be described as such.
+These are source-derived constraints, not measured runtime failures. The first adapter should implement a direct VS Code transport, one-document session identity and explicit serialize/ack operations in a small tracked upstream patch. That boundary is now implemented for GridCraft in the adapter and tracked host-command patch; PDF remains read only.
 
 ## Graphics, assets and CSP
 

@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { verifySource } from './upstream-patches.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const manifest = JSON.parse(readFileSync(resolve(root, 'upstream/manifest.json'), 'utf8'));
@@ -18,10 +19,7 @@ for (const app of manifest.applications) {
   const directory = resolve(root, 'upstream/checkouts', app.id);
   if (existsSync(directory)) {
     // Never reset, clean, or change an existing checkout, including local patches.
-    if (git(directory, ['rev-parse', 'HEAD']) !== app.revision ||
-        git(directory, ['status', '--porcelain']) !== '') {
-      throw new Error(`${app.id}: existing checkout differs from the clean pin; preserve it and move it aside before fetching.`);
-    }
+    verifySource(root, app);
   } else {
     mkdirSync(directory, { recursive: true });
     git(directory, ['init', '--quiet']);

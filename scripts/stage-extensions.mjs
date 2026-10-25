@@ -22,11 +22,11 @@ export function stageExtensions({ development = false, allowMissingRenderers = f
     const manifest = JSON.parse(readFileSync(resolve(destination, 'package.json'), 'utf8'));
     const { engine } = extensions[name];
     if (engine) {
-      for (const file of ['host', 'document', 'rendering']) copy(`out/src/${file}.js`);
+      for (const file of ['host', 'document', 'rendering', ...(name === 'spreadsheets' ? ['editing', 'rpc'] : [])]) copy(`out/src/${file}.js`);
       copy(`out/src/entrypoints/${name}.js`);
       copy('out/protocol/probe.js');
       for (const file of ['probe.js', 'probe.css', 'viewer.js', 'viewer.css']) copy(`media/${file}`);
-      if (development) copy('media/rendering-checks.js');
+      if (development) { copy('media/rendering-checks.js'); copy('media/editing-checks.js'); }
       for (const file of ['viewer.js', 'viewer_bg.wasm']) {
         const source = resolve(root, 'media/engines', engine, file);
         if (!existsSync(source)) {

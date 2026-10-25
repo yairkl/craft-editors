@@ -2,7 +2,6 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import * as vscode from 'vscode';
 import { ProbeSession } from '../protocol/probe';
 import { ProbeDocument, readProbeDocument } from './document';
-import { RenderingProvider, type RenderResult } from './rendering';
 import type { DocumentFormat } from '../protocol/probe';
 
 export interface ExtensionDescriptor {
@@ -94,14 +93,10 @@ function probeHtml(webview: vscode.Webview, media: vscode.Uri, sessionId: string
 </main><script nonce="${nonce}" src="${script}"></script></body></html>`;
 }
 
-export function activateHost(context: vscode.ExtensionContext, descriptor: ExtensionDescriptor): { onDidProbe: vscode.Event<ProbeResult>; onDidRender: vscode.Event<RenderResult> } {
+export function activateHost(context: vscode.ExtensionContext, descriptor: ExtensionDescriptor): { onDidProbe: vscode.Event<ProbeResult> } {
   const provider = new ProbeProvider(context.extensionUri, descriptor.format);
-  const rendering = new RenderingProvider(context, descriptor.format);
   context.subscriptions.push(provider, vscode.window.registerCustomEditorProvider(
     descriptor.probeId, provider, { supportsMultipleEditorsPerDocument: false },
   ));
-  context.subscriptions.push(rendering, vscode.window.registerCustomEditorProvider(
-    descriptor.previewId, rendering, { supportsMultipleEditorsPerDocument: false },
-  ));
-  return { onDidProbe: provider.onDidProbe, onDidRender: rendering.onDidRender };
+  return { onDidProbe: provider.onDidProbe };
 }

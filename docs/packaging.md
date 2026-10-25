@@ -38,7 +38,7 @@ To package only one already-built renderer, use `npm run package -- spreadsheets
 The independent archives are:
 
 ```text
-dist/vsix/craft-spreadsheets-0.0.1.vsix
+dist/vsix/craft-spreadsheets-0.0.2.vsix
 dist/vsix/craft-pdf-0.0.1.vsix
 dist/vsix/craft-suite-0.0.1.vsix
 ```
@@ -49,7 +49,7 @@ In VS Code, use **Extensions → … → Install from VSIX…** and choose the f
 
 Run `npm run compile`, then choose **Craft Spreadsheets**, **Craft PDF**, or **Both Craft extensions** from VS Code's Run and Debug dropdown and press F5. Open the matching fixture normally; its extension is the default editor unless an existing user preference overrides it. Each format also has its own optional integration probe.
 
-Both `npm run test:integration` and `npm run test:rendering` run three isolated VS Code sessions: Spreadsheet alone, PDF alone and both together. They assert the other extension and renderer are absent during standalone runs. The rendering checks continue to cover default opening, navigation, read-only input, source preservation and remote-style URIs.
+Both `npm run test:integration` and `npm run test:rendering` run three isolated VS Code sessions: Spreadsheet alone, PDF alone and both together. They assert the other extension and renderer are absent during standalone runs. The rendering checks continue to cover default opening, native worksheet navigation, PDF read-only input, source preservation and remote-style URIs.
 
 `npm run packages:check` opens the actual ZIP/VSIX archives to verify renderer, entry point, file association and notice isolation; it verifies the Suite has no runtime code or WASM. `npm run test:installed` installs the real archives into disposable test profiles and checks default opening and actual rendering in production extension mode. The Suite is tested with both members preinstalled. Headless Linux runs the VS Code commands with `xvfb-run -a`. CI performs all these checks on branch pushes, pull requests and version-tag pushes.
 
@@ -71,3 +71,5 @@ Retention is explicitly configured in the workflow and is subject to repository/
 The repository root is now a private build workspace rather than a VS Code extension. Restart the F5 development host using one of the new launch configurations. If the old `craft-vscode-dev.craft-vscode` bundle is installed, disable or uninstall it to avoid competing default editors.
 
 The new editor identifiers are `craft.spreadsheets.preview` and `craft.pdf.preview`. Existing preferences referring to `craft.preview` should be changed through **Reopen Editor With… → Configure default editor**. No user settings are overwritten automatically.
+
+The spreadsheet editing suite (`xvfb-run -a npm run test:editing`) additionally checks native cell input, save/reopen, undo/redo, Save As, Revert, write failures, concurrent edits during save and backup recovery. Spreadsheet 0.0.2 enables editing; PDF and Suite versions remain 0.0.1.

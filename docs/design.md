@@ -1,8 +1,8 @@
 # Design: a shared Craft document host for VS Code
 
-Status: read-only engine rendering validated; editing architecture remains proposed. Updated: 2026-10-25.
+Status: native XLSX editing lifecycle and read-only PDF rendering implemented; broader format/platform validation remains open. Updated: 2026-10-25.
 
-The current implementation uses default `CustomReadonlyEditorProvider` previews for XLSX/PDF: a small Rust/WASM wrapper draws GridCraft's grid, and another uses PdfCraft's page rasterizer. Upstream app shells, editing controls and command APIs are not exposed. The separate transport probe remains available. Both diagnostic/rendering messages are intentionally separate from the proposed editing protocol below. See [the rendering implementation](rendering.md) and [upstream editing constraints](upstream-research.md).
+Spreadsheets use `CustomEditorProvider` with GridCraft's native UI; PDF uses `CustomReadonlyEditorProvider` with PdfCraft's rasterizer. The host owns serialization requests, persisted-save acknowledgments, undo/redo callbacks, backups and Revert. See [the implemented editing lifecycle](editing.md). The design below describes the broader target, including formats and capabilities still planned.
 
 ## Goals and boundaries
 

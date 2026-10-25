@@ -1,20 +1,184 @@
-//! Read-only viewport over the unmodified GridCraft grid renderer.
+//! GridCraft's native UI, with document lifecycle owned by VS Code.
 #![forbid(unsafe_code)]
-use gridcraft_engine::{DocState, Session, Trust};
-use gridcraft_ui_egui::SheetApp;
+use gridcraft_engine::{DocState, HistoryEntry, Selection, Session, Trust};
+use gridcraft_ui_egui::{Services, SheetApp};
 use sha2::Digest;
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, collections::BTreeMap, rc::Rc, sync::Arc};
 use wasm_bindgen::prelude::*;
 
+#[derive(Clone)]
+struct Snapshot {
+    wb: Arc<gridcraft_engine::model::Workbook>,
+    selection: Selection,
+    undo: Vec<HistoryEntry>,
+    redo: Vec<HistoryEntry>,
+    sheet_selections: Vec<Selection>,
+    editor: Option<gridcraft_ui_egui::editor::EditState>,
+    text_box_editor: Option<gridcraft_ui_egui::text_box::EditState>,
+}
+impl Snapshot {
+    fn capture(doc: &DocState, app: &SheetApp) -> Self {
+        Self {
+            editor: app.editor.clone(),
+            text_box_editor: app.text_box_editor.clone(),
+            wb: doc.wb.clone(),
+            selection: doc.selection.clone(),
+            undo: doc.undo.clone(),
+            redo: doc.redo.clone(),
+            sheet_selections: doc.sheet_selections.clone(),
+        }
+    }
+    fn same_draft(&self, app: &SheetApp) -> bool {
+        self.editor
+            .as_ref()
+            .map(|edit| (edit.sheet, edit.cell, &edit.text))
+            == app
+                .editor
+                .as_ref()
+                .map(|edit| (edit.sheet, edit.cell, &edit.text))
+            && self
+                .text_box_editor
+                .as_ref()
+                .map(|edit| (edit.id, &edit.text))
+                == app
+                    .text_box_editor
+                    .as_ref()
+                    .map(|edit| (edit.id, &edit.text))
+    }
+    fn restore(&self, doc: &mut DocState) {
+        doc.wb = self.wb.clone();
+        doc.selection = self.selection.clone();
+        doc.undo = self.undo.clone();
+        doc.redo = self.redo.clone();
+        doc.sheet_selections = self.sheet_selections.clone();
+        doc.calc.rebuild(&doc.wb);
+        doc.revision = doc.revision.saturating_add(1);
+    }
+}
 struct State {
     app: SheetApp,
     context: egui::Context,
     on_frame: Option<js_sys::Function>,
-    capture_requested: bool,
+    on_event: js_sys::Function,
+    token: u32,
+    next_token: u32,
+    snapshots: BTreeMap<u32, Snapshot>,
+    commands: Rc<RefCell<Vec<String>>>,
 }
-
+fn emit(callback: &js_sys::Function, kind: &str, fields: &[(&str, JsValue)]) {
+    let event = js_sys::Object::new();
+    if js_sys::Reflect::set(&event, &"kind".into(), &kind.into()).is_err() {
+        return;
+    }
+    for (name, value) in fields {
+        if js_sys::Reflect::set(&event, &(*name).into(), value).is_err() {
+            return;
+        }
+    }
+    let _ = callback.call1(&JsValue::NULL, &event);
+}
+fn services(commands: Rc<RefCell<Vec<String>>>) -> Services {
+    Services {
+        host_command: Some(Box::new(move |id| {
+            if matches!(
+                id,
+                "file.save"
+                    | "file.saveAs"
+                    | "file.open"
+                    | "file.new"
+                    | "file.close"
+                    | "edit.undo"
+                    | "edit.redo"
+                    | "view.newWindow"
+                    | "app.quit"
+            ) {
+                if let Ok(mut queue) = commands.try_borrow_mut() {
+                    queue.push(id.to_owned());
+                }
+                true
+            } else {
+                false
+            }
+        })),
+        ..Default::default()
+    }
+}
+fn make_app(bytes: &[u8], commands: Rc<RefCell<Vec<String>>>) -> Result<SheetApp, JsValue> {
+    let (wb, _) = gridcraft_xlsx::read_xlsx(bytes)
+        .map_err(|_| JsValue::from_str("The workbook could not be opened."))?;
+    if wb.active().is_none() {
+        return Err(JsValue::from_str("The workbook has no active worksheet."));
+    }
+    let mut session = Session::new();
+    session.add_document(DocState::new(
+        wb,
+        None,
+        "Workbook.xlsx".into(),
+        Trust::FromFile,
+    ));
+    let mut app = SheetApp::new(session, services(commands));
+    // VS Code provides file/window chrome; the native ribbon, formula bar, grid,
+    // worksheet tabs, context menus and dialogs remain fully interactive.
+    app.chrome.title_bar = false;
+    app.chrome.file_tab = false;
+    Ok(app)
+}
+impl State {
+    fn observe(&mut self) {
+        let Some(doc) = self.app.session.active() else {
+            return;
+        };
+        if self
+            .snapshots
+            .get(&self.token)
+            .is_some_and(|old| Arc::ptr_eq(&old.wb, &doc.wb) && old.same_draft(&self.app))
+        {
+            return;
+        }
+        if let Some(previous) = self.snapshots.get(&self.token) {
+            let mut comparison = (*previous.wb).clone();
+            comparison.active_sheet = doc.wb.active_sheet;
+            if comparison == *doc.wb && previous.same_draft(&self.app) {
+                self.snapshots
+                    .insert(self.token, Snapshot::capture(doc, &self.app));
+                return;
+            }
+        }
+        let before = self.token;
+        let Some(token) = self.next_token.checked_add(1) else {
+            return;
+        };
+        self.next_token = token;
+        self.token = token;
+        let label = doc
+            .undo
+            .last()
+            .map_or("Workbook change", |entry| entry.label.as_str())
+            .to_owned();
+        self.snapshots
+            .insert(token, Snapshot::capture(doc, &self.app));
+        emit(
+            &self.on_event,
+            "changed",
+            &[
+                ("before", before.into()),
+                ("after", token.into()),
+                ("label", label.into()),
+            ],
+        );
+    }
+    fn flush(&mut self) -> Result<(), JsValue> {
+        if self.app.editor.is_some() && !self.app.commit_edit(0, 0, false, false) {
+            return Err(JsValue::from_str("The cell edit failed validation."));
+        }
+        self.app
+            .commit_text_box_edit()
+            .map_err(|_| JsValue::from_str("The text edit could not be committed."))?;
+        self.observe();
+        Ok(())
+    }
+}
 struct GridShell(Rc<RefCell<State>>);
-
 impl eframe::App for GridShell {
     fn raw_input_hook(&mut self, _ctx: &egui::Context, raw: &mut egui::RawInput) {
         if let Ok(mut state) = self.0.try_borrow_mut() {
@@ -29,33 +193,36 @@ impl eframe::App for GridShell {
                         .collect();
                     let _ = callback.call3(
                         &JsValue::NULL,
-                        &JsValue::from_f64(image.size[0] as f64),
-                        &JsValue::from_f64(image.size[1] as f64),
+                        &(image.size[0] as f64).into(),
+                        &(image.size[1] as f64).into(),
                         &js_sys::Uint8Array::from(pixels.as_slice()),
                     );
                 }
             }
+            state.app.raw_input_hook(raw);
         }
-        // A positive allowlist: no typing, buttons, touch, paste, IME, or drops can
-        // reach upstream handlers. Do not call SheetApp::logic/raw_input_hook/ui.
-        raw.events.retain(view_event);
-        for event in &mut raw.events {
-            if let egui::Event::MouseWheel { modifiers, .. } = event {
-                *modifiers = egui::Modifiers {
-                    shift: modifiers.shift,
-                    ..Default::default()
-                };
-            }
-        }
+        // Files are opened by VS Code, never into a second internal workbook.
         raw.dropped_files.clear();
         raw.hovered_files.clear();
     }
-
+    fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        if let Ok(mut state) = self.0.try_borrow_mut() {
+            state.app.logic(ctx);
+        }
+    }
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         if let Ok(mut state) = self.0.try_borrow_mut() {
-            gridcraft_ui_egui::grid::show(&mut state.app, ui);
-            if !state.capture_requested && state.on_frame.is_some() {
-                state.capture_requested = true;
+            state.app.ui(ui);
+            state.observe();
+            let queued = state
+                .commands
+                .try_borrow_mut()
+                .map(|mut commands| std::mem::take(&mut *commands))
+                .unwrap_or_default();
+            for command in queued {
+                emit(&state.on_event, "command", &[("command", command.into())]);
+            }
+            if state.on_frame.is_some() && state.app.grid.geo.is_some() {
                 ui.ctx()
                     .send_viewport_cmd(egui::ViewportCommand::Screenshot(Default::default()));
                 ui.ctx().request_repaint();
@@ -63,53 +230,48 @@ impl eframe::App for GridShell {
         }
     }
 }
-
-fn view_event(event: &egui::Event) -> bool {
-    matches!(
-        event,
-        egui::Event::PointerMoved(_) | egui::Event::PointerGone | egui::Event::MouseWheel { .. }
-    )
-}
-
 #[wasm_bindgen]
 pub struct GridViewer {
     runner: eframe::WebRunner,
     state: Rc<RefCell<State>>,
 }
-
 #[wasm_bindgen]
 impl GridViewer {
     pub async fn start(
         canvas: web_sys::HtmlCanvasElement,
         bytes: Vec<u8>,
         on_frame: js_sys::Function,
+        on_event: js_sys::Function,
     ) -> Result<GridViewer, JsValue> {
         if bytes.len() > 32 * 1024 * 1024 {
             return Err(JsValue::from_str("Document exceeds 32 MiB."));
         }
-        let (wb, _report) = gridcraft_xlsx::read_xlsx(&bytes)
-            .map_err(|_| JsValue::from_str("The workbook could not be opened."))?;
-        if wb.active().is_none() {
-            return Err(JsValue::from_str("The workbook has no active worksheet."));
-        }
-        let mut session = Session::new();
-        session.add_document(DocState::new(wb, None, "Preview".into(), Trust::FromFile));
+        let commands = Rc::new(RefCell::new(Vec::new()));
+        let app = make_app(&bytes, commands.clone())?;
+        let doc = app
+            .session
+            .active()
+            .ok_or_else(|| JsValue::from_str("No workbook."))?;
+        let snapshots = BTreeMap::from([(0, Snapshot::capture(doc, &app))]);
         let state = Rc::new(RefCell::new(State {
-            app: SheetApp::new(session, Default::default()),
+            app,
+            commands,
             context: egui::Context::default(),
             on_frame: Some(on_frame),
-            capture_requested: false,
+            on_event,
+            token: 0,
+            next_token: 0,
+            snapshots,
         }));
         let shared = state.clone();
         let runner = eframe::WebRunner::new();
-        let options = eframe::WebOptions {
-            renderer: eframe::Renderer::Glow,
-            ..Default::default()
-        };
         runner
             .start(
                 canvas,
-                options,
+                eframe::WebOptions {
+                    renderer: eframe::Renderer::Glow,
+                    ..Default::default()
+                },
                 Box::new(move |cc| {
                     SheetApp::setup_context(&cc.egui_ctx, false);
                     shared.borrow_mut().context = cc.egui_ctx.clone();
@@ -117,12 +279,131 @@ impl GridViewer {
                 }),
             )
             .await
-            .map_err(|_| {
-                JsValue::from_str("The spreadsheet renderer could not start. WebGL is required.")
-            })?;
+            .map_err(|_| JsValue::from_str("GridCraft could not start. WebGL is required."))?;
         Ok(Self { runner, state })
     }
-
+    pub fn commit(&self) -> Result<(), JsValue> {
+        self.state
+            .try_borrow_mut()
+            .map_err(|_| JsValue::from_str("Renderer is busy."))?
+            .flush()
+    }
+    pub fn mark_original(&self, bytes: Vec<u8>) -> Result<(), JsValue> {
+        let (wb, _) = gridcraft_xlsx::read_xlsx(&bytes)
+            .map_err(|_| JsValue::from_str("Original workbook could not be opened."))?;
+        let mut state = self
+            .state
+            .try_borrow_mut()
+            .map_err(|_| JsValue::from_str("Renderer is busy."))?;
+        if let Some(doc) = state.app.session.active_mut() {
+            doc.saved = Arc::new(wb);
+        }
+        Ok(())
+    }
+    pub fn serialize(&self, flush: bool) -> Result<JsValue, JsValue> {
+        let mut state = self
+            .state
+            .try_borrow_mut()
+            .map_err(|_| JsValue::from_str("Renderer is busy."))?;
+        if flush {
+            state.flush()?;
+        } else {
+            state.observe();
+        }
+        let snapshot = state
+            .snapshots
+            .get(&state.token)
+            .ok_or_else(|| JsValue::from_str("Missing workbook state."))?;
+        let bytes = gridcraft_engine::io::save_bytes_as(
+            &snapshot.wb,
+            "Workbook.xlsx",
+            gridcraft_engine::io::FileKind::Xlsx,
+        )
+        .map_err(|_| JsValue::from_str("The workbook could not be serialized."))?;
+        let result = js_sys::Object::new();
+        js_sys::Reflect::set(
+            &result,
+            &"bytes".into(),
+            &js_sys::Uint8Array::from(bytes.as_slice()),
+        )?;
+        js_sys::Reflect::set(&result, &"token".into(), &state.token.into())?;
+        Ok(result.into())
+    }
+    pub fn mark_saved(&self, token: u32) -> Result<(), JsValue> {
+        let mut state = self
+            .state
+            .try_borrow_mut()
+            .map_err(|_| JsValue::from_str("Renderer is busy."))?;
+        let saved = state
+            .snapshots
+            .get(&token)
+            .ok_or_else(|| JsValue::from_str("Saved state is no longer available."))?
+            .wb
+            .clone();
+        if let Some(doc) = state.app.session.active_mut() {
+            doc.saved = saved;
+        }
+        state.context.request_repaint();
+        Ok(())
+    }
+    pub fn restore_history(&self, token: u32) -> Result<(), JsValue> {
+        let mut state = self
+            .state
+            .try_borrow_mut()
+            .map_err(|_| JsValue::from_str("Renderer is busy."))?;
+        let snapshot = state
+            .snapshots
+            .get(&token)
+            .ok_or_else(|| JsValue::from_str("Undo state is no longer available."))?
+            .clone();
+        if let Some(uid) = state.app.session.active().map(|doc| doc.uid) {
+            state.app.session.abort_groups(uid);
+        }
+        if let Some(doc) = state.app.session.active_mut() {
+            snapshot.restore(doc);
+        }
+        state.app.editor = snapshot.editor;
+        state.app.text_box_editor = snapshot.text_box_editor;
+        state.token = token;
+        state.context.request_repaint();
+        Ok(())
+    }
+    pub fn replace(&self, bytes: Vec<u8>) -> Result<u32, JsValue> {
+        let mut state = self
+            .state
+            .try_borrow_mut()
+            .map_err(|_| JsValue::from_str("Renderer is busy."))?;
+        let app = make_app(&bytes, state.commands.clone())?;
+        let token = state
+            .next_token
+            .checked_add(1)
+            .ok_or_else(|| JsValue::from_str("Session revision limit reached."))?;
+        let snapshot = Snapshot::capture(
+            app.session
+                .active()
+                .ok_or_else(|| JsValue::from_str("No workbook."))?,
+            &app,
+        );
+        state.app = app;
+        state.snapshots.clear();
+        state.snapshots.insert(token, snapshot);
+        state.token = token;
+        state.next_token = token;
+        state.context.request_repaint();
+        Ok(token)
+    }
+    pub fn blank_workbook() -> Result<Vec<u8>, JsValue> {
+        let mut session = Session::new();
+        session.new_workbook();
+        let doc = session
+            .active()
+            .ok_or_else(|| JsValue::from_str("No workbook."))?;
+        gridcraft_xlsx::write_xlsx(&doc.wb)
+            .map_err(|_| JsValue::from_str("Could not create workbook."))
+    }
+    pub fn destroy(&self) {
+        self.runner.destroy();
+    }
     pub fn sheets(&self) -> Result<js_sys::Array, JsValue> {
         let state = self
             .state
@@ -131,55 +412,11 @@ impl GridViewer {
         let array = js_sys::Array::new();
         if let Some(doc) = state.app.session.active() {
             for sheet in &doc.wb.sheets {
-                array.push(&JsValue::from_str(&sheet.name));
+                array.push(&sheet.name.as_str().into());
             }
         }
         Ok(array)
     }
-
-    pub fn select_sheet(&self, index: usize) -> Result<(), JsValue> {
-        let mut state = self
-            .state
-            .try_borrow_mut()
-            .map_err(|_| JsValue::from_str("Renderer is busy."))?;
-        let doc = state
-            .app
-            .session
-            .active_mut()
-            .ok_or_else(|| JsValue::from_str("No workbook."))?;
-        if index >= doc.wb.sheets.len() {
-            return Err(JsValue::from_str("Worksheet is out of range."));
-        }
-        // Only preview-local active-sheet metadata changes; no editing API is exported.
-        std::sync::Arc::make_mut(&mut doc.wb).active_sheet = index;
-        state.capture_requested = false;
-        state.context.request_repaint();
-        Ok(())
-    }
-
-    pub fn destroy(&self) {
-        self.runner.destroy();
-    }
-
-    /// Diagnostic hash, used by read-only interaction regression tests.
-    pub fn content_signature(&self) -> Result<String, JsValue> {
-        let state = self
-            .state
-            .try_borrow()
-            .map_err(|_| JsValue::from_str("Renderer is busy."))?;
-        let doc = state
-            .app
-            .session
-            .active()
-            .ok_or_else(|| JsValue::from_str("No workbook."))?;
-        let bytes = serde_json::to_vec(&doc.wb)
-            .map_err(|_| JsValue::from_str("Could not inspect preview state."))?;
-        Ok(sha2::Sha256::digest(bytes)
-            .iter()
-            .map(|byte| format!("{byte:02x}"))
-            .collect())
-    }
-
     pub fn active_sheet(&self) -> Result<usize, JsValue> {
         let state = self
             .state
@@ -191,7 +428,36 @@ impl GridViewer {
             .active()
             .map_or(0, |doc| doc.wb.active_sheet))
     }
-
+    pub fn select_sheet(&self, index: usize) -> Result<(), JsValue> {
+        let mut state = self
+            .state
+            .try_borrow_mut()
+            .map_err(|_| JsValue::from_str("Renderer is busy."))?;
+        state
+            .app
+            .run("sheet.activate", serde_json::json!({"sheet":index}))
+            .map_err(|_| JsValue::from_str("Could not select sheet."))?;
+        state.observe();
+        state.context.request_repaint();
+        Ok(())
+    }
+    pub fn content_signature(&self) -> Result<String, JsValue> {
+        let state = self
+            .state
+            .try_borrow()
+            .map_err(|_| JsValue::from_str("Renderer is busy."))?;
+        let doc = state
+            .app
+            .session
+            .active()
+            .ok_or_else(|| JsValue::from_str("No workbook."))?;
+        let bytes = serde_json::to_vec(&doc.wb)
+            .map_err(|_| JsValue::from_str("Could not inspect workbook."))?;
+        Ok(sha2::Sha256::digest(bytes)
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect())
+    }
     pub fn cell_text(&self, sheet: usize, row: u32, col: u32) -> Result<String, JsValue> {
         let state = self
             .state
@@ -202,13 +468,34 @@ impl GridViewer {
             .session
             .active()
             .ok_or_else(|| JsValue::from_str("No workbook."))?;
-        let sheet = doc
+        let sh = doc
             .wb
             .sheet(sheet)
             .ok_or_else(|| JsValue::from_str("No worksheet."))?;
-        sheet
-            .value(gridcraft_engine::core::CellRef::new(row, col))
+        sh.value(gridcraft_engine::core::CellRef::new(row, col))
             .to_text()
             .map_err(|_| JsValue::from_str("Cell contains an error."))
+    }
+    pub fn cell_bounds(&self, row: u32, col: u32) -> Result<js_sys::Float32Array, JsValue> {
+        let state = self
+            .state
+            .try_borrow()
+            .map_err(|_| JsValue::from_str("Renderer is busy."))?;
+        let sh = state
+            .app
+            .session
+            .active()
+            .and_then(|doc| doc.wb.active())
+            .ok_or_else(|| JsValue::from_str("No worksheet."))?;
+        let geo = state
+            .app
+            .grid
+            .geo
+            .as_ref()
+            .ok_or_else(|| JsValue::from_str("Grid has not rendered."))?;
+        let rect = geo.screen_cell_rect(sh, gridcraft_engine::core::CellRef::new(row, col));
+        Ok(js_sys::Float32Array::from(
+            [rect.min.x, rect.min.y, rect.max.x, rect.max.y].as_slice(),
+        ))
     }
 }

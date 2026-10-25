@@ -12,7 +12,7 @@ for name, engine, extension in [("spreadsheets", "grid", "xlsx"), ("pdf", "pdf",
         installed = json.loads(z.read("extension/package.json"))
         assert installed == manifest, f"{name}: packaged manifest drift"
         assert not installed.get("extensionDependencies"), f"{name}: unexpected required extension"
-        assert not any("node_modules/" in f or "rendering-checks.js" in f or "/test/" in f for f in files)
+        assert not any("node_modules/" in f or "-checks.js" in f or "/test/" in f for f in files)
         if engine:
             assert f"extension/media/engines/{engine}/viewer_bg.wasm" in files
             assert f"extension/media/engines/{engine}/viewer.js" in files

@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { verifySource } from './upstream-patches.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const manifest = JSON.parse(readFileSync(resolve(root, 'upstream/manifest.json'), 'utf8'));
@@ -10,10 +11,7 @@ if (process.env.CRAFT_FONTS_DIR) throw new Error('Optional external fonts are no
 const run = (command, args, cwd = root) => execFileSync(command, args, { cwd, stdio: 'inherit' });
 const output = (command, args, cwd = root) => execFileSync(command, args, { cwd, encoding: 'utf8' }).trim();
 for (const app of manifest.applications) {
-  const cwd = resolve(root, 'upstream/checkouts', app.id);
-  if (output('git', ['rev-parse', 'HEAD'], cwd) !== app.revision || output('git', ['status', '--porcelain'], cwd)) {
-    throw new Error(`${app.id}: build requires the clean, pinned source. Run npm run upstream:fetch.`);
-  }
+  verifySource(root, app, { apply: true });
 }
 if (output('wasm-bindgen', ['--version']) !== 'wasm-bindgen 0.2.129') {
   throw new Error('Install wasm-bindgen-cli 0.2.129 to match the adapter lockfile.');
@@ -34,5 +32,6 @@ writeFileSync(resolve(root, 'media/engines/build.json'), JSON.stringify({
   rust: output('rustc', ['+1.95.0', '--version']), wasmBindgen: '0.2.129',
   adapterLockSha256: createHash('sha256').update(readFileSync(resolve(root, 'adapters/Cargo.lock'))).digest('hex'),
   sources: Object.fromEntries(manifest.applications.map(app => [app.id, app.revision])), artifacts,
+  patches: Object.fromEntries(manifest.applications.map(app => [app.id, app.patches ?? []])),
 }, null, 2) + '\n');
 console.log('Built renderer modules and recorded SHA-256 hashes in media/engines/build.json.');

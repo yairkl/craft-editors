@@ -4,7 +4,7 @@ An independent project to bring the Rust-based Crafting Apps into VS Code as doc
 
 Open, view, and edit spreadsheets, documents, presentations, and PDFs in editor tabs, using the existing Craft engines and WebAssembly interfaces. Files remain local to the VS Code session; no document processing service is required.
 
-**Status: independent read-only XLSX/PDF extensions.** Craft Spreadsheets renders XLSX with GridCraft; Craft PDF renders PDFs with PdfCraft. Install either format independently, or choose both through the optional Craft Suite extension pack. Each package includes only its own renderer. Sheet switching, PDF page navigation and PDF zoom are available. Editing, DOCX and PPTX remain planned.
+**Status: independent XLSX editing and PDF viewing extensions.** Craft Spreadsheets embeds GridCraft's native ribbon, formula bar, grid and bottom worksheet tabs. Edit cells and worksheets, then use VS Code Save/Save As, undo/redo and Revert. Craft PDF remains read only. Install either independently, or both through the optional Craft Suite pack. Each package includes only its own engine. DOCX and PPTX remain planned. See [editing behavior and limits](docs/editing.md).
 
 Build local installable archives with `npm run package` after building the renderers. See [packaging and installation](docs/packaging.md) for setup, VSIX paths and Suite development-install instructions. Nothing is published to Marketplace yet.
 

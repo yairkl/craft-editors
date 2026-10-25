@@ -27,7 +27,8 @@
     "stage": "npm run compile",
     "package": "npm run compile && node scripts/package-extensions.mjs",
     "packages:check": "python3 scripts/verify-packages.py",
-    "test:installed": "npm run compile && node scripts/test-installed.cjs"
+    "test:installed": "npm run compile && node scripts/test-installed.cjs",
+    "test:editing": "npm run compile && node scripts/test-extensions.cjs editing"
   },
   "devDependencies": {
     "@types/node": "22.20.5",
