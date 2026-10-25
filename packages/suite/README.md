@@ -1,5 +1,5 @@
-# Craft Suite
+# Craft Suite (beta)
 
-Optional extension pack containing Craft Spreadsheets, Craft Word, Craft PowerPoint and Craft PDF. Each extension can also be installed and managed independently. This pack contains no renderer or executable host code.
+Optional extension pack for Craft Spreadsheets, Word, PowerPoint, PDF and Vector. Each is independently installable; the pack contains no renderer or host code.
 
-The development publisher IDs are not published to the Marketplace. For offline development, install the four individual VSIX files first, then this pack. Once the member extensions are published under these IDs, VS Code can install them through the pack.
+For the GitHub beta, install the five selected member VSIX files before installing this pack. The development publisher is not on Marketplace, so the pack cannot download its members there yet. An XLSX-only installation needs only Craft Spreadsheets.

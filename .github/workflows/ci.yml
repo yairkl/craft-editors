@@ -45,16 +45,20 @@ jobs:
           key: rendering-${{ runner.os }}-rust-1.95.0-${{ hashFiles('adapters/Cargo.lock', 'upstream/manifest.json') }}
       - run: rustup toolchain install 1.95.0 --profile minimal --component rustfmt,clippy --target wasm32-unknown-unknown
       - run: cargo +1.95.0 install wasm-bindgen-cli --version 0.2.129 --locked
-      - run: cargo +1.95.0 fmt --manifest-path adapters/grid/Cargo.toml -p craft-grid-viewer -p craft-pdf-viewer -p craft-word-viewer -p craft-deck-viewer --check
+      - run: cargo +1.95.0 fmt --manifest-path adapters/grid/Cargo.toml -p craft-grid-viewer -p craft-pdf-viewer -p craft-word-viewer -p craft-deck-viewer -p craft-vector-viewer --check
+      - run: rustfmt +1.95.0 --edition 2024 --check adapters/native/runtime.rs adapters/native/fonts.rs
       - run: cargo +1.95.0 clippy --manifest-path adapters/Cargo.toml --locked --target wasm32-unknown-unknown --no-deps -- -D warnings
       - run: npm run renderers:build
       - run: xvfb-run -a npm run test:rendering
       - run: xvfb-run -a npm run test:editing
       - run: xvfb-run -a npm run test:office
+      - run: xvfb-run -a npm run test:languages
+      - run: xvfb-run -a npm run test:graphics
       - run: xvfb-run -a npm run test:theme
       - run: npm run package
       - run: npm run packages:check
       - run: xvfb-run -a npm run test:installed
+      - run: npm run release:checksums
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -66,5 +70,32 @@ jobs:
         if: success() && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         with:
           name: craft-release-vsix-${{ github.ref_name }}
-          path: dist/vsix/*.vsix
-          retention-days: 90
+          path: |
+            dist/vsix/*.vsix
+            dist/vsix/SHA256SUMS
+          retention-days: 1
+
+  preview-release:
+    needs: rendering
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, '-beta.')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: craft-release-vsix-${{ github.ref_name }}
+          path: release-assets
+      - name: Verify installer checksums
+        working-directory: release-assets
+        run: sha256sum --check SHA256SUMS
+      - name: Publish installation preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          release_notes="docs/releases/${RELEASE_TAG}.md"
+          test -f "$release_notes"
+          gh release create "$RELEASE_TAG" release-assets/*.vsix release-assets/SHA256SUMS \
+            --verify-tag --prerelease --title "Craft for VS Code $RELEASE_TAG" --notes-file "$release_notes"

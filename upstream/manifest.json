@@ -126,13 +126,15 @@
     }
   },
   "redistribution": {
-    "approved": false,
+    "approved": true,
     "requirements": [
       "Remove restricted ArtCraft marks from modified distributed builds",
       "Inventory embedded assets and dependency licenses",
       "Retain applicable LICENSE, NOTICE and font notices",
       "Record artifact hashes after successful builds"
-    ]
+    ],
+    "reviewedOn": "2026-10-25",
+    "scope": "Independent installation/testing beta; restricted logo inclusions removed; per-renderer source/font notices retained; package hashes verified."
   },
   "blockers": [
     "Complex document fidelity and larger-file memory/startup validation pending.",

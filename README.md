@@ -4,11 +4,13 @@ An independent project to bring the Rust-based Crafting Apps into VS Code as doc
 
 Open, view, and edit spreadsheets, documents, presentations, and PDFs in editor tabs, using the existing Craft engines and WebAssembly interfaces. Files remain local to the VS Code session; no document processing service is required.
 
-**Status: independent XLSX, DOCX and PPTX editing extensions, plus native PDF editing.** Craft Spreadsheets, Craft Word and Craft PowerPoint and Craft PDF embed their engines' native interfaces, with VS Code Save/Save As, undo/redo, Revert and recovery supplied by one shared editing host. Native editors have no extra host header and follow VS Code’s light/dark theme live. Install any application independently or all four through Craft Suite; each extension contains only its own engine. See [editing behavior and limits](docs/editing.md).
+**Beta:** five independent native editors for XLSX, DOCX, PPTX, PDF, SVG and `.vectorcraft`. They share VS Code Save/Save As, Undo/Redo, Revert and recovery, and follow the editor's light/dark theme. Each extension contains only its own engine; Craft Suite is an optional pack. SVG visual editing is opt-in through **Reopen Editor With… → Craft Vector**.
 
-Build local installable archives with `npm run package` after building the renderers. See [packaging and installation](docs/packaging.md) for setup, VSIX paths and Suite development-install instructions. Nothing is published to Marketplace yet.
+Download the installers from [GitHub prereleases](https://github.com/yairkl/craft-vscode/releases). See [beta installation and known limits](docs/releases/v0.1.0-beta.1.md) and [packaging](docs/packaging.md). This is an independent community integration, not an official Storytold/ArtCraft product. Nothing is published to Marketplace yet.
 
-CI uploads VSIX archives only for successful version-tag pushes (`v*`), retained for 90 days. Failure screenshots expire after one day; successful branch/PR runs retain no artifacts. See [artifact retention](docs/packaging.md#ci-artifact-retention).
+Release tags build and test the VSIX files. Beta tags publish permanent GitHub prerelease assets with SHA-256 checksums. Transfer artifacts and failure screenshots expire after one day; successful branch/PR runs retain no artifacts.
+
+Hebrew/niqqud fallback is included in all five apps; see [language/font support](docs/languages.md). Actual Linux Remote SSH lifecycle checks are recorded in [the verification report](docs/verification/remote-ssh.md).
 
 ## Development
 
@@ -69,20 +71,17 @@ The extension will inherit each engine's file-format limitations. It does not pr
 - [Initial implementation plan](docs/plan.md): milestones, acceptance criteria, estimates, and risks.
 - [Contributing](CONTRIBUTING.md): project boundaries and development expectations.
 - [Upstream research](docs/upstream-research.md): inspected source pins, build entry points and embedding gaps.
-- [Read-only rendering](docs/rendering.md): build/run instructions, verification and current limits.
+- [Native rendering/editing](docs/rendering.md): build/run instructions, verification and current limits.
 - [Independent packaging](docs/packaging.md): extension structure, installation, archive verification and migration.
 
 ## Relationship to upstream
 
 This is an independent integration project, not an official ArtCraft product. Upstream names identify the applications being integrated. Restricted upstream branding will not be redistributed in modified builds.
 
-Related proposal: [Unified VS Code Extension for Crafting Apps, ArtCraft #2244](https://github.com/storytold/artcraft/issues/2244). It describes a CLI-first integration; this project's proposed primary path embeds WASM interfaces for interactive editing. CLI/MCP integration is a later capability.
+Related proposal: [Unified VS Code Extension for Crafting Apps, ArtCraft #2244](https://github.com/storytold/artcraft/issues/2244). It describes a CLI-first integration; this project's implemented primary path embeds WASM interfaces for interactive editing. CLI/MCP integration is a later capability.
 
 Other Office viewers already exist, including [cweijan's Office Viewer](https://marketplace.visualstudio.com/items?itemName=cweijan.vscode-office). This project's focus is integration with the Craft editing engines.
 
 ## License
 
 This repository is licensed under [MIT](LICENSE). Upstream code and bundled assets retain their own licenses and required notices. Generated VSIX files include their selected renderer and dependency notices; binaries stay out of git. The tracked smoke documents are original generated fixtures.
-
-
-Craft Vector adds independently installable SVG/native `.vectorcraft` editing through the same host. Use **Reopen Editor With… → Craft Vector**; SVG remains opt-in so normal text editing is available.

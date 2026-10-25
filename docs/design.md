@@ -1,8 +1,8 @@
 # Design: a shared Craft document host for VS Code
 
-Status: native XLSX/DOCX/PPTX editing lifecycle and read-only PDF rendering implemented; broader format/platform validation remains open. Updated: 2026-10-25.
+Status: native XLSX/DOCX/PPTX/PDF/SVG/VectorCraft editing lifecycle implemented; broader format/platform validation remains open. Updated: 2026-10-25.
 
-Spreadsheets, Word and PowerPoint use one `CustomEditorProvider` implementation with per-program native adapters; PDF uses `CustomReadonlyEditorProvider` with PdfCraft's rasterizer. The host owns serialization requests, persisted-save acknowledgments, undo/redo callbacks, backups and Revert. See [the implemented editing lifecycle](editing.md). The design below describes the broader target, including formats and capabilities still planned.
+All five applications use one `CustomEditorProvider` implementation with per-program native adapters. The host owns serialization requests, persisted-save acknowledgments, undo/redo callbacks, backups and Revert. See [the implemented editing lifecycle](editing.md). The design below describes the broader target, including formats and capabilities still planned.
 
 ## Goals and boundaries
 

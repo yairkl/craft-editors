@@ -44,7 +44,7 @@ The current bridges are useful reference code, but are insufficient for the prop
 - PdfCraft sends `saveAs`, but the callback completes when `postMessage` succeeds. There is no asynchronous persistence acknowledgment.
 - Dirty notifications report a boolean across the app's documents, not a specific VS Code document revision. Both apps can open multiple internal documents, which requires limiting or adapting for one resource per editor.
 
-These are source-derived constraints, not measured runtime failures. The first adapter should implement a direct VS Code transport, one-document session identity and explicit serialize/ack operations in a small tracked upstream patch. That boundary is now implemented for GridCraft in the adapter and tracked host-command patch; PDF remains read only.
+These are source-derived constraints, not measured runtime failures. The first adapter should implement a direct VS Code transport, one-document session identity and explicit serialize/ack operations in a small tracked upstream patch. That boundary is now implemented for GridCraft in the adapter and tracked host-command patch; PDF and the other adapters now share the editable lifecycle; see [editing](editing.md).
 
 ## Graphics, assets and CSP
 

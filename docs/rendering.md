@@ -1,33 +1,35 @@
-# Rendering and native spreadsheet UI
+# Native rendering and editing
 
-**Craft Spreadsheets**, **Craft Word** and **Craft PowerPoint** embed native editable UIs for XLSX, DOCX and PPTX; **Craft PDF** provides read-only PDF rendering. Both use pinned WASM engines inside the VS Code webview, with no local server. Each package contains only its own engine. See [editing lifecycle](editing.md) and [packaging](packaging.md).
+All five independently installable applications embed their Rust/egui interfaces in a VS Code webview: GridCraft (XLSX), WordCraft (DOCX), DeckCraft (PPTX), PdfCraft (PDF), and VectorCraft (SVG/native `.vectorcraft`). There is no local processing server or runtime engine download. Each package contains only its own renderer. See [editing](editing.md) and [packaging](packaging.md).
 
 ## Build and run
 
-Install Node.js 22+, Git, rustup and VS Code 1.102+. Then:
+Install Node.js 22+, Git, rustup and desktop VS Code 1.102+. Then:
 
 ```sh
 npm ci
 npm run upstream:fetch
-rustup toolchain install 1.95.0 --profile minimal --target wasm32-unknown-unknown
+rustup toolchain install 1.95.0 --profile minimal --component rustfmt,clippy --target wasm32-unknown-unknown
 cargo +1.95.0 install wasm-bindgen-cli --version 0.2.129 --locked
 npm run renderers:build
 npm run compile
 ```
 
-Source preparation applies the declared patches before Rust checks; the renderer build rechecks source revisions and accepts only clean upstream checkouts or the exact hash-verified patches declared in `upstream/manifest.json`. It uses `adapters/Cargo.lock`, including PdfCraft's vendored renderer patches and GridCraft's pinned `craft-libs` dependency. Optional `CRAFT_FONTS_DIR` input is deliberately rejected until it has its own source pin and audit. Trunk and wasm-opt are not used by these wrappers.
+Source preparation applies hash-verified integration patches before Rust checks. The build accepts only exact source revisions and declared patches. `adapters/Cargo.lock` pins dependencies, including shared Hayro/Krilla from `craft-libs` revision `a0916808…`, PdfCraft's remaining vendored patches, and DeckCraft/VectorCraft's egui/winit fork. Patches in dependency workspaces are not inherited, so the adapter workspace repeats them. Optional unpinned `CRAFT_FONTS_DIR` input is rejected. Trunk and wasm-opt are not used.
 
-Generated JavaScript/WASM stays in ignored `media/engines/`. `media/engines/build.json` records tool versions, input pins, lock hash, output sizes and SHA-256 hashes. The tracked `upstream/rendering-build.json` is the baseline from the verified local build, not a promise of identical bytes on every host. Binaries are not committed or downloaded at extension runtime.
+Generated JavaScript/WASM stays in ignored `media/engines/`. `build.json` records input pins, lock hash, tools, output sizes and SHA-256 hashes. `upstream/rendering-build.json` records a verified local baseline; identical bytes across build hosts are not promised.
 
-Run `npm run compile`, then select an individual Craft application or **All Craft extensions** in Run and Debug and press F5. In the development window, open the matching `integration-tests/fixtures/rendering.xlsx` or `rendering.pdf` normally. Each extension is the default for its own file type. Existing user editor associations take precedence; use **Reopen Editor With… → Configure default editor** to change a saved preference. The spreadsheet supports wheel scrolling, Shift-wheel horizontal scrolling and sheet selection. The PDF supports Previous/Next and 75–200% zoom.
+Select an individual application or **All Craft extensions** in Run and Debug and press F5. Open the matching original fixture from `integration-tests/fixtures/`. SVG/native drawings use **Reopen Editor With… → Craft Vector**; other formats are default editors unless the user has another association. Configure default editors through VS Code; no settings are overwritten automatically.
 
-## Adapter boundaries
+## Adapter interfaces
 
-`adapters/grid` loads XLSX into a single-document GridCraft session and drives its native `SheetApp` logic, input and UI using eframe Glow/WebGL. Ribbon, formula bar, cell editor, bottom worksheet tabs, context menus and editing dialogs remain interactive. VS Code owns file/window chrome. A minimal tracked upstream service hook routes file lifecycle and undo/redo commands to the host. No custom HTML worksheet tabs or dropdown are maintained. Immutable workbook snapshots bridge committed native edits to VS Code history; the adapter exposes explicit serialize, acknowledge, restore and replace operations.
+`adapters/grid` drives GridCraft's native ribbon, formula bar, cells, bottom worksheet tabs and dialogs. It preserves active cell drafts during autosave, with incomplete formulas deferred. Wheel scrolling, Shift-wheel horizontal scrolling and Ctrl-wheel zoom use the native grid; zoom steps are five percentage points.
 
-`adapters/pdf` uses PdfCraft's `PageRenderer` directly. It returns opaque RGBA pixels, which the webview paints into a 2D canvas. It exposes page rasterization only. The adapter workspace repeats the relevant PdfCraft Cargo patches because patches in a dependency workspace are not inherited.
+`adapters/{word,deck,pdf,vector}` share `adapters/native/runtime.rs` for startup, frame capture, edit/command events, host-driven serialization, exact-revision acknowledgment, history, replacement and theme changes. Each application owns its document model and snapshot details. PDF snapshots retain the native object graph and text/form drafts; Vector snapshots retain structurally shared model/history data and preserve SVG/native source format. PDF ordinary wheel scrolling navigates the viewport; Ctrl-wheel zooms. Word/slide/PDF page colors and artwork are preserved while native chrome follows VS Code light/dark. High contrast maps to native brightness rather than an exact high-contrast token palette.
 
-The extension reads through `workspace.fs`, limits source files to 32 MiB and transfers only the selected document's bytes. Its CSP permits local modules and WASM compilation, while local resource roots are limited to extension media. Rendering errors and a 60-second startup timeout are visible in the preview. Spreadsheet writes go through the host lifecycle described in [editing](editing.md); PDF has no write handler.
+VS Code owns file/window chrome and persistence. Restricted logo artwork is removed from modified builds. The shared HTML bootstrap adds no Save/Save As header. Native editing menus and tools remain available; advanced operations outside the beta's validated scope are documented in [the release notes](releases/v0.1.0-beta.1.md).
+
+The host reads through `workspace.fs`, caps source files at 32 MiB and transfers only the selected file's bytes. The CSP permits local modules/WASM and extension media. Startup failures and a 60-second timeout are visible in the editor. Save, cancellation, conflict checks, recovery and Revert are shared across all formats.
 
 ## Verification
 
@@ -39,35 +41,19 @@ npm run test:integration
 npm run test:rendering
 npm run test:editing
 npm run test:office
+npm run test:graphics
+npm run test:theme
+npm run package
+npm run packages:check
+npm run test:installed
 ```
 
-On headless Linux, prefix each VS Code suite with `xvfb-run -a`. The rendering suite uses Chromium's software WebGL backend for headless testing; normal launches use the available GPU backend. Both suites target VS Code 1.102.0. `VSCODE_EXECUTABLE_PATH` selects a different installed test host.
+Prefix VS Code suites with `xvfb-run -a` on headless Linux. Tests use actual WASM, software WebGL and disposable profiles; normal windows use the available GPU. The default host is VS Code 1.102.0; `VSCODE_EXECUTABLE_PATH` selects a current installed version.
 
-Rendering tests run the actual WASM engines and capture GPU/CPU output pixels. They verify:
+Coverage includes native worksheet tab clicks/formula values/canvas resize, PDF pages, source preservation, native Office text input, PDF page rotation and text drafts, SVG/native drawing edits, Ctrl-wheel zoom, native keyboard Undo/Redo, Save/reopen, Save As, Revert, recovery, live palettes, remote filesystem transport, failed/cancelled writes and spreadsheet autosave during typing. Each program is exercised independently and together. Archive tests verify entry points, renderer/dependency isolation, generated module imports, notices and source byte equality; installed tests open actual production VSIX files.
 
-- Basic cells and formula results; styled numbers/percentages, a merged heading and two worksheets.
-- Single-page and two-page PDFs with text and vector graphics.
-- Sheet/page navigation, PDF zoom and grid canvas resize.
-- Actual native bottom worksheet tab clicks and restoration of the saved active worksheet.
-- Cell/formula save round trips, history, recovery, cancellation and write failures in the editing suite.
-- Unchanged source bytes, a non-file filesystem provider with zero writes, and explicit errors for malformed XLSX/PDF input.
+Browser helpers and screenshot capture are test-only and excluded from VSIX files. `artifacts/rendering/*.png` contains original generated fixtures for local visual inspection. CI retains failure screenshots for one day and no successful branch artifacts. Beta tags publish installers/checksums after the full suite passes.
 
-Test-only browser checks and screenshot capture run only in `ExtensionMode.Test`. `artifacts/rendering/*.png` contains the captured documents; these are inspected locally. CI uploads screenshots only when the rendering job fails and retains them for one day. They are generated fixtures, not user documents. Screenshots from the initial four fixture renders were visually inspected on Linux.
+## Limits
 
-The transport/rendering suites run each extension alone and then together, asserting that standalone extensions contain no sibling renderer. The separate installed-package suite exercises actual VSIX installations in production mode without the browser test helper; it verifies default opening and rendered pixels. The archive check also verifies that the Suite contains no runtime code. See [packaging verification](packaging.md).
-
-## Current limits
-
-Validation covers the generated fixtures on Linux and a simulated non-file provider. Windows, macOS, actual WSL/SSH sessions, startup/memory benchmarks, large/malformed corpora, full font/script coverage and format fidelity remain release work. Embedded images/charts and complex documents have not been assessed. GridCraft may recalculate formulas while opening, as its native engine does. Rendering inherits upstream behavior and supported formats.
-
-PDF rendering runs synchronously in the webview, so expensive pages can temporarily delay its UI. Password entry is not implemented. Oversized rasters are rejected. WordCraft and DeckCraft native rendering and text-edit persistence are covered by the Office suite. Complex DOCX/PPTX fidelity remains unvalidated.
-
-Native application file/window chrome belongs to VS Code; PDF uses its own small viewing toolbar. Packaging now collects renderer-specific dependency inventories and available license/font notices. Reviewing that output and the remaining platform/fidelity limits is still required before public release; see [the asset inventory](../upstream/rendering-assets.md). Building local VSIX files does not publish an extension release.
-
-## Word and PowerPoint adapters
-
-`adapters/word` embeds WordCraft with egui 0.36.2; `adapters/deck` embeds DeckCraft with its upstream-pinned egui 0.37 fork. They use `adapters/native/runtime.rs` for runner setup, revision messages, serialization, saved acknowledgments and history. Each supplies model I/O, native UI calls and snapshot restoration. The shared TypeScript host is format-independent.
-
-The adapter workspace repeats required upstream Cargo patches: DeckCraft’s egui/winit fork and WordCraft’s newer Krilla fork (`17744430…`), which supplies the PDF print/optional-content APIs and also satisfies DeckCraft’s older PDF writer requirements. All are immutable git pins in `adapters/Cargo.lock`; no upstream lockfile is changed. Re-run all four renderers when changing these shared build inputs.
-
-wasm-bindgen may emit `snippets/` modules alongside its main wrapper. Packaging includes those modules only with their own engine; the build hashes every generated JS/WASM file and archive checks verify imported modules are present. This is required for DeckCraft’s text agent.
+Linux and simulated remote filesystems are covered; Actual Linux Remote SSH lifecycle tests pass; Windows/macOS, WSL and wider network/authentication scenarios still need beta testing. Browser-hosted VS Code is not supported. Complex document fidelity, large-file memory/startup, accessibility, IME/image clipboard, printing/signing, external pickers, combine/export and synchronized views need further validation. Password-protected files are outside this preview. Unserializable drafts defer autosave/backup and cannot be crash-recovered before they become serializable. Use original copies for beta testing.
