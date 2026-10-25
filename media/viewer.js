@@ -85,6 +85,7 @@ window.addEventListener('message', async ({ data }) => {
       for (const name of viewer.sheets()) {
         const option = document.createElement('option'); option.textContent = name; sheetSelect.append(option);
       }
+      sheetSelect.selectedIndex = viewer.active_sheet();
       document.getElementById('sheet-control').hidden = false;
     } else {
       viewer = new module.PdfViewer(bytes);

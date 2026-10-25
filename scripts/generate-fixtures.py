@@ -7,7 +7,7 @@ from zipfile import ZipFile, ZipInfo
 ROOT = Path(__file__).resolve().parents[1] / "integration-tests" / "fixtures"
 
 
-def spreadsheet(styled=False):
+def spreadsheet(styled=False, active_sheet=0):
     parts = {
         "[Content_Types].xml": '''<?xml version="1.0" encoding="UTF-8"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>''',
@@ -24,6 +24,7 @@ def spreadsheet(styled=False):
         parts["[Content_Types].xml"] = parts["[Content_Types].xml"].replace("</Types>", '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>')
         parts["xl/_rels/workbook.xml.rels"] = parts["xl/_rels/workbook.xml.rels"].replace("</Relationships>", '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/></Relationships>')
         parts["xl/workbook.xml"] = parts["xl/workbook.xml"].replace('name="Smoke"', 'name="Overview"').replace('</sheets>', '<sheet name="Notes" sheetId="2" r:id="rId3"/></sheets>')
+        parts["xl/workbook.xml"] = parts["xl/workbook.xml"].replace('<sheets>', f'<bookViews><workbookView activeTab="{active_sheet}"/></bookViews><sheets>')
         parts["xl/styles.xml"] = '''<?xml version="1.0" encoding="UTF-8"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="3"><font><sz val="11"/><name val="sans-serif"/></font><font><b/><sz val="18"/><color rgb="FFFFFFFF"/><name val="sans-serif"/></font><font><b/><sz val="11"/><name val="sans-serif"/></font></fonts><fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF185A8D"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE6EFF5"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf/></cellStyleXfs><cellXfs count="5"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="2" fillId="3" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="4" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="10" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>'''
         parts["xl/worksheets/sheet1.xml"] = '''<?xml version="1.0" encoding="UTF-8"?>
@@ -70,7 +71,7 @@ def pdf(multipage=False):
 if __name__ == "__main__":
     check = "--check" in sys.argv
     ROOT.mkdir(parents=True, exist_ok=True)
-    for name, contents in {"minimal.xlsx": spreadsheet(), "minimal.pdf": pdf(), "rendering.xlsx": spreadsheet(True), "rendering.pdf": pdf(True)}.items():
+    for name, contents in {"minimal.xlsx": spreadsheet(), "minimal.pdf": pdf(), "rendering.xlsx": spreadsheet(True), "rendering-active.xlsx": spreadsheet(True, 1), "rendering.pdf": pdf(True)}.items():
         path = ROOT / name
         if check:
             if not path.exists() or path.read_bytes() != contents:

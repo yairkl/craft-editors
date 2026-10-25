@@ -6,6 +6,8 @@ export async function verifyPreview(viewer, format, canvas, units) {
   await frame();
   if (format === 'xlsx') {
     const signature = viewer.content_signature();
+    const initialSheet = viewer.active_sheet();
+    check(document.getElementById('sheet').selectedIndex === initialSheet, 'Sheet selector disagrees with the rendered active sheet');
     const label = viewer.cell_text(0, 0, 0);
     check(['Craft smoke fixture', 'Quarterly overview'].includes(label), 'Expected fixture text was not parsed');
     check(viewer.cell_text(0, label === 'Quarterly overview' ? 5 : 2, 1) === '84', 'Calculated cell value is wrong');
@@ -42,6 +44,8 @@ export async function verifyPreview(viewer, format, canvas, units) {
       select.selectedIndex = 0; select.dispatchEvent(new Event('change'));
       await frame();
       check(viewer.active_sheet() === 0, 'Return to first sheet failed');
+      select.selectedIndex = initialSheet; select.dispatchEvent(new Event('change'));
+      await frame();
     }
     check(viewer.content_signature() === signature, 'Navigation changed workbook content');
     // CSS resize must reach the real eframe drawing surface.

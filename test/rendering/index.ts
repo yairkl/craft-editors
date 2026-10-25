@@ -12,7 +12,7 @@ export async function run(): Promise<void> {
   const api = await extension.activate();
   const artifacts = path.join(extension.extensionPath, 'artifacts', 'rendering');
   await mkdir(artifacts, { recursive: true });
-  for (const name of ['minimal.xlsx', 'minimal.pdf', 'rendering.xlsx', 'rendering.pdf']) {
+  for (const name of ['minimal.xlsx', 'minimal.pdf', 'rendering.xlsx', 'rendering-active.xlsx', 'rendering.pdf']) {
     const format = name.endsWith('xlsx') ? 'xlsx' : 'pdf';
     const uri = vscode.Uri.joinPath(extension.extensionUri, 'integration-tests', 'fixtures', name);
     const before = await vscode.workspace.fs.readFile(uri);
