@@ -75,6 +75,19 @@ export async function run(): Promise<void> {
     await waitFor(() => copied.token !== old);
     await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
     if (descriptor.format === 'docx') {
+      const focusUri = vscode.Uri.joinPath(directory, 'undo-focus.docx');
+      await vscode.workspace.fs.writeFile(focusUri, original);
+      let focusDoc = await open(api, focusUri);
+      const initialText = await focusDoc.request('test:text');
+      await focusDoc.request('test:paste', { text: 'Undo focus ' });
+      await focusDoc.request('test:history', { redo: false });
+      await waitText(focusDoc, initialText);
+      assert.ok(String(await focusDoc.request('test:type-focused', { text: 'בדיקה' })).includes('בדיקה'), 'Typing after Undo needs no click');
+      assert.ok(await vscode.workspace.save(focusUri));
+      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+      focusDoc = await open(api, focusUri);
+      assert.ok(String(await focusDoc.request('test:text')).includes('בדיקה'));
+      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
       const hebrew = await open(api, fixture('hebrew.docx'));
       assert.ok(String(await hebrew.request('test:text')).includes('שָׁלוֹם'));
       await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
