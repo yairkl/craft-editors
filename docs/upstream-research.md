@@ -1,6 +1,6 @@
 # Upstream embedding research
 
-Inspected 2026-10-25. Source inspection only: neither WASM application has been built or run in a VS Code webview here. The machine initially has Node.js 22.17.1 and npm 10.9.2, but no `rustc`. Machine-readable pins and outstanding gates are in [the manifest](../upstream/manifest.json).
+Inspected 2026-10-25. The initial research below describes the full upstream application shells. A subsequent implementation built separate read-only adapters from these pins and verified actual rendering in VS Code; see [rendering](rendering.md). The full apps and editing bridges remain unvalidated. Rust 1.95.0 was installed in an isolated build directory. Machine-readable pins and outstanding gates are in [the manifest](../upstream/manifest.json).
 
 ## Pinned inputs
 

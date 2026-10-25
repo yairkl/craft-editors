@@ -1,12 +1,12 @@
 # Initial implementation plan
 
-Status: M0 in progress. Updated: 2026-10-25. No full milestone is complete.
+Status: read-only rendering increment verified; M0/M1 release and editing gates remain open. Updated: 2026-10-25.
 
 ## Current implementation
 
-The TypeScript extension registers an optional read-only XLSX/PDF integration probe. A session-scoped handshake transfers binary data and verifies its SHA-256 digest in the real webview. Unit tests cover invalid/stale/duplicate messages and integrity mismatches; VS Code integration tests cover both fixtures, non-file URI transport, cancellation, size limits and unchanged source files. This is transport validation, not a document viewer or editing prototype.
+The extension registers optional read-only XLSX/PDF previews as well as the transport probe. Actual GridCraft grid rendering and PdfCraft page rasterization run as WASM inside VS Code. Generated styled/multi-sheet and multi-page fixtures pass navigation, zoom/resize, source-preservation, malformed-input and non-file URI tests. Spreadsheet input filtering is checked against attempted edits and an unchanged workbook hash. Captured output was visually inspected. See [rendering validation and limits](rendering.md).
 
-GridCraft and PdfCraft source revisions are pinned in `upstream/manifest.json`. A source-fetch command checks out those exact revisions without replacing dirty work. Rust 1.95.0 / Trunk 0.21.14 are recorded candidates, but WASM builds, tool-download pins and artifacts are still unverified. See [the source inspection](upstream-research.md) for the bridge and licensing constraints.
+GridCraft and PdfCraft source revisions are pinned in `upstream/manifest.json`. Rust 1.95.0, wasm-bindgen 0.2.129 and the adapter Cargo lockfile are verified for the read-only wrappers. These use direct Cargo builds, not Trunk or full upstream app builds. Output sizes/hashes are recorded in `upstream/rendering-build.json`; transitive redistribution notices and wider-platform validation remain open.
 
 ## Scope and estimates
 
@@ -26,7 +26,7 @@ Budget approximately 3–5 months for one full-time engineer, including integrat
 ## M0 — Establish reproducible inputs
 
 - [x] Recheck upstream embedding APIs and contributor requirements.
-- [ ] Pin source revisions and toolchains for GridCraft and PdfCraft.
+- [x] Pin source revisions and toolchains for GridCraft and PdfCraft rendering adapters.
 - [ ] Record licensing, required assets/fonts, and restricted branding.
 - [x] Collect redistributable or generated document fixtures.
 - [x] Scaffold TypeScript extension tooling and meaningful CI checks.
@@ -35,9 +35,9 @@ Done when a fresh checkout has documented build inputs and can produce the first
 
 ## M1 — Two-app feasibility spike
 
-- [ ] Register optional custom editors for XLSX and PDF.
-- [ ] Load both apps without a desktop process or localhost server.
-- [ ] Pass document bytes through the VS Code bridge.
+- [x] Register optional custom editors for XLSX and PDF.
+- [x] Load both rendering adapters without a desktop process or localhost server.
+- [x] Pass document bytes through the VS Code bridge.
 - [ ] Validate graphics, fonts, CSP, keyboard focus, clipboard, and resizing.
 - [ ] Exercise a remote-workspace document.
 - [ ] Measure artifact size, startup latency, and memory on recorded hardware.
@@ -97,4 +97,4 @@ CLI/MCP integration, multiple synchronized editable views, browser-hosted VS Cod
 
 ## Immediate next task
 
-Finish M0 by validating the pinned WASM builds, recording auxiliary tool versions and artifact hashes, and inventorying compiled assets/licenses. Then implement a small GridCraft direct-host adapter: one document per session, host-triggered serialization and explicit persisted-save acknowledgment. Prove open → edit → export to a separate file → reopen before enabling original-file Save. The public repository and extension/CI foundation now exist.
+Keep the rendering increment read-only for user verification. Broaden representative-document/platform coverage and complete the distribution inventory before release. Editing follows as a separate phase: add explicit revision tracking, host-triggered serialization and persisted-save acknowledgment, then prove open → edit → export to a separate file → reopen before enabling original-file Save. Actual WSL/SSH and platform checks, performance measurements and editable lifecycle acceptance criteria remain incomplete.

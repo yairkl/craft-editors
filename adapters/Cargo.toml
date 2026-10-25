@@ -1,0 +1,19 @@
+[workspace]
+resolver = "3"
+members = ["grid", "pdf"]
+
+[profile.release]
+opt-level = "s"
+lto = "thin"
+codegen-units = 8
+strip = "debuginfo"
+
+[patch.crates-io]
+hayro = { path = "../upstream/checkouts/pdfcraft/vendor/hayro" }
+hayro-interpret = { path = "../upstream/checkouts/pdfcraft/vendor/hayro-interpret" }
+hayro-syntax = { path = "../upstream/checkouts/pdfcraft/vendor/hayro-syntax" }
+hayro-cmap = { path = "../upstream/checkouts/pdfcraft/vendor/hayro-cmap" }
+hayro-postscript = { path = "../upstream/checkouts/pdfcraft/vendor/hayro-postscript" }
+hayro-jbig2 = { path = "../upstream/checkouts/pdfcraft/vendor/hayro-jbig2" }
+lopdf = { path = "../upstream/checkouts/pdfcraft/vendor/lopdf" }
+vello_common = { path = "../upstream/checkouts/pdfcraft/vendor/vello_common" }

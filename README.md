@@ -4,7 +4,7 @@ An independent project to bring the Rust-based Crafting Apps into VS Code as doc
 
 Open, view, and edit spreadsheets, documents, presentations, and PDFs in editor tabs, using the existing Craft engines and WebAssembly interfaces. Files remain local to the VS Code session; no document processing service is required.
 
-**Status: development foundation.** A TypeScript extension provides an optional, read-only integration probe for XLSX and PDF files. It verifies binary transfer to a VS Code webview; Craft rendering and editing are not connected yet. The editing features below remain planned. Working repository name: `craft-vscode`.
+**Status: read-only XLSX/PDF rendering.** Craft Preview renders spreadsheets with GridCraft's grid and PDFs with PdfCraft's page renderer inside VS Code. Sheet switching, PDF page navigation and PDF zoom are available. Editing, DOCX and PPTX remain planned. Working repository name: `craft-vscode`.
 
 ## Development
 
@@ -20,9 +20,19 @@ npm run test:integration
 
 Integration tests download VS Code 1.102.0 and run in its Extension Development Host. Linux headless environments need `xvfb-run -a npm run test:integration`. Set `VSCODE_EXECUTABLE_PATH` to test a separately installed VS Code executable instead.
 
-Open this repository in VS Code and press F5 to launch the development extension. In the new window, open a generated file from `integration-tests/fixtures`, run **Reopen Editor With…**, and choose **Craft Integration Probe (development)**. It reports whether the file reached the webview intact. It does not display the document or modify it. The probe accepts files up to 32 MiB, uses VS Code filesystem APIs, and remains an optional editor.
+Build the WASM renderers before launching the preview:
 
-To fetch the exact inspected upstream sources, run `npm run upstream:fetch`. See [upstream setup](upstream/README.md) and [source research](docs/upstream-research.md) for toolchain candidates, licensing and adapter requirements. Rust/WASM builds are separate from the extension build and have not been validated yet.
+```sh
+npm run upstream:fetch
+rustup toolchain install 1.95.0 --profile minimal --target wasm32-unknown-unknown
+cargo +1.95.0 install wasm-bindgen-cli --version 0.2.129 --locked
+npm run renderers:build
+npm run test:rendering
+```
+
+Open this repository in VS Code and press F5 to launch the development extension. In the new window, open `integration-tests/fixtures/rendering.xlsx` or `rendering.pdf`, run **Reopen Editor With…**, and choose **Craft Preview (read only)**. Files up to 32 MiB are read through VS Code filesystem APIs. **Craft Integration Probe (development)** remains available as a separate transport diagnostic.
+
+See [rendering setup and verification](docs/rendering.md) for the adapter boundaries, tested behavior and remaining limits. Generated binaries stay out of git and are built locally or in CI; they are not downloaded at extension runtime.
 
 ## Initial scope
 
@@ -53,6 +63,7 @@ The extension will inherit each engine's file-format limitations. It does not pr
 - [Initial implementation plan](docs/plan.md): milestones, acceptance criteria, estimates, and risks.
 - [Contributing](CONTRIBUTING.md): project boundaries and development expectations.
 - [Upstream research](docs/upstream-research.md): inspected source pins, build entry points and embedding gaps.
+- [Read-only rendering](docs/rendering.md): build/run instructions, verification and current limits.
 
 ## Relationship to upstream
 

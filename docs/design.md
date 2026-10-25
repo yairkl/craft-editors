@@ -1,8 +1,8 @@
 # Design: a shared Craft document host for VS Code
 
-Status: proposed architecture; host/webview binary transport validated, engine embedding pending. Updated: 2026-10-25.
+Status: read-only engine rendering validated; editing architecture remains proposed. Updated: 2026-10-25.
 
-The initial implementation is an optional `CustomReadonlyEditorProvider` transport probe, with no mutation UI or engine. It checks binary transfer and source-file preservation before the editable provider is introduced. The diagnostic protocol is intentionally separate from the proposed editing protocol below. See [current upstream constraints](upstream-research.md).
+The current implementation uses optional `CustomReadonlyEditorProvider` previews: a small Rust/WASM wrapper draws GridCraft's grid, and another uses PdfCraft's page rasterizer. Upstream app shells, editing controls and command APIs are not exposed. The separate transport probe remains available. Both diagnostic/rendering messages are intentionally separate from the proposed editing protocol below. See [the rendering implementation](rendering.md) and [upstream editing constraints](upstream-research.md).
 
 ## Goals and boundaries
 

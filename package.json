@@ -1,7 +1,7 @@
 {
   "name": "craft-vscode",
   "displayName": "Craft for VS Code",
-  "description": "Development foundation for embedding Craft document editors in VS Code.",
+  "description": "Read-only GridCraft spreadsheet and PdfCraft PDF previews in VS Code.",
   "version": "0.0.1",
   "private": true,
   "publisher": "craft-vscode-dev",
@@ -30,6 +30,19 @@
   "contributes": {
     "customEditors": [
       {
+        "viewType": "craft.preview",
+        "displayName": "Craft Preview (read only)",
+        "selector": [
+          {
+            "filenamePattern": "*.xlsx"
+          },
+          {
+            "filenamePattern": "*.pdf"
+          }
+        ],
+        "priority": "option"
+      },
+      {
         "viewType": "craft.integrationProbe",
         "displayName": "Craft Integration Probe (development)",
         "selector": [
@@ -52,7 +65,9 @@
     "fixtures": "python3 scripts/generate-fixtures.py",
     "fixtures:check": "python3 scripts/generate-fixtures.py --check",
     "upstream:fetch": "node scripts/fetch-upstream.mjs",
-    "vscode:prepublish": "npm run compile"
+    "vscode:prepublish": "npm run compile",
+    "renderers:build": "node scripts/build-renderers.mjs",
+    "test:rendering": "npm run compile && node scripts/test-rendering.cjs"
   },
   "devDependencies": {
     "@types/node": "22.20.5",

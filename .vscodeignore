@@ -12,3 +12,5 @@ upstream/**
 out/test/**
 **/*.map
 tsconfig.json
+adapters/**
+media/rendering-checks.js

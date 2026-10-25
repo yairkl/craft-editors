@@ -2,6 +2,7 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import * as vscode from 'vscode';
 import { ProbeSession } from '../protocol/probe';
 import { ProbeDocument, readProbeDocument } from './document';
+import { RenderingProvider, type RenderResult } from './rendering';
 
 export interface ProbeResult {
   format: 'xlsx' | 'pdf';
@@ -86,10 +87,14 @@ function probeHtml(webview: vscode.Webview, media: vscode.Uri, sessionId: string
 </main><script nonce="${nonce}" src="${script}"></script></body></html>`;
 }
 
-export function activate(context: vscode.ExtensionContext): { onDidProbe: vscode.Event<ProbeResult> } {
+export function activate(context: vscode.ExtensionContext): { onDidProbe: vscode.Event<ProbeResult>; onDidRender: vscode.Event<RenderResult> } {
   const provider = new ProbeProvider(context.extensionUri);
+  const rendering = new RenderingProvider(context);
   context.subscriptions.push(provider, vscode.window.registerCustomEditorProvider(
     'craft.integrationProbe', provider, { supportsMultipleEditorsPerDocument: false },
   ));
-  return { onDidProbe: provider.onDidProbe };
+  context.subscriptions.push(rendering, vscode.window.registerCustomEditorProvider(
+    'craft.preview', rendering, { supportsMultipleEditorsPerDocument: false },
+  ));
+  return { onDidProbe: provider.onDidProbe, onDidRender: rendering.onDidRender };
 }

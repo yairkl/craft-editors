@@ -1,13 +1,15 @@
 {
   "schemaVersion": 1,
   "inspectedOn": "2026-10-25",
-  "status": "source-inspected; WASM builds and VS Code embedding not yet validated",
+  "status": "Read-only GridCraft/PdfCraft WASM adapters built and verified in VS Code 1.102.0 on Linux; editing and full app embedding pending",
   "toolchain": {
     "rust": "1.95.0",
     "rustTarget": "wasm32-unknown-unknown",
     "trunk": "0.21.14",
-    "rustPinStatus": "candidate; meets inspected workspace minimum versions, not build-tested",
-    "trunkSource": "https://github.com/storytold/craft-common-actions/blob/2b4eb2c6d94880d926c934ec3736c92cde30086b/.github/workflows/release.yml"
+    "rustPinStatus": "validated for the locked read-only adapters",
+    "trunkSource": "https://github.com/storytold/craft-common-actions/blob/2b4eb2c6d94880d926c934ec3736c92cde30086b/.github/workflows/release.yml",
+    "wasmBindgen": "0.2.129",
+    "trunkStatus": "not used by read-only adapters; full-app build candidate only"
   },
   "applications": [
     {
@@ -23,7 +25,13 @@
       "renderer": "wgpu: WebGPU or WebGL2; ?webgl forces GL",
       "bridgeSource": "apps/gridcraft-web/src/host.rs",
       "buildCommand": "trunk build --release",
-      "artifact": null
+      "artifact": null,
+      "renderingAdapter": {
+        "crate": "adapters/grid",
+        "buildCommand": "npm run renderers:build",
+        "verification": "npm run test:rendering",
+        "baseline": "upstream/rendering-build.json"
+      }
     },
     {
       "id": "pdfcraft",
@@ -38,7 +46,13 @@
       "renderer": "eframe Glow (WebGL), explicitly selected by source",
       "bridgeSource": "apps/pdfcraft-web/src/main.rs",
       "buildCommand": "trunk build --release",
-      "artifact": null
+      "artifact": null,
+      "renderingAdapter": {
+        "crate": "adapters/pdf",
+        "buildCommand": "npm run renderers:build",
+        "verification": "npm run test:rendering",
+        "baseline": "upstream/rendering-build.json"
+      }
     }
   ],
   "optionalBuildInputs": {
@@ -57,10 +71,11 @@
     ]
   },
   "blockers": [
-    "Rust toolchain absent in initial environment",
     "Existing same-origin iframe bridges do not implement VS Code acquisition or host-triggered serialization",
     "Existing bridge save delivery lacks persisted-revision acknowledgment",
     "No host-driven undo/redo or per-document revision messages",
-    "Trunk-generated bootstrap/CSP and VS Code asset loading remain untested"
+    "Trunk-generated bootstrap/CSP and VS Code asset loading remain untested",
+    "Full platform, real WSL/SSH and complex document/fidelity coverage pending",
+    "Transitive distribution notices and font/license inventory incomplete"
   ]
 }

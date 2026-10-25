@@ -1,0 +1,27 @@
+{
+  "rust": "rustc 1.95.0 (59807616e 2026-04-14)",
+  "wasmBindgen": "0.2.129",
+  "adapterLockSha256": "6fcd7f42ca9253516c6938bae66bb0a11dcc1c6ab3ece68a47c75a69ffb210ae",
+  "sources": {
+    "gridcraft": "17b9f6ff0125209fe707efc919690632ff49cb0b",
+    "pdfcraft": "418ac6a2af49b7ac2fed44ca2cae8d5d1d2cec0d"
+  },
+  "artifacts": {
+    "grid/viewer.js": {
+      "bytes": 76921,
+      "sha256": "9fcbeee2fcf50df702d2b55f4a2e673c7919b5b1680b6911dc605122ea1049b3"
+    },
+    "grid/viewer_bg.wasm": {
+      "bytes": 16399310,
+      "sha256": "e4ee83ab89695b1b86cacc8411dfba9a9d7d2e47a643a9406b6ea3614d874619"
+    },
+    "pdf/viewer.js": {
+      "bytes": 7545,
+      "sha256": "19d6157e37a8a6de5b15ed1d03bf2c2e212e96ee94e4d8d0e84eefc207bae051"
+    },
+    "pdf/viewer_bg.wasm": {
+      "bytes": 5689609,
+      "sha256": "e3aaf116969d1226356df516785dc181e34f101cbecf55cf2415ede892bb75c3"
+    }
+  }
+}

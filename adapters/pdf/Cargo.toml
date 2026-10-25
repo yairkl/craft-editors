@@ -1,0 +1,12 @@
+[package]
+name = "craft-pdf-viewer"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+pdfcraft-render = { path = "../../upstream/checkouts/pdfcraft/crates/render" }
+wasm-bindgen = "=0.2.129"
