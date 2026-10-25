@@ -518,6 +518,18 @@ impl GridViewer {
         }
         Ok(array)
     }
+    pub fn zoom_percent(&self) -> Result<u16, JsValue> {
+        let state = self
+            .state
+            .try_borrow()
+            .map_err(|_| JsValue::from_str("Renderer busy"))?;
+        Ok(state
+            .app
+            .session
+            .active()
+            .and_then(|doc| doc.wb.active())
+            .map_or(100, |sheet| sheet.zoom))
+    }
     pub fn active_sheet(&self) -> Result<usize, JsValue> {
         let state = self
             .state

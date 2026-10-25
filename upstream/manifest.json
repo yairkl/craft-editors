@@ -35,8 +35,8 @@
       "patches": [
         {
           "path": "upstream/patches/gridcraft-host-commands.patch",
-          "sha256": "b993b7aaea6a78ab4635275057c70fe07c939767cbe8d42e5520b1dcf25d893c",
-          "purpose": "Delegate native file lifecycle and committed undo/redo to VS Code without acknowledging writes early.",
+          "sha256": "07306cc27a7f3ea71a680b70a3f28c52065bd4649841bbea3b085ff4c8470bf0",
+          "purpose": "Delegate native file lifecycle and committed undo/redo to VS Code without acknowledging writes early. Use consistent five-percentage-point spreadsheet zoom steps.",
           "removalCondition": "Remove when the pinned upstream Services interface supplies the equivalent host-command hook."
         }
       ]

@@ -15,3 +15,5 @@ This is an early editing preview. Verify complex workbooks on copies: charts, im
 Autosave preserves ongoing cell entry. Incomplete formulas defer saving until they are complete; the editor stays active and the file remains dirty.
 
 The native interface follows VS Code’s light/dark theme on opening and while the theme changes. Theme changes do not modify document formatting or mark the file dirty.
+
+Spreadsheet zoom uses five percentage points per Ctrl+wheel notch, zoom button click, or Ctrl+Alt+plus/minus shortcut (10–400%). The slider and percentage dialog allow an exact zoom.
