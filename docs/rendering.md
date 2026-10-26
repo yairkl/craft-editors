@@ -23,7 +23,7 @@ Select an individual application or **All Craft extensions** in Run and Debug an
 
 ## Adapter interfaces
 
-`adapters/grid` drives GridCraft's native ribbon, formula bar, cells, bottom worksheet tabs and dialogs. It preserves active cell drafts during autosave, with incomplete formulas deferred. Wheel scrolling, Shift-wheel horizontal scrolling and Ctrl-wheel zoom use the native grid; zoom steps are five percentage points.
+`adapters/grid` drives GridCraft's native ribbon, formula bar, cells, bottom worksheet tabs and dialogs. It preserves active cell drafts during autosave, with incomplete formulas deferred. Ordinary wheel and Shift-wheel scrolling remain native. The integration adapter handles Ctrl+wheel over the worksheet in five-percentage-point steps; native pinch gestures, buttons and keyboard shortcuts retain upstream behavior.
 
 `adapters/{word,deck,pdf,vector}` share `adapters/native/runtime.rs` for startup, frame capture, edit/command events, host-driven serialization, exact-revision acknowledgment, history, replacement and theme changes. Each application owns its document model and snapshot details. PDF snapshots retain the native object graph and text/form drafts; Vector snapshots retain structurally shared model/history data and preserve SVG/native source format. PDF ordinary wheel scrolling navigates the viewport; Ctrl-wheel zooms. Word/slide/PDF page colors and artwork are preserved while native chrome follows VS Code light/dark. High contrast maps to native brightness rather than an exact high-contrast token palette.
 

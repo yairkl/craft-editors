@@ -16,6 +16,6 @@ Autosave preserves ongoing cell entry. Incomplete formulas defer saving until th
 
 The native interface follows VS Code’s light/dark theme on opening and while the theme changes. Theme changes do not modify document formatting or mark the file dirty.
 
-Spreadsheet zoom uses five percentage points per Ctrl+wheel notch, zoom button click, or Ctrl+Alt+plus/minus shortcut (10–400%). The slider and percentage dialog allow an exact zoom.
+Ctrl+wheel over the worksheet uses five-percentage-point steps in the VS Code adapter (10–400%). Native zoom buttons and Ctrl+Alt+plus/minus shortcuts retain GridCraft’s original ten-point behavior. Pinch gestures remain native. The slider and percentage dialog allow an exact zoom.
 
 CSV uses the native delimiter detector and writer, including quoted fields, multiline text and UTF-8. CSV stores one sheet of values only: formatting and formulas are not retained as workbook features. Saves with additional sheets are rejected to avoid dropping them. Save As keeps the source extension; XLSX/CSV conversion is not offered by the host. Native CSV value inference can normalize numeric/date fields.

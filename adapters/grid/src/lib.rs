@@ -6,6 +6,7 @@ use sha2::Digest;
 use std::{cell::RefCell, collections::BTreeMap, rc::Rc, sync::Arc};
 use wasm_bindgen::prelude::*;
 include!("../../native/fonts.rs");
+mod wheel;
 
 #[derive(Clone)]
 struct Snapshot {
@@ -57,6 +58,7 @@ impl Snapshot {
     }
 }
 struct State {
+    wheel: wheel::WheelZoom,
     format: String,
     app: SheetApp,
     context: egui::Context,
@@ -257,7 +259,7 @@ impl State {
 }
 struct GridShell(Rc<RefCell<State>>);
 impl eframe::App for GridShell {
-    fn raw_input_hook(&mut self, _ctx: &egui::Context, raw: &mut egui::RawInput) {
+    fn raw_input_hook(&mut self, ctx: &egui::Context, raw: &mut egui::RawInput) {
         if let Ok(mut state) = self.0.try_borrow_mut() {
             for event in &raw.events {
                 if let egui::Event::Screenshot { image, .. } = event
@@ -276,6 +278,73 @@ impl eframe::App for GridShell {
                     );
                 }
             }
+            // Intercept only physical Ctrl/Cmd+wheel over the worksheet. Ordinary
+            // scrolling, pinch Zoom events, native buttons and shortcuts stay native.
+            let mut pointer = ctx.input(|input| input.pointer.hover_pos());
+            let (line_points, zoom_modifier) = ctx.options(|o| {
+                (
+                    o.input_options.line_scroll_speed,
+                    o.input_options.zoom_modifier,
+                )
+            });
+            let now = raw.time.unwrap_or_else(|| ctx.input(|input| input.time));
+            raw.events.retain(|event| {
+                if let egui::Event::PointerMoved(position) = event {
+                    pointer = Some(*position);
+                }
+                if matches!(event, egui::Event::PointerGone) {
+                    pointer = None;
+                }
+                if let egui::Event::MouseWheel {
+                    unit,
+                    delta,
+                    modifiers,
+                    ..
+                } = event
+                {
+                    let over_grid = state
+                        .app
+                        .grid
+                        .rect
+                        .is_some_and(|rect| pointer.is_some_and(|p| rect.contains(p)));
+                    if modifiers.matches_any(zoom_modifier)
+                        && over_grid
+                        && state.app.text_box_editor.is_none()
+                    {
+                        let notches = match unit {
+                            egui::MouseWheelUnit::Line => delta.x + delta.y,
+                            egui::MouseWheelUnit::Point => (delta.x + delta.y) / line_points,
+                            egui::MouseWheelUnit::Page => {
+                                (delta.x + delta.y) * ctx.content_rect().height() / line_points
+                            }
+                        };
+                        state.observe();
+                        if let Some(doc) = state.app.session.active() {
+                            let place = (doc.uid, doc.wb.active_sheet);
+                            let zoom = doc.wb.active().map_or(100, |sheet| sheet.zoom);
+                            let next = state.wheel.turn(place, now, notches, zoom);
+                            if next != zoom {
+                                let _ = state
+                                    .app
+                                    .session
+                                    .run("view.zoom", serde_json::json!({"percent": next}));
+                                // Like selecting a worksheet, zoom is view state, not a
+                                // new document edit. Keep the current revision's model current.
+                                let token = state.token;
+                                let wb = state.app.session.active().map(|doc| doc.wb.clone());
+                                if let (Some(snapshot), Some(wb)) =
+                                    (state.snapshots.get_mut(&token), wb)
+                                {
+                                    snapshot.wb = wb;
+                                }
+                                ctx.request_repaint();
+                            }
+                        }
+                        return false;
+                    }
+                }
+                true
+            });
             state.app.raw_input_hook(raw);
         }
         // Files are opened by VS Code, never into a second internal workbook.
@@ -338,6 +407,7 @@ impl GridViewer {
             .ok_or_else(|| JsValue::from_str("No workbook."))?;
         let snapshots = BTreeMap::from([(0, Snapshot::capture(doc, &app))]);
         let state = Rc::new(RefCell::new(State {
+            wheel: wheel::WheelZoom::default(),
             format,
             app,
             commands,

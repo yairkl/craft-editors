@@ -48,6 +48,7 @@ jobs:
       - run: cargo +1.95.0 fmt --manifest-path adapters/grid/Cargo.toml -p craft-grid-viewer -p craft-pdf-viewer -p craft-word-viewer -p craft-deck-viewer -p craft-vector-viewer --check
       - run: rustfmt +1.95.0 --edition 2024 --check adapters/native/runtime.rs adapters/native/fonts.rs
       - run: cargo +1.95.0 clippy --manifest-path adapters/Cargo.toml --locked --target wasm32-unknown-unknown --no-deps -- -D warnings
+      - run: rustc +1.95.0 --edition 2024 --test adapters/grid/src/wheel.rs -o "$RUNNER_TEMP/wheel-tests" && "$RUNNER_TEMP/wheel-tests"
       - run: npm run renderers:build
       - run: xvfb-run -a npm run test:rendering
       - run: xvfb-run -a npm run test:editing

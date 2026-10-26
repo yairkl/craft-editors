@@ -17,20 +17,48 @@ export async function verifyPreview(viewer, format, canvas, units) {
       const { clickCanvas } = await import('./editing-checks.js');
       await clickCanvas(canvas, 350, 300);
       const initialZoom = viewer.zoom_percent();
+      const initialToken = viewer.serialize(false).token;
       canvas.dispatchEvent(new KeyboardEvent('keydown', { key: 'Control', code: 'ControlLeft', ctrlKey: true, bubbles: true }));
       await frame();
-      const wheel = async deltaY => {
+      const wheel = async (deltaY, deltaMode = 1, ctrlKey = true, x = 350, y = 300) => {
         const bounds = canvas.getBoundingClientRect();
         canvas.dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true,
-          clientX: bounds.left + 350, clientY: bounds.top + 300,
-          ctrlKey: true, deltaMode: 1, deltaY }));
+          clientX: bounds.left + x, clientY: bounds.top + y,
+          ctrlKey, deltaMode, deltaY }));
         await new Promise(resolve => setTimeout(resolve, 600));
       };
       await wheel(-1);
       check(viewer.zoom_percent() === initialZoom + 5, `Wheel zoom jumped to ${viewer.zoom_percent()} from ${initialZoom}`);
       await wheel(1);
       check(viewer.zoom_percent() === initialZoom, 'Wheel zoom out did not reverse the fine step');
+      await wheel(-0.25); await wheel(-0.25);
+      check(viewer.zoom_percent() === initialZoom, 'Partial wheel events must accumulate before stepping');
+      await wheel(-0.25);
+      check(viewer.zoom_percent() === initialZoom + 5, 'Fractional line input must make one fine step');
+      await wheel(-0.25); await wheel(1);
+      check(viewer.zoom_percent() === initialZoom, 'Fractional wheel steps must reverse');
+      await wheel(-8, 0); // egui's web default: eight logical points per line.
+      check(viewer.zoom_percent() === initialZoom + 5, 'Pixel-mode Ctrl+wheel must use the same fine step');
+      await wheel(8, 0);
+      check(viewer.zoom_percent() === initialZoom, 'Pixel-mode zoom must reverse');
+      check(viewer.serialize(false).token === initialToken, 'Adapter zoom must not create a document edit');
       canvas.dispatchEvent(new KeyboardEvent('keyup', { key: 'Control', code: 'ControlLeft', bubbles: true }));
+      await frame();
+      const beforeScroll = [...viewer.cell_bounds(10, 8)];
+      await wheel(3, 1, false);
+      const afterScroll = [...viewer.cell_bounds(10, 8)];
+      check(afterScroll[1] !== beforeScroll[1], 'Ordinary native wheel scrolling must still move the worksheet');
+      check(viewer.zoom_percent() === initialZoom, 'Ordinary scrolling must not zoom');
+      await wheel(-3, 1, false);
+      // Restore the native shortcut policy: Ctrl+Alt+plus/minus uses ten points.
+      for (const type of ['keydown', 'keyup']) canvas.dispatchEvent(new KeyboardEvent(type, { key: '=', code: 'Equal', ctrlKey: true, altKey: true, bubbles: true }));
+      await new Promise(resolve => setTimeout(resolve, 300));
+      check(viewer.zoom_percent() === initialZoom + 10, 'Native keyboard zoom must retain its original ten-point step');
+      for (const type of ['keydown', 'keyup']) canvas.dispatchEvent(new KeyboardEvent(type, { key: '-', code: 'Minus', ctrlKey: true, altKey: true, bubbles: true }));
+      await new Promise(resolve => setTimeout(resolve, 300));
+      check(viewer.zoom_percent() === initialZoom, 'Native keyboard zoom out must reverse');
+      canvas.dispatchEvent(new KeyboardEvent('keyup', { key: 'Control', code: 'ControlLeft', bubbles: true }));
+      canvas.dispatchEvent(new KeyboardEvent('keyup', { key: 'Alt', code: 'AltLeft', bubbles: true }));
       await frame();
     }
     check(['Craft smoke fixture', 'Quarterly overview'].includes(label), 'Expected fixture text was not parsed');
