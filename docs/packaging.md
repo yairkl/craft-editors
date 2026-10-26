@@ -90,3 +90,11 @@ See [v0.1.0-beta.1](releases/v0.1.0-beta.1.md). All VSIX manifests use numeric v
 
 
 For Remote SSH, install the desired VSIX into the **SSH host** Extensions section and reload the remote window. Each editor declares `extensionKind: workspace`. The remote host owns reads/writes/recovery; the local webview executes WASM. No Rust or Craft desktop installation is needed on either computer. See [actual SSH verification and reproduction](verification/remote-ssh.md) and [language support](languages.md).
+
+## Cursor / Open VSX publication
+
+Cursor's extension library uses Open VSX. Existing VSIX installers can also be installed manually in Cursor. The Cursor agent-plugin marketplace is a separate distribution system.
+
+Before registry publication, test the native webviews and lifecycle in the current Cursor build, choose a lasting publisher ID (currently `craft-vscode-dev`), create an Eclipse account, sign the Open VSX Publisher Agreement, and create/claim the matching namespace. Store an Open VSX token as a protected CI secret. Publish the five app VSIX files first, then the Suite pack, whose member IDs must match. Upload already verified release archives with `ovsx publish`; do not rebuild independently per store. Publication is not enabled by this change and no token is stored in the repository.
+
+Sources: [Cursor announcement](https://forum.cursor.com/t/extension-marketplace-changes-transition-to-openvsx/109138), [Open VSX publishing guide](https://github.com/eclipse-openvsx/openvsx/wiki/Publishing-Extensions).
