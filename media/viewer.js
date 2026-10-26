@@ -64,7 +64,7 @@ function csvNotice() {
   if (document.body.dataset.format !== 'csv' || !viewer) return;
   const features = JSON.parse(viewer.csv_features());
   const notice = document.getElementById('csv-notice');
-  notice.hidden = false;
+  notice.hidden = features.length === 0;
   notice.classList.toggle('needs-workbook', features.length > 0);
   document.getElementById('csv-message').textContent = features.length
     ? `This CSV contains ${features.join(', ')}. Save as XLSX to keep them; closing without saving will discard unsaved changes. CSV autosave is paused.`
