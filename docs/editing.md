@@ -1,6 +1,6 @@
 # Native document editing
 
-Craft Spreadsheets (XLSX), Craft Word (DOCX) and Craft PowerPoint (PPTX) embed their native application interfaces. One shared `EditingProvider` handles VS Code file lifecycle; each entry point supplies only its format, engine directory, editor ID and file-dialog label. The engine adapters implement the same serialize, acknowledgment, history and replace operations. Craft PDF and Craft Vector now use the same host with native editable interfaces. Vector accepts SVG and `.vectorcraft`; Save As keeps the source format. See [the adapter design](decisions/0002-shared-editing-host.md).
+Craft Spreadsheets (XLSX/CSV), Craft Word (DOCX) and Craft PowerPoint (PPTX) embed their native application interfaces. One shared `EditingProvider` handles VS Code file lifecycle; each entry point supplies only its format, engine directory, editor ID and file-dialog label. The engine adapters implement the same serialize, acknowledgment, history and replace operations. Craft PDF and Craft Vector now use the same host with native editable interfaces. Vector accepts SVG and `.vectorcraft`; Save As keeps the source format. See [the adapter design](decisions/0002-shared-editing-host.md).
 
 GridCraft's worksheet tabs belong to its embedded canvas; VS Code workbench tabs represent files. WordCraft supplies its native document canvas/ribbon, and DeckCraft supplies its native slide canvas/ribbon/thumbnails. No custom host header or Save/Save As buttons appear above these native interfaces.
 
@@ -56,3 +56,9 @@ Native Undo/Redo reveals the current panel with `preserveFocus: true`, preventin
 Actual Remote SSH render/edit/save/reopen, Undo/Redo, Save As, Revert and backup operations pass for all five apps on a Linux client/container host, including Unicode paths. The closed-panel Revert path updates persisted cache without requiring a live renderer. See [verification scope](verification/remote-ssh.md).
 
 Test input distinguishes replacing a selected cell from continuing an active draft. Replacement checks leave native draft mode through the canvas keyboard path before pasting, so rapid double-click timing cannot turn a replacement into appended text. Dedicated draft/autosave checks retain and exercise the active native text agent.
+
+## CSV sessions and XLSX copies
+
+Value-only CSV edits (including sorting) save in their original format and delimiter. CSV sessions use XLSX for internal cache/backup serialization; source saves explicitly request CSV. Formula, formatting, chart/drawing and extra-sheet edits remain available. A native feature check defers CSV writes while those features exist, keeping the session dirty and the standard close/discard prompt active. A persistent format notice explains the loss risk and offers Save as XLSX; it does not repeatedly interrupt autosave with dialogs.
+
+The copy command and CSV → XLSX Save As serialize the live workbook as XLSX. They do not write or acknowledge the CSV source, and failures/cancellation retain its dirty state. The explicit copy command opens the XLSX as a separate document; discard the CSV session only after keeping the desired workbook copy. Unsupported cross-format conversions remain rejected.

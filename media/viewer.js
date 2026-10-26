@@ -60,10 +60,22 @@ function syncTheme() {
 const themeObserver = new MutationObserver(() => syncTheme());
 themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class', 'data-vscode-theme-id'] });
 
+function csvNotice() {
+  if (document.body.dataset.format !== 'csv' || !viewer) return;
+  const features = JSON.parse(viewer.csv_features());
+  const notice = document.getElementById('csv-notice');
+  notice.hidden = false;
+  notice.classList.toggle('needs-workbook', features.length > 0);
+  document.getElementById('csv-message').textContent = features.length
+    ? `This CSV contains ${features.join(', ')}. Save as XLSX to keep them; closing without saving will discard unsaved changes. CSV autosave is paused.`
+    : 'CSV saves values only. Use XLSX to keep formulas, formatting, charts and multiple sheets.';
+}
+document.getElementById('csv-workbook').addEventListener('click', () => hostCommand('file.saveCopyXlsx'));
+
 function hostCommand(command) {
   queueMicrotask(() => {
     try {
-      if (['file.save', 'file.saveAs', 'file.close', 'file.new', 'file.open'].includes(command)) viewer.commit();
+      if (['file.save', 'file.saveAs', 'file.saveCopyXlsx', 'file.close', 'file.new', 'file.open'].includes(command)) viewer.commit();
       send('editor:command', { command });
     } catch {
       status.hidden = false;
@@ -80,7 +92,7 @@ window.addEventListener('message', async ({ data }) => {
       let result;
       switch (data.operation) {
         case 'serialize': {
-          const snapshot = viewer.serialize(data.flush === true);
+          const snapshot = viewer.serialize(data.flush === true, data.format);
           result = { token: snapshot.token, bytes: snapshot.bytes.buffer.slice(snapshot.bytes.byteOffset, snapshot.bytes.byteOffset + snapshot.bytes.byteLength) };
           break;
         }
@@ -137,6 +149,10 @@ window.addEventListener('message', async ({ data }) => {
           if (!capture) throw new Error('Test operation unavailable.');
           result = { documentFocused: document.hasFocus(), active: document.activeElement?.tagName, native: JSON.parse(viewer.inspect()) }; break;
         }
+        case 'test:csv-status': {
+          if (!capture) throw new Error('Test operation unavailable.');
+          csvNotice(); result = { features: JSON.parse(viewer.csv_features()), message: document.getElementById('csv-message').textContent }; break;
+        }
         case 'test:inspect': {
           if (!capture) throw new Error('Test operation unavailable.');
           result = JSON.parse(viewer.inspect()); break;
@@ -176,12 +192,17 @@ window.addEventListener('message', async ({ data }) => {
           await checks.pasteText(canvas, data.text);
           result = viewer.text(); break;
         }
+        case 'test:cell-input': {
+          if (!capture) throw new Error('Test operation unavailable.');
+          result = viewer.cell_input(data.sheet, data.row, data.col); break;
+        }
         case 'test:cell': {
           if (!capture) throw new Error('Test operation unavailable.');
           result = viewer.cell_text(data.sheet, data.row, data.col); break;
         }
         default: throw new Error('Unsupported document operation.');
       }
+      csvNotice();
       send('editor:response', { requestId: data.requestId, result });
     } catch (error) {
       send('editor:response', { requestId: data.requestId, error: error instanceof Error ? error.message : typeof error === 'string' ? error : 'Document operation failed.' });
@@ -204,11 +225,12 @@ window.addEventListener('message', async ({ data }) => {
       viewer = await Viewer.start(canvas, bytes, (width, height, pixels) => {
         queueMicrotask(() => report(width, height, pixels, ['xlsx', 'csv'].includes(data.format) ? viewer.sheets().length || 1 : viewer.unit_count() || 1));
       }, event => {
-        if (event.kind === 'changed') send('editor:changed', { before: event.before, after: event.after, label: event.label });
+        if (event.kind === 'changed') { send('editor:changed', { before: event.before, after: event.after, label: event.label }); queueMicrotask(csvNotice); }
         else if (event.kind === 'command') hostCommand(event.command);
       }, data.format);
       syncTheme();
-      if (data.recovered) viewer.mark_original(new Uint8Array(data.originalBytes));
+      if (data.recovered || data.format === 'csv') viewer.mark_original(new Uint8Array(data.originalBytes));
+      csvNotice();
       engineReadyResolve();
     }
   } catch (error) { engineReadyReject(error); fail(error instanceof Error ? error.message : typeof error === 'string' ? error : 'Renderer startup failed.'); }

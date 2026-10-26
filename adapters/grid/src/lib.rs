@@ -58,6 +58,7 @@ impl Snapshot {
     }
 }
 struct State {
+    csv_styles: Vec<gridcraft_engine::model::Style>,
     wheel: wheel::WheelZoom,
     format: String,
     app: SheetApp,
@@ -106,6 +107,59 @@ fn services(commands: Rc<RefCell<Vec<String>>>) -> Services {
         })),
         ..Default::default()
     }
+}
+fn csv_features(
+    wb: &gridcraft_engine::model::Workbook,
+    imported_styles: &[gridcraft_engine::model::Style],
+) -> Vec<&'static str> {
+    let mut features = Vec::new();
+    if wb.sheets.len() > 1 {
+        features.push("multiple worksheets");
+    }
+    if wb
+        .sheets
+        .iter()
+        .any(|s| s.cells.iter().any(|(_, c)| c.formula.is_some()))
+    {
+        features.push("formulas");
+    }
+    if wb.sheets.iter().any(|s| {
+        s.cells
+            .iter()
+            .any(|(_, c)| c.style.0 != 0 && !imported_styles.contains(wb.styles.get(c.style)))
+            || s.cols
+                .values()
+                .chain(s.rows.values())
+                .any(|line| line.style.is_some_and(|id| id.0 != 0) || line.custom)
+            || !s.merges.is_empty()
+            || !s.cond_formats.is_empty()
+            || s.freeze.is_some()
+    }) {
+        features.push("formatting");
+    }
+    if wb.sheets.iter().any(|s| {
+        !s.charts.is_empty()
+            || !s.images.is_empty()
+            || !s.shapes.is_empty()
+            || !s.cell_pictures.is_empty()
+            || !s.sparklines.is_empty()
+    }) {
+        features.push("charts or drawings");
+    }
+    if !wb.names.is_empty()
+        || wb.sheets.iter().any(|s| {
+            !s.tables.is_empty()
+                || !s.pivots.is_empty()
+                || !s.slicers.is_empty()
+                || !s.validations.is_empty()
+                || !s.comments.is_empty()
+                || !s.hyperlinks.is_empty()
+                || s.protection.is_some()
+        })
+    {
+        features.push("workbook features");
+    }
+    features
 }
 fn make_app(
     bytes: &[u8],
@@ -407,7 +461,14 @@ impl GridViewer {
             .active()
             .ok_or_else(|| JsValue::from_str("No workbook."))?;
         let snapshots = BTreeMap::from([(0, Snapshot::capture(doc, &app))]);
+        let csv_styles = doc
+            .wb
+            .styles
+            .iter()
+            .map(|(_, style)| style.clone())
+            .collect();
         let state = Rc::new(RefCell::new(State {
+            csv_styles,
             wheel: wheel::WheelZoom::default(),
             format,
             app,
@@ -484,12 +545,24 @@ impl GridViewer {
             .state
             .try_borrow_mut()
             .map_err(|_| JsValue::from_str("Renderer is busy."))?;
+        let csv = state.format == "csv";
+        if csv {
+            state.csv_styles = wb.styles.iter().map(|(_, style)| style.clone()).collect();
+        }
         if let Some(doc) = state.app.session.active_mut() {
+            if csv {
+                Arc::make_mut(&mut doc.wb).csv_delimiter = wb.csv_delimiter;
+            }
             doc.saved = Arc::new(wb);
+        }
+        let wb = state.app.session.active().map(|doc| doc.wb.clone());
+        let token = state.token;
+        if let (Some(snapshot), Some(wb)) = (state.snapshots.get_mut(&token), wb) {
+            snapshot.wb = wb;
         }
         Ok(())
     }
-    pub fn serialize(&self, flush: bool) -> Result<JsValue, JsValue> {
+    pub fn serialize(&self, flush: bool, format: Option<String>) -> Result<JsValue, JsValue> {
         let mut state = self
             .state
             .try_borrow_mut()
@@ -503,15 +576,19 @@ impl GridViewer {
             .snapshots
             .get(&state.token)
             .ok_or_else(|| JsValue::from_str("Missing workbook state."))?;
-        if state.format == "csv" && snapshot.wb.sheets.len() != 1 {
-            return Err(JsValue::from_str(
-                "CSV supports one worksheet. Remove additional sheets before saving.",
-            ));
+        // Internal snapshots/backups use XLSX even for CSV sources so formulas,
+        // formatting and extra sheets survive view reconstruction and recovery.
+        let target = format.as_deref().unwrap_or("xlsx");
+        if !matches!(target, "csv" | "xlsx") {
+            return Err(JsValue::from_str("Unsupported workbook format."));
+        }
+        if target == "csv" && !csv_features(&snapshot.wb, &state.csv_styles).is_empty() {
+            return Err(JsValue::from_str("CSV_FEATURES"));
         }
         let bytes = gridcraft_engine::io::save_bytes_as(
             &snapshot.wb,
             "Workbook.xlsx",
-            if state.format == "csv" {
+            if target == "csv" {
                 gridcraft_engine::io::FileKind::Csv
             } else {
                 gridcraft_engine::io::FileKind::Xlsx
@@ -584,6 +661,13 @@ impl GridViewer {
                 .ok_or_else(|| JsValue::from_str("No workbook."))?,
             &app,
         );
+        state.csv_styles = app.session.active().map_or_else(Vec::new, |doc| {
+            doc.wb
+                .styles
+                .iter()
+                .map(|(_, style)| style.clone())
+                .collect()
+        });
         state.app = app;
         state.snapshots.clear();
         state.snapshots.insert(token, snapshot);
@@ -616,6 +700,43 @@ impl GridViewer {
             }
         }
         Ok(array)
+    }
+    pub fn csv_features(&self) -> Result<String, JsValue> {
+        let state = self
+            .state
+            .try_borrow()
+            .map_err(|_| JsValue::from_str("Renderer busy"))?;
+        let mut features = state
+            .app
+            .session
+            .active()
+            .map_or_else(Vec::new, |doc| csv_features(&doc.wb, &state.csv_styles));
+        if state
+            .app
+            .editor
+            .as_ref()
+            .is_some_and(|editor| editor.text.starts_with('='))
+            && !features.contains(&"formulas")
+        {
+            features.push("formulas");
+        }
+        serde_json::to_string(&features)
+            .map_err(|_| JsValue::from_str("Could not inspect CSV features."))
+    }
+    pub fn command(&self, id: &str, params: &str) -> Result<(), JsValue> {
+        let mut state = self
+            .state
+            .try_borrow_mut()
+            .map_err(|_| JsValue::from_str("Renderer busy"))?;
+        let params = serde_json::from_str(params)
+            .map_err(|_| JsValue::from_str("Invalid command parameters."))?;
+        state
+            .app
+            .run(id, params)
+            .map_err(|_| JsValue::from_str("Native command was refused."))?;
+        state.observe();
+        state.context.request_repaint();
+        Ok(())
     }
     pub fn inspect(&self) -> Result<String, JsValue> {
         let state = self
@@ -694,6 +815,21 @@ impl GridViewer {
         sh.value(gridcraft_engine::core::CellRef::new(row, col))
             .to_text()
             .map_err(|_| JsValue::from_str("Cell contains an error."))
+    }
+    pub fn cell_input(&self, sheet: usize, row: u32, col: u32) -> Result<String, JsValue> {
+        let state = self
+            .state
+            .try_borrow()
+            .map_err(|_| JsValue::from_str("Renderer busy"))?;
+        let sh = state
+            .app
+            .session
+            .active()
+            .and_then(|doc| doc.wb.sheet(sheet))
+            .ok_or_else(|| JsValue::from_str("No worksheet."))?;
+        Ok(sh
+            .cell(gridcraft_engine::core::CellRef::new(row, col))
+            .map_or_else(String::new, |cell| cell.input_text()))
     }
     pub fn cell_bounds(&self, row: u32, col: u32) -> Result<js_sys::Float32Array, JsValue> {
         let state = self

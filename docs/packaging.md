@@ -77,7 +77,7 @@ The repository root is now a private build workspace rather than a VS Code exten
 
 The new editor identifiers are `craft.spreadsheets.preview` and `craft.pdf.preview`. Existing preferences referring to `craft.preview` should be changed through **Reopen Editor With… → Configure default editor**. No user settings are overwritten automatically.
 
-The spreadsheet editing suite (`xvfb-run -a npm run test:editing`) additionally checks native cell input, save/reopen, undo/redo, Save As, Revert, write failures, concurrent edits during save and backup recovery. Current versions: Spreadsheets 0.0.4, Word/PowerPoint 0.0.2, PDF 0.0.1, Suite 0.0.2.
+The spreadsheet editing suite (`xvfb-run -a npm run test:editing`) additionally checks native cell input, save/reopen, undo/redo, Save As, Revert, write failures, concurrent edits during save and backup recovery. Package versions are recorded in each `packages/*/package.json`; CSV workbook-copy support starts with Spreadsheets 0.1.2.
 
 `npm run test:theme` verifies live native palettes, including high-contrast brightness mapping, in the all-extensions profile. Theme synchronization is included in Spreadsheets 0.0.4 and Word/PowerPoint 0.0.2.
 

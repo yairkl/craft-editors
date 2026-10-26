@@ -51,6 +51,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
   readonly onDidChangeCustomDocument = this.changes.event;
   private readonly renders = new vscode.EventEmitter<RenderResult>();
   readonly onDidRender = this.renders.event;
+  private readonly panels = new Map<EditableDocument, vscode.WebviewPanel>();
   private readonly documents = new Map<string, EditableDocument>();
   constructor(private readonly context: vscode.ExtensionContext, private readonly descriptor: EditableDescriptor) {}
 
@@ -80,6 +81,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
     const sessionId = randomUUID();
     const rpc = new WebviewRpc(sessionId, value => panel.webview.postMessage(value));
     doc.rpc?.dispose(); doc.rpc = rpc;
+    this.panels.set(doc, panel);
     panel.webview.options = { enableScripts: true, localResourceRoots: [media] };
     const capture = this.context.extensionMode === vscode.ExtensionMode.Test;
     let ready = false;
@@ -131,7 +133,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
         this.renders.fire(result);
       }
     });
-    const cleanup = (): void => { clearTimeout(renderTimer); rpc.dispose(); listener.dispose(); if (doc.rpc === rpc) doc.rpc = undefined; };
+    const cleanup = (): void => { clearTimeout(renderTimer); rpc.dispose(); listener.dispose(); if (doc.rpc === rpc) doc.rpc = undefined; if (this.panels.get(doc) === panel) this.panels.delete(doc); };
     doc.add(token.onCancellationRequested(cleanup));
     panel.onDidDispose(cleanup);
     panel.webview.html = renderHtml(panel.webview, media, engine, sessionId, true);
@@ -146,14 +148,15 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
     return this.write(doc, doc.uri, token);
   }
   async saveCustomDocumentAs(doc: EditableDocument, target: vscode.Uri, token: vscode.CancellationToken): Promise<void> {
+    if (doc.format === 'csv' && this.descriptor.engine === 'grid' && target.path.toLowerCase().endsWith('.xlsx')) return this.saveWorkbookCopy(doc, target, token);
     if (!target.path.toLowerCase().endsWith(`.${doc.format}`)) throw new Error(`Save As must use the ${doc.format.toUpperCase()} format.`);
     return this.write(doc, target, token);
   }
-  private async serialize(doc: EditableDocument): Promise<{ bytes: Uint8Array; token: number }> {
-    try { return snapshot(await doc.request('serialize', { flush: true })); }
+  private async serialize(doc: EditableDocument, format: DocumentFormat = doc.format): Promise<{ bytes: Uint8Array; token: number }> {
+    try { return snapshot(await doc.request('serialize', { flush: true, format })); }
     catch (error) {
       // Cancellation defers autosave without a validation dialog or a false saved acknowledgment.
-      if (error instanceof Error && error.message === 'DRAFT_PENDING') throw new vscode.CancellationError();
+      if (error instanceof Error && ['DRAFT_PENDING', 'CSV_FEATURES'].includes(error.message)) throw new vscode.CancellationError();
       throw error;
     }
   }
@@ -171,7 +174,10 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
       if (target.toString() === doc.uri.toString()) {
         doc.diskBytes = data.bytes; doc.diskDigest = digest(data.bytes);
       }
-      if (doc.token === data.token) doc.cache = data.bytes;
+      if (doc.token === data.token) {
+        const cache = doc.format === 'csv' ? snapshot(await doc.request('serialize', { flush: false })) : data;
+        if (cache.token === doc.token) doc.cache = cache.bytes;
+      }
       // Only the snapshot actually written is acknowledged. Later edits stay dirty.
       await doc.request('ack', { token: data.token });
       doc.savedToken = data.token;
@@ -195,14 +201,38 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
     });
   }
   async backupCustomDocument(doc: EditableDocument, context: vscode.CustomDocumentBackupContext, token: vscode.CancellationToken): Promise<vscode.CustomDocumentBackup> {
-    const data = await this.serialize(doc); cancelled(token);
+    const data = await this.serialize(doc, doc.format === 'csv' ? 'xlsx' : doc.format); cancelled(token);
     const body = Buffer.from(JSON.stringify({ version: 1, diskDigest: doc.diskDigest, bytes: Buffer.from(data.bytes).toString('base64') }));
     await vscode.workspace.fs.writeFile(context.destination, body);
     if (data.token === doc.token) doc.cache = data.bytes;
     return { id: context.destination.toString(), delete: () => { void vscode.workspace.fs.delete(context.destination).then(() => {}, () => {}); } };
   }
+  /** Export a CSV session as XLSX without acknowledging or overwriting its CSV source. */
+  saveWorkbookCopy(doc: EditableDocument, target: vscode.Uri, token: vscode.CancellationToken): Promise<void> {
+    if (doc.format !== 'csv' || this.descriptor.engine !== 'grid' || !target.path.toLowerCase().endsWith('.xlsx') || target.toString() === doc.uri.toString()) return Promise.reject(new Error('Choose an .xlsx destination for this CSV workbook.'));
+    return doc.enqueue(async () => {
+      cancelled(token);
+      const data = await this.serialize(doc, 'xlsx');
+      cancelled(token);
+      await vscode.workspace.fs.writeFile(target, data.bytes);
+      if (doc.token === data.token) doc.cache = data.bytes;
+      // The copy is saved; rich edits in the CSV session still need an explicit
+      // discard on closing. Export must never falsely acknowledge a CSV save.
+    });
+  }
+  async saveCsvAsWorkbook(document?: EditableDocument): Promise<void> {
+    const doc = document ?? [...this.panels].find(([item, panel]) => item.format === 'csv' && panel.active)?.[0];
+    if (!doc || doc.format !== 'csv') { await vscode.window.showInformationMessage('Open a CSV file in Craft Spreadsheets first.'); return; }
+    const target = await vscode.window.showSaveDialog({ defaultUri: doc.uri.with({ path: doc.uri.path.replace(/\.csv$/i, '.xlsx') }), filters: { 'Excel workbook': ['xlsx'] }, saveLabel: 'Save XLSX copy' });
+    if (!target) return;
+    const source = new vscode.CancellationTokenSource();
+    try { await this.saveWorkbookCopy(doc, target, source.token); }
+    finally { source.dispose(); }
+    await vscode.commands.executeCommand('vscode.openWith', target, this.descriptor.viewType);
+  }
   private async command(doc: EditableDocument, panel: vscode.WebviewPanel, command: string): Promise<void> {
     switch (command) {
+      case 'file.saveCopyXlsx': await this.saveCsvAsWorkbook(doc); break;
       case 'file.save': await vscode.workspace.save(doc.uri); break;
       case 'file.saveAs': await vscode.workspace.saveAs(doc.uri); break;
       case 'file.revert': await vscode.commands.executeCommand('workbench.action.files.revert'); break;

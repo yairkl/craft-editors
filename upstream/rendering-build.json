@@ -31,12 +31,12 @@
   },
   "artifacts": {
     "grid/viewer.js": {
-      "bytes": 156564,
-      "sha256": "678f14b613b2222dee73e52711f9bed1de4ac88f376d9c87121028da58b1cb67"
+      "bytes": 83413,
+      "sha256": "80bc8fe2feb357b3002b76588770e8a265c43546ce387c62852ea1d1d33063a9"
     },
     "grid/viewer_bg.wasm": {
-      "bytes": 22749624,
-      "sha256": "8dceeb77d2a866f6bf657c448e07c191c6802591d207f170814b84ca9d92c143"
+      "bytes": 17898433,
+      "sha256": "7fe97340b19669e853d152d48b7fa28d96978c1d459c27844a86610056914e49"
     },
     "pdf/viewer.js": {
       "bytes": 163866,

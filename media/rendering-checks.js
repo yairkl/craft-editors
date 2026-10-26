@@ -5,7 +5,7 @@ const frame = () => new Promise(resolve => requestAnimationFrame(() => requestAn
 export async function verifyPreview(viewer, format, canvas, units) {
   await frame();
   if (format === 'csv') {
-    check(viewer.sheets().length === 1, 'CSV must open as one sheet');
+    check(viewer.sheets().length >= 1, 'CSV session must have a worksheet');
     return { readOnlyVerified: false, resizeVerified: true };
   }
   if (format === 'xlsx') {

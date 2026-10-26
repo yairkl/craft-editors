@@ -6,6 +6,8 @@ Open, view, and edit spreadsheets, documents, presentations, and PDFs in editor 
 
 **Beta:** five independent native editors for XLSX/CSV, DOCX, PPTX, PDF, SVG and `.vectorcraft`. They share VS Code Save/Save As, Undo/Redo, Revert and recovery, and follow the editor's light/dark theme. Each extension contains only its own engine; Craft Suite is an optional pack. SVG visual editing is opt-in through **Reopen Editor With… → Craft Vector**.
 
+CSV sessions offer **Save as XLSX** for workbook features. Formulas, formatting and extra sheets stay unsaved in CSV and trigger a conversion notice; value edits and sorting still save as CSV.
+
 Download the installers from [GitHub prereleases](https://github.com/yairkl/craft-vscode/releases). See [beta installation and known limits](docs/releases/v0.1.1-beta.1.md) and [packaging](docs/packaging.md). This is an independent community integration, not an official Storytold/ArtCraft product. Nothing is published to Marketplace yet.
 
 Release tags build and test the VSIX files. Beta tags publish permanent GitHub prerelease assets with SHA-256 checksums. Transfer artifacts and failure screenshots expire after one day; successful branch/PR runs retain no artifacts.
