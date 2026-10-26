@@ -66,7 +66,7 @@ export async function continueDraft(text) {
 }
 
 export async function editorKey(canvas, key) {
-  if (!['Enter', 'ArrowLeft', 'Escape'].includes(key)) throw new Error('Invalid test key');
+  if (!['Enter', 'ArrowLeft', 'Escape', 'F5'].includes(key)) throw new Error('Invalid test key');
   const target = document.activeElement || canvas;
   for (const type of ['keydown', 'keyup']) target.dispatchEvent(new KeyboardEvent(type, { key, code: key, bubbles: true }));
   await frame(); await frame();

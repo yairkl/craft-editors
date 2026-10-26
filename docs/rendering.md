@@ -57,3 +57,7 @@ Browser helpers and screenshot capture are test-only and excluded from VSIX file
 ## Limits
 
 Linux and simulated remote filesystems are covered; Actual Linux Remote SSH lifecycle tests pass; Windows/macOS, WSL and wider network/authentication scenarios still need beta testing. Browser-hosted VS Code is not supported. Complex document fidelity, large-file memory/startup, accessibility, IME/image clipboard, printing/signing, external pickers, combine/export and synchronized views need further validation. Password-protected files are outside this preview. Unserializable drafts defer autosave/backup and cannot be crash-recovered before they become serializable. Use original copies for beta testing.
+
+## Embedded slide presentation limits
+
+DeckCraft slideshow/Presenter View launches are disabled in VS Code. Desktop child viewports fall back to windows inside the editor webview and cover the audience slide; they do not provide an independent monitor or fullscreen presentation host. The guard applies at native `start_show`, including F5, ribbon/status actions, custom shows and command launches. Reading View remains an in-editor preview without a presenter viewport. A future multi-display mode requires a separate audience surface and host-managed lifecycle, navigation and focus.

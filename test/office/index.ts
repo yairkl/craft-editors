@@ -18,6 +18,20 @@ export async function run(): Promise<void> {
     const uri = vscode.Uri.joinPath(directory, `roundtrip.${descriptor.format}`);
     await vscode.workspace.fs.writeFile(uri, original);
     let doc = await open(api, uri);
+    if (descriptor.format === 'pptx') {
+      await doc.request('test:command', { command: 'show.start' });
+      const state = await doc.request('test:inspect') as { show: unknown };
+      assert.equal(state.show, null, 'Embedded slideshow must not open a presenter window over the audience slide');
+      await doc.request('test:editor-key', { key: 'F5' });
+      assert.equal((await doc.request('test:inspect') as { show: unknown }).show, null, 'F5 cannot bypass the embedded presentation restriction');
+      await doc.request('test:command', { command: 'show.presenter', params: { on: true } });
+      await doc.request('test:command', { command: 'view.reading' });
+      const reading = await doc.request('test:inspect') as { show: { reading: boolean; presenter: boolean } };
+      assert.equal(reading.show.reading, true, 'In-editor Reading View remains available');
+      assert.equal(reading.show.presenter, false, 'Reading View cannot create an overlapping presenter window');
+      assert.equal(doc.dirty, false, 'Presentation/view controls must not modify the file');
+      await doc.request('test:command', { command: 'show.end' });
+    }
     const before = await doc.request('test:text'); assert.equal(typeof before, 'string');
     assert.ok(String(before).includes('Craft'));
     let after = await doc.request('test:paste', { text: 'Native edit verified ' });

@@ -1,5 +1,5 @@
 diff --git a/crates/ui-egui/src/lib.rs b/crates/ui-egui/src/lib.rs
-index 094d7aba81e7fb138099e24153a57adc0bc4b9d5..e22823460327bace17c60cb3b9815675368eafbd 100644
+index 094d7aba81e7fb138099e24153a57adc0bc4b9d5..fa526c9c2551f3da13f9bfacefc8c41d5dcdcc93 100644
 --- a/crates/ui-egui/src/lib.rs
 +++ b/crates/ui-egui/src/lib.rs
 @@ -241,6 +241,10 @@ const STATUS_LINGER_MS: f64 = 6000.0;
@@ -21,7 +21,33 @@ index 094d7aba81e7fb138099e24153a57adc0bc4b9d5..e22823460327bace17c60cb3b9815675
          let r = if UI_COMMANDS.iter().any(|c| c.0 == id) {
              self.run_ui(id, &params)
          } else {
-@@ -1668,6 +1673,7 @@ impl SlideApp {
+@@ -1305,7 +1310,13 @@ impl SlideApp {
+                     self.start_show(from, false);
+                 }
+             }
+-            "show.presenter" => self.ui.presenter_view = self.flag(p, self.ui.presenter_view),
++            "show.presenter" => {
++                if self.services.embedded {
++                    self.set_status("Presenter View needs a separate audience window and is unavailable in VS Code.");
++                } else {
++                    self.ui.presenter_view = self.flag(p, self.ui.presenter_view);
++                }
++            },
+             "show.end" => {
+                 self.show = None;
+                 self.media.stop_owned(media::Owner::Show);
+@@ -1440,6 +1451,10 @@ impl SlideApp {
+     /// Leave animation preview, stop editor-owned media, and create a show at the requested slide
+     /// with the current reading/presenter configuration; an out-of-range slide starts an ended show.
+     pub fn start_show(&mut self, from: usize, reading: bool) {
++        if self.services.embedded && !reading {
++            self.set_status("Presenting is unavailable in the VS Code editor. Use Reading View here, or present with a standalone application.");
++            return;
++        }
+         self.anim_preview = None;
+         self.media.stop_owned(media::Owner::Editor);
+         if let Some(d) = self.session.active() {
+@@ -1668,6 +1683,7 @@ impl SlideApp {
      }
  
      pub fn save_as_dialog(&mut self, format: &str) {
@@ -29,7 +55,7 @@ index 094d7aba81e7fb138099e24153a57adc0bc4b9d5..e22823460327bace17c60cb3b9815675
          let name = self.session.active().map(|d| d.title()).unwrap_or_else(|| "Presentation".into());
          let ext = if format == "pptx" { "pptx" } else { "deckcraft" };
          let suggested = format!("{name}.{ext}");
-@@ -1707,6 +1713,7 @@ impl SlideApp {
+@@ -1707,6 +1723,7 @@ impl SlideApp {
      }
  
      pub fn save(&mut self) {
@@ -38,7 +64,7 @@ index 094d7aba81e7fb138099e24153a57adc0bc4b9d5..e22823460327bace17c60cb3b9815675
              match self.session.execute("file.save", &json!({})) {
                  Ok(_) => self.set_status("Saved"),
 diff --git a/crates/ui-egui/src/ribbon.rs b/crates/ui-egui/src/ribbon.rs
-index 117e08e89512627c8c237e15bc6603db14ea814d..88cfb225ef10746cc34dccc6d32e75661f7085fd 100644
+index 117e08e89512627c8c237e15bc6603db14ea814d..39718a15c3236c032708e4986c9f5ed482066102 100644
 --- a/crates/ui-egui/src/ribbon.rs
 +++ b/crates/ui-egui/src/ribbon.rs
 @@ -55,6 +55,7 @@ fn run(app: &mut SlideApp, id: &str, p: Value) {
@@ -58,3 +84,38 @@ index 117e08e89512627c8c237e15bc6603db14ea814d..88cfb225ef10746cc34dccc6d32e7566
              let w = ui.fonts_mut(|f| f.layout_no_wrap("File".to_string(), theme::font(13.0), t.text).size().x) + 18.0;
              let r = Rect::from_min_size(pos2(x, y), vec2(w, 24.0));
              let resp = ui.interact(r, ui.scope_id().with("tab_file"), Sense::click());
+@@ -2191,6 +2192,10 @@ pub fn paint_anim_tile(p: &egui::Painter, r: Rect, label: &str, class: AnimClass
+ // ---------- Slide Show / Record / Review / View ----------
+ 
+ fn slide_show(app: &mut SlideApp, ui: &mut Ui) {
++    if app.services.embedded {
++        ui.label("Presenting is unavailable in VS Code. Use View > Reading View to preview slides, or present with a standalone application.");
++        return;
++    }
+     group(ui, |ui| {
+         if big_button(ui, Icon::PlayFromStart, "Play from\nStart", true).clicked() {
+             app.start_show(app.show_start_index(), false);
+@@ -2241,6 +2246,10 @@ fn slide_show(app: &mut SlideApp, ui: &mut Ui) {
+ }
+ 
+ fn record(app: &mut SlideApp, ui: &mut Ui) {
++    if app.services.embedded {
++        ui.label("Presenting is unavailable in VS Code. Use View > Reading View to preview slides, or present with a standalone application.");
++        return;
++    }
+     group(ui, |ui| {
+         let r = big_button(ui, Icon::Cameo, "Cameo", false);
+         let _ = r.on_hover_text("Camera capture is not available yet");
+diff --git a/crates/ui-egui/src/status.rs b/crates/ui-egui/src/status.rs
+index 0301af446b9ea75d9c917349c8de8e6485714ec7..592da39a9f1b284c2846a9beb86c7764756d5033 100644
+--- a/crates/ui-egui/src/status.rs
++++ b/crates/ui-egui/src/status.rs
+@@ -89,7 +89,7 @@ pub fn status_bar(app: &mut SlideApp, ui: &mut Ui) {
+         }
+         right.add_space(8.0);
+         let view = app.ui.view;
+-        if view_icon(&mut right, Icon::ViewShowSmall, "Slide Show", false).clicked() {
++        if !app.services.embedded && view_icon(&mut right, Icon::ViewShowSmall, "Slide Show", false).clicked() {
+             let i = app.session.active().map(|d| d.selection.slide).unwrap_or(0);
+             app.start_show(i, false);
+         }

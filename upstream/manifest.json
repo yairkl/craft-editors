@@ -96,7 +96,7 @@
       "patches": [
         {
           "path": "upstream/patches/deckcraft-embedding.patch",
-          "sha256": "e19eb042ee3617c93a09f28caff6202f1417dc8050913b8da87a5ff248bcf949",
+          "sha256": "3c9d522656a69c370a2cb1760cfb89a4a64aeec7861bfb55d0a6184328ed8ccb",
           "purpose": "Delegate file lifecycle and history to the embedding host and omit standalone chrome.",
           "removalCondition": "Remove when upstream exposes equivalent embedding services and host snapshots."
         }

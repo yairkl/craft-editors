@@ -160,7 +160,7 @@ impl Document {
             .unwrap_or_default()
     }
     fn inspect(&self) -> serde_json::Value {
-        serde_json::json!({"hebrewGlyphs": deckcraft_fonts::FontDb::global().fallback_for('ש', u32::MAX).is_some()})
+        serde_json::json!({"show": self.app.show.as_ref().map(|s| serde_json::json!({"presenter": s.presenter, "reading": s.reading, "slide": s.state.slide})), "hebrewGlyphs": deckcraft_fonts::FontDb::global().fallback_for('ש', u32::MAX).is_some()})
     }
     fn command(&mut self, id: &str, params: serde_json::Value) -> Result<(), JsValue> {
         self.app
