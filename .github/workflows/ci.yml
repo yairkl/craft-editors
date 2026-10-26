@@ -43,6 +43,7 @@ jobs:
             ~/.cargo/.crates*
             adapters/target
           key: rendering-${{ runner.os }}-rust-1.95.0-${{ hashFiles('adapters/Cargo.lock', 'upstream/manifest.json') }}
+          restore-keys: rendering-${{ runner.os }}-rust-1.95.0-
       - run: rustup toolchain install 1.95.0 --profile minimal --component rustfmt,clippy --target wasm32-unknown-unknown
       - run: cargo +1.95.0 install wasm-bindgen-cli --version 0.2.129 --locked
       - run: cargo +1.95.0 fmt --manifest-path adapters/grid/Cargo.toml -p craft-grid-viewer -p craft-pdf-viewer -p craft-word-viewer -p craft-deck-viewer -p craft-vector-viewer --check
