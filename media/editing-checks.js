@@ -14,6 +14,15 @@ export async function editCell(viewer, canvas, row, col, text) {
   await frame(); await frame();
   const [left, top, right, bottom] = viewer.cell_bounds(row, col);
   await clickCanvas(canvas, (left + right) / 2, (top + bottom) / 2);
+  // A rapid second click can enter native edit mode, and a previous draft can
+  // still own input. This helper replaces a cell; draft-entry tests use their
+  // own helpers. Cancel that draft before sending the real clipboard event.
+  if (viewer.draft_text() !== undefined && viewer.draft_text() !== null) {
+    canvas.focus(); await frame();
+    for (const type of ['keydown', 'keyup']) canvas.dispatchEvent(new KeyboardEvent(type, { key: 'Escape', code: 'Escape', bubbles: true }));
+    await frame(); await frame();
+    if (viewer.draft_text() !== undefined && viewer.draft_text() !== null) throw new Error('Cell replacement could not leave draft mode');
+  }
   const clipboardData = new DataTransfer(); clipboardData.setData('text/plain', text);
   canvas.dispatchEvent(new ClipboardEvent('paste', { clipboardData, bubbles: true }));
   await frame(); await frame();

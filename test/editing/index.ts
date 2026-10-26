@@ -27,7 +27,8 @@ export async function run(): Promise<void> {
   await vscode.workspace.fs.writeFile(uri, original);
   let doc = await open(api, uri);
   assert.equal(await cell(doc), '42');
-  assert.equal(await edit(doc, '21'), '21');
+  await doc.request('test:draft', { row: 1, col: 1 });
+  assert.equal(await edit(doc, '21'), '21', 'Cell replacement must replace even when an earlier native draft is active');
   assert.equal(await cell(doc, 2), '42', 'The native calculation engine recalculates formulas');
   assert.equal(doc.dirty, true);
   assert.deepEqual(await vscode.workspace.fs.readFile(uri), original, 'Editing alone cannot write the original');

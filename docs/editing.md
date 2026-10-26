@@ -54,3 +54,5 @@ Vector uses native structurally shared document/history snapshots. SVG import/ex
 Native Undo/Redo reveals the current panel with `preserveFocus: true`, preventing the host from dropping the document’s typing focus. Regression checks type directly into the focused native input after history, with no click/refocus helper. All five engines and their UIs receive a pinned Noto Sans Hebrew fallback; Hebrew/niqqud edits and save/reopen are tested in each. Other complex bidi cases remain subject to upstream engine limitations.
 
 Actual Remote SSH render/edit/save/reopen, Undo/Redo, Save As, Revert and backup operations pass for all five apps on a Linux client/container host, including Unicode paths. The closed-panel Revert path updates persisted cache without requiring a live renderer. See [verification scope](verification/remote-ssh.md).
+
+Test input distinguishes replacing a selected cell from continuing an active draft. Replacement checks leave native draft mode through the canvas keyboard path before pasting, so rapid double-click timing cannot turn a replacement into appended text. Dedicated draft/autosave checks retain and exercise the active native text agent.
