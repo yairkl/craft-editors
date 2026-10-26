@@ -18,6 +18,8 @@ impl Document {
         pdfcraft_fonts::register_host_hebrew_font(HEBREW_FONT_BYTES);
         let mut app = PdfCraftApp::new();
         app.embedded = true;
+        app.default_mode = pdfcraft_ui_egui::Mode::Read;
+        app.left_open = false;
         app.host_command = Some(Box::new(move |id| {
             let mapped = match id {
                 "file.save_as" => "file.saveAs",
@@ -139,7 +141,7 @@ impl Document {
     fn inspect(&self) -> serde_json::Value {
         let view = self.app.views.first();
         let rect = view.map(|v| v.viewport_rect());
-        serde_json::json!({"hebrewGlyphs": pdfcraft_fonts::hebrew_has('ש'), "zoom": view.map(|v| v.zoom), "draft": self.app.host_draft().map(|d| d.text()), "pageRect": view.and_then(|v| v.page_screen_rect(0)).map(|r| [r.min.x,r.min.y,r.max.x,r.max.y]), "rotations": self.app.session.get(self.id).map(|d| d.info.pages.iter().map(|p| p.rotation).collect::<Vec<_>>()),
+        serde_json::json!({"readMode": self.app.mode == pdfcraft_ui_egui::Mode::Read, "hebrewGlyphs": pdfcraft_fonts::hebrew_has('ש'), "zoom": view.map(|v| v.zoom), "draft": self.app.host_draft().map(|d| d.text()), "pageRect": view.and_then(|v| v.page_screen_rect(0)).map(|r| [r.min.x,r.min.y,r.max.x,r.max.y]), "rotations": self.app.session.get(self.id).map(|d| d.info.pages.iter().map(|p| p.rotation).collect::<Vec<_>>()),
             "rect": rect.map(|r| [r.min.x,r.min.y,r.max.x,r.max.y])})
     }
     fn command(&mut self, id: &str, _params: serde_json::Value) -> Result<(), JsValue> {

@@ -6,7 +6,7 @@ import type { EditingProvider } from '../../src/editing';
 import type { RenderResult } from '../../src/rendering';
 import { assertIsolation, fixture, root, selected } from '../environment';
 interface Api { editing: EditingProvider; onDidRender: vscode.Event<RenderResult> }
-interface State { zoom: number; draft?: string; rotations?: number[] }
+interface State { readMode?: boolean; zoom: number; draft?: string; rotations?: number[] }
 export async function run(): Promise<void> {
   assertIsolation();
   const directory = vscode.Uri.file(path.join(root!, 'artifacts/graphics'));
@@ -35,6 +35,7 @@ export async function run(): Promise<void> {
       assert.equal(doc.dirty, false, 'Unsupported multi-document workflows cannot replace the host document');
     }
     const initial = await doc.request('test:inspect') as State;
+    if (descriptor.format === 'pdf') assert.equal(initial.readMode, true, 'PDF opens in native Read preview workspace');
     const enlarged = await doc.request('test:wheel', { delta: -1 }) as State;
     assert.ok(enlarged.zoom > initial.zoom, `${descriptor.format}: Ctrl+wheel must zoom in (${initial.zoom} to ${enlarged.zoom})`);
     const reduced = await doc.request('test:wheel', { delta: 1 }) as State;
