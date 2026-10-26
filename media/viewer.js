@@ -190,7 +190,7 @@ window.addEventListener('message', async ({ data }) => {
   }
   if (data.type === 'render:timeout') { fail(); return; }
   if (data.type !== 'render:open' || opened || !(data.bytes instanceof ArrayBuffer) ||
-      !['xlsx', 'pdf', 'docx', 'pptx', 'svg', 'vectorcraft'].includes(data.format)) return;
+      !['xlsx', 'csv', 'pdf', 'docx', 'pptx', 'svg', 'vectorcraft'].includes(data.format)) return;
   opened = true;
   capture = data.capture === true;
   document.body.dataset.format = data.format;
@@ -200,9 +200,9 @@ window.addEventListener('message', async ({ data }) => {
     await module.default({ module_or_path: document.body.dataset.wasm });
     const bytes = new Uint8Array(data.bytes);
     {
-      Viewer = data.format === 'xlsx' ? module.GridViewer : module.NativeViewer;
+      Viewer = ['xlsx', 'csv'].includes(data.format) ? module.GridViewer : module.NativeViewer;
       viewer = await Viewer.start(canvas, bytes, (width, height, pixels) => {
-        queueMicrotask(() => report(width, height, pixels, data.format === 'xlsx' ? viewer.sheets().length || 1 : viewer.unit_count() || 1));
+        queueMicrotask(() => report(width, height, pixels, ['xlsx', 'csv'].includes(data.format) ? viewer.sheets().length || 1 : viewer.unit_count() || 1));
       }, event => {
         if (event.kind === 'changed') send('editor:changed', { before: event.before, after: event.after, label: event.label });
         else if (event.kind === 'command') hostCommand(event.command);

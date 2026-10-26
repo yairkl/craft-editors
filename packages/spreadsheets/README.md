@@ -1,8 +1,8 @@
 # Craft Spreadsheets
 
-Read XLSX files inside VS Code using GridCraft. This extension contains only its own renderer and does not require the other Craft extensions.
+View and edit XLSX and CSV files inside VS Code using GridCraft. This extension contains only its own renderer and does not require the other Craft extensions.
 
-It opens supported files by default unless you have saved another editor preference. GridCraft's native ribbon, formula bar, grid and bottom worksheet tabs support editing. Use Ctrl/Cmd+S to persist XLSX changes; Save As, undo/redo and Revert integrate with VS Code. Files stay local to the VS Code session.
+It opens supported files by default unless you have saved another editor preference. GridCraft's native ribbon, formula bar, grid and bottom worksheet tabs support editing. Use Ctrl/Cmd+S to persist changes in the original format; Save As, undo/redo and Revert integrate with VS Code. Files stay local to the VS Code session.
 
 Use the sheet selector and mouse-wheel scrolling to navigate spreadsheets.
 
@@ -17,3 +17,5 @@ Autosave preserves ongoing cell entry. Incomplete formulas defer saving until th
 The native interface follows VS Code’s light/dark theme on opening and while the theme changes. Theme changes do not modify document formatting or mark the file dirty.
 
 Spreadsheet zoom uses five percentage points per Ctrl+wheel notch, zoom button click, or Ctrl+Alt+plus/minus shortcut (10–400%). The slider and percentage dialog allow an exact zoom.
+
+CSV uses the native delimiter detector and writer, including quoted fields, multiline text and UTF-8. CSV stores one sheet of values only: formatting and formulas are not retained as workbook features. Saves with additional sheets are rejected to avoid dropping them. Save As keeps the source extension; XLSX/CSV conversion is not offered by the host. Native CSV value inference can normalize numeric/date fields.

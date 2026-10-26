@@ -49,6 +49,35 @@ export async function run(): Promise<void> {
   assert.equal(doc.dirty, false);
 
   console.log('Editing round trip and revert passed');
+  await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+  const csvUri = vscode.Uri.joinPath(directory, 'roundtrip.csv');
+  const csvSource = new TextEncoder().encode('Name;Value\r\n"Craft, quoted";42\r\n"two\nlines";7\r\n');
+  await vscode.workspace.fs.writeFile(csvUri, csvSource);
+  let csv = await open(api, csvUri);
+  assert.equal(await csv.request('test:cell', { sheet: 0, row: 1, col: 0 }), 'Craft, quoted');
+  await csv.request('test:edit', { row: 1, col: 1, text: 'שלום, "CSV"' });
+  await vscode.commands.executeCommand('undo');
+  assert.equal(await csv.request('test:cell', { sheet: 0, row: 1, col: 1 }), '42');
+  await vscode.commands.executeCommand('redo');
+  assert.ok(await vscode.workspace.save(csvUri));
+  const csvBytes = await vscode.workspace.fs.readFile(csvUri);
+  assert.ok(new TextDecoder().decode(csvBytes).startsWith('Name;Value'), 'CSV stays text and preserves semicolon delimiter');
+  await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+  csv = await open(api, csvUri);
+  assert.equal(await csv.request('test:cell', { sheet: 0, row: 1, col: 1 }), 'שלום, "CSV"');
+  assert.equal(await csv.request('test:cell', { sheet: 0, row: 2, col: 0 }), 'two\nlines');
+  await csv.request('test:edit', { row: 1, col: 1, text: 'changed' });
+  const csvCopy = vscode.Uri.joinPath(directory, 'copy.csv');
+  const csvToken = new vscode.CancellationTokenSource();
+  await api.editing.saveCustomDocumentAs(csv, csvCopy, csvToken.token);
+  assert.deepEqual(await vscode.workspace.fs.readFile(csvUri), csvBytes, 'CSV Save As leaves source unchanged');
+  assert.ok(new TextDecoder().decode(await vscode.workspace.fs.readFile(csvCopy)).includes('changed'));
+  await api.editing.revertCustomDocument(csv, csvToken.token);
+  assert.equal(await csv.request('test:cell', { sheet: 0, row: 1, col: 1 }), 'שלום, "CSV"');
+  csvToken.dispose();
+  await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+  doc = await open(api, uri);
+  console.log('CSV delimiter, quoting, multiline Unicode, native edit, Undo/Redo and save/reopen passed');
   // External modifications are never silently overwritten.
   await edit(doc, '30');
   await vscode.workspace.fs.writeFile(uri, original);

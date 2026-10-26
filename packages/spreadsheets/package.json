@@ -20,7 +20,7 @@
   },
   "name": "craft-spreadsheets",
   "displayName": "Craft Spreadsheets",
-  "description": "Native GridCraft XLSX viewing and editing in VS Code.",
+  "description": "Native GridCraft XLSX and CSV viewing and editing in VS Code.",
   "categories": [
     "Other"
   ],
@@ -33,6 +33,9 @@
         "selector": [
           {
             "filenamePattern": "*.xlsx"
+          },
+          {
+            "filenamePattern": "*.csv"
           }
         ],
         "priority": "default"

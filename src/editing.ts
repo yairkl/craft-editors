@@ -44,7 +44,7 @@ export class EditableDocument implements vscode.CustomDocument {
   dispose(): void { this.disposed = true; this.rpc?.dispose(); this.disposables.forEach(item => item.dispose()); }
 }
 
-export interface EditableDescriptor { format: 'xlsx' | 'docx' | 'pptx' | 'pdf' | 'svg' | 'vectorcraft'; engine: 'grid' | 'word' | 'deck' | 'pdf' | 'vector'; viewType: string; label: string; additionalFormats?: DocumentFormat[] }
+export interface EditableDescriptor { format: 'xlsx' | 'csv' | 'docx' | 'pptx' | 'pdf' | 'svg' | 'vectorcraft'; engine: 'grid' | 'word' | 'deck' | 'pdf' | 'vector'; viewType: string; label: string; additionalFormats?: DocumentFormat[] }
 
 export class EditingProvider implements vscode.CustomEditorProvider<EditableDocument>, vscode.Disposable {
   private readonly changes = new vscode.EventEmitter<vscode.CustomDocumentEditEvent<EditableDocument>>();

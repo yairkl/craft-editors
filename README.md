@@ -4,7 +4,7 @@ An independent project to bring the Rust-based Crafting Apps into VS Code as doc
 
 Open, view, and edit spreadsheets, documents, presentations, and PDFs in editor tabs, using the existing Craft engines and WebAssembly interfaces. Files remain local to the VS Code session; no document processing service is required.
 
-**Beta:** five independent native editors for XLSX, DOCX, PPTX, PDF, SVG and `.vectorcraft`. They share VS Code Save/Save As, Undo/Redo, Revert and recovery, and follow the editor's light/dark theme. Each extension contains only its own engine; Craft Suite is an optional pack. SVG visual editing is opt-in through **Reopen Editor With… → Craft Vector**.
+**Beta:** five independent native editors for XLSX/CSV, DOCX, PPTX, PDF, SVG and `.vectorcraft`. They share VS Code Save/Save As, Undo/Redo, Revert and recovery, and follow the editor's light/dark theme. Each extension contains only its own engine; Craft Suite is an optional pack. SVG visual editing is opt-in through **Reopen Editor With… → Craft Vector**.
 
 Download the installers from [GitHub prereleases](https://github.com/yairkl/craft-vscode/releases). See [beta installation and known limits](docs/releases/v0.1.0-beta.1.md) and [packaging](docs/packaging.md). This is an independent community integration, not an official Storytold/ArtCraft product. Nothing is published to Marketplace yet.
 

@@ -57,6 +57,7 @@ impl Snapshot {
     }
 }
 struct State {
+    format: String,
     app: SheetApp,
     context: egui::Context,
     on_frame: Option<js_sys::Function>,
@@ -104,19 +105,23 @@ fn services(commands: Rc<RefCell<Vec<String>>>) -> Services {
         ..Default::default()
     }
 }
-fn make_app(bytes: &[u8], commands: Rc<RefCell<Vec<String>>>) -> Result<SheetApp, JsValue> {
-    let (wb, _) = gridcraft_xlsx::read_xlsx(bytes)
+fn make_app(
+    bytes: &[u8],
+    format: &str,
+    commands: Rc<RefCell<Vec<String>>>,
+) -> Result<SheetApp, JsValue> {
+    let name = if format == "csv" {
+        "Workbook.csv"
+    } else {
+        "Workbook.xlsx"
+    };
+    let (wb, _) = gridcraft_engine::io::open_bytes(name, bytes)
         .map_err(|_| JsValue::from_str("The workbook could not be opened."))?;
     if wb.active().is_none() {
         return Err(JsValue::from_str("The workbook has no active worksheet."));
     }
     let mut session = Session::new();
-    session.add_document(DocState::new(
-        wb,
-        None,
-        "Workbook.xlsx".into(),
-        Trust::FromFile,
-    ));
+    session.add_document(DocState::new(wb, None, name.into(), Trust::FromFile));
     let mut app = SheetApp::new(session, services(commands));
     // VS Code provides file/window chrome; the native ribbon, formula bar, grid,
     // worksheet tabs, context menus and dialogs remain fully interactive.
@@ -317,18 +322,23 @@ impl GridViewer {
         bytes: Vec<u8>,
         on_frame: js_sys::Function,
         on_event: js_sys::Function,
+        format: String,
     ) -> Result<GridViewer, JsValue> {
         if bytes.len() > 32 * 1024 * 1024 {
             return Err(JsValue::from_str("Document exceeds 32 MiB."));
         }
         let commands = Rc::new(RefCell::new(Vec::new()));
-        let app = make_app(&bytes, commands.clone())?;
+        if !matches!(format.as_str(), "xlsx" | "csv") {
+            return Err(JsValue::from_str("Unsupported spreadsheet format."));
+        }
+        let app = make_app(&bytes, &format, commands.clone())?;
         let doc = app
             .session
             .active()
             .ok_or_else(|| JsValue::from_str("No workbook."))?;
         let snapshots = BTreeMap::from([(0, Snapshot::capture(doc, &app))]);
         let state = Rc::new(RefCell::new(State {
+            format,
             app,
             commands,
             context: egui::Context::default(),
@@ -392,7 +402,12 @@ impl GridViewer {
             .flush(false)
     }
     pub fn mark_original(&self, bytes: Vec<u8>) -> Result<(), JsValue> {
-        let (wb, _) = gridcraft_xlsx::read_xlsx(&bytes)
+        let name = if self.state.borrow().format == "csv" {
+            "Workbook.csv"
+        } else {
+            "Workbook.xlsx"
+        };
+        let (wb, _) = gridcraft_engine::io::open_bytes(name, &bytes)
             .map_err(|_| JsValue::from_str("Original workbook could not be opened."))?;
         let mut state = self
             .state
@@ -417,10 +432,19 @@ impl GridViewer {
             .snapshots
             .get(&state.token)
             .ok_or_else(|| JsValue::from_str("Missing workbook state."))?;
+        if state.format == "csv" && snapshot.wb.sheets.len() != 1 {
+            return Err(JsValue::from_str(
+                "CSV supports one worksheet. Remove additional sheets before saving.",
+            ));
+        }
         let bytes = gridcraft_engine::io::save_bytes_as(
             &snapshot.wb,
             "Workbook.xlsx",
-            gridcraft_engine::io::FileKind::Xlsx,
+            if state.format == "csv" {
+                gridcraft_engine::io::FileKind::Csv
+            } else {
+                gridcraft_engine::io::FileKind::Xlsx
+            },
         )
         .map_err(|_| JsValue::from_str("The workbook could not be serialized."))?;
         let result = js_sys::Object::new();
@@ -476,7 +500,7 @@ impl GridViewer {
             .state
             .try_borrow_mut()
             .map_err(|_| JsValue::from_str("Renderer is busy."))?;
-        let mut app = make_app(&bytes, state.commands.clone())?;
+        let mut app = make_app(&bytes, &state.format, state.commands.clone())?;
         app.ui.dark = state.app.ui.dark;
         app.ui.system_theme = false;
         let token = state

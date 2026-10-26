@@ -35,7 +35,7 @@ for name in [*PROGRAMS, 'suite']:
                 if other_name != name:
                     assert not any(p['name'].startswith(other_program + '-') for p in dependencies), f'{name}: sibling engine dependency'
             for editor in installed['contributes']['customEditors']:
-                assert editor['selector'] == ([{'filenamePattern': '*.svg'}, {'filenamePattern': '*.vectorcraft'}] if name == 'vector' and not editor['viewType'].endswith('integrationProbe') else [{'filenamePattern': f'*.{extension}'}])
+                assert editor['selector'] == ([{'filenamePattern': '*.svg'}, {'filenamePattern': '*.vectorcraft'}] if name == 'vector' and not editor['viewType'].endswith('integrationProbe') else ([{'filenamePattern': '*.xlsx'}, {'filenamePattern': '*.csv'}] if name == 'spreadsheets' and not editor['viewType'].endswith('integrationProbe') else [{'filenamePattern': f'*.{extension}'}]))
             for renderer in (ROOT / 'media/engines' / engine).rglob('*'):
                 if renderer.is_file() and renderer.suffix in ('.js', '.wasm'):
                     relative = renderer.relative_to(ROOT / 'media/engines' / engine).as_posix()
