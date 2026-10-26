@@ -84,7 +84,7 @@ The spreadsheet editing suite (`xvfb-run -a npm run test:editing`) additionally 
 
 ## First beta release
 
-See [v0.1.0-beta.1](releases/v0.1.0-beta.1.md). All VSIX manifests use numeric version `0.1.0` with `preview: true`; the GitHub tag/release carries the beta label. CI creates a prerelease only for a successful beta-tag run. It attaches each independent VSIX and `SHA256SUMS`. No branch build publishes files. A failed release job can be rerun; no automatic retagging or overwriting of published installers is performed.
+See [v0.1.1-beta.1](releases/v0.1.1-beta.1.md). All VSIX manifests use numeric version `0.1.1` with `preview: true`; the GitHub tag/release carries the beta label. CI creates a prerelease only for a successful beta-tag run. It attaches each independent VSIX and `SHA256SUMS`. No branch build publishes files. A failed release job can be rerun; no automatic retagging or overwriting of published installers is performed.
 
 `npm run test:graphics` checks native PDF/SVG edits, Ctrl+wheel zoom, native keyboard Undo/Redo, saved-file reopening, Save As, Revert and backup recovery, including `.vectorcraft` save/reopen. `npm run test:theme` now covers all five native palettes. Installed-package tests explicitly choose the optional SVG editor.
 

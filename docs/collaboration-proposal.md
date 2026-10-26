@@ -9,7 +9,7 @@ Suggested comment heading: **[Proposal] Native Craft editors inside VS Code — 
 Following this proposal, we've built an independent VS Code integration for GridCraft, WordCraft, DeckCraft, PdfCraft and VectorCraft:
 
 - Source: https://github.com/yairkl/craft-vscode
-- Installation beta: https://github.com/yairkl/craft-vscode/releases/tag/v0.1.0-beta.1
+- Installation beta: https://github.com/yairkl/craft-vscode/releases/tag/v0.1.1-beta.1
 - Each app is independently installable, with an optional extension pack.
 - Native Rust/egui UIs run as WASM inside VS Code editor tabs. Files stay local to the VS Code session, with no processing service or external app dependency.
 - A shared host handles Save/Save As, cancellation, disk-conflict checks, exact-revision acknowledgments, VS Code Undo/Redo, Revert and recovery. Native app chrome is adapted for embedding, and light/dark follows VS Code.
