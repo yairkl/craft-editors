@@ -31,20 +31,20 @@
   },
   "artifacts": {
     "grid/viewer.js": {
-      "bytes": 156379,
-      "sha256": "edb53714b1efad5eb7eaed2652e71ff46e0bcd664d132ecfc08d19a99d5e8f7a"
+      "bytes": 156564,
+      "sha256": "ce909033390b6f45a346c876d515a5b76e0ad686c8ce5e6a5d56d2a10f134015"
     },
     "grid/viewer_bg.wasm": {
-      "bytes": 22742080,
-      "sha256": "644b0faf3bedb5c1ca874a9e7dc8378044414dc718dbbc27e55940fed35fea03"
+      "bytes": 22743602,
+      "sha256": "1f39fb642aa69eb39951e6246eaee5bdbfb27977c9aa4224c3f787baad728fe7"
     },
     "pdf/viewer.js": {
       "bytes": 163866,
       "sha256": "3c507f57da8e32a588075a1cf5b2e845c9dbe167dbbb4341e5c89b8fb0cf3cfb"
     },
     "pdf/viewer_bg.wasm": {
-      "bytes": 46662151,
-      "sha256": "5cff4dfc068fdb736b4118ab48f08cfb8b4a614c4664acdeb07150d5cc339be8"
+      "bytes": 46662424,
+      "sha256": "7079164193f5582206fa0a0ade7147ce843ad0b865ed5bd07171261e01032241"
     },
     "word/viewer.js": {
       "bytes": 156863,
