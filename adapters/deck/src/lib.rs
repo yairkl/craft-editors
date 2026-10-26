@@ -23,9 +23,9 @@ impl Document {
             host_command: Some(Box::new(move |id| host_command(&commands, id))),
             ..Default::default()
         };
-        Ok(Self {
-            app: SlideApp::new(session, services),
-        })
+        let mut app = SlideApp::new(session, services);
+        app.ui.ribbon_collapsed = true;
+        Ok(Self { app })
     }
     fn snapshot(&self) -> Snapshot {
         Snapshot {

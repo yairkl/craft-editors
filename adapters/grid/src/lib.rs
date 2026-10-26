@@ -129,6 +129,7 @@ fn make_app(
     // worksheet tabs, context menus and dialogs remain fully interactive.
     app.chrome.title_bar = false;
     app.chrome.file_tab = false;
+    app.ui.ribbon_collapsed = true;
     Ok(app)
 }
 impl State {

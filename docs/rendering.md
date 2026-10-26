@@ -61,3 +61,5 @@ Linux and simulated remote filesystems are covered; Actual Linux Remote SSH life
 ## Embedded slide presentation limits
 
 DeckCraft slideshow/Presenter View launches are disabled in VS Code. Desktop child viewports fall back to windows inside the editor webview and cover the audience slide; they do not provide an independent monitor or fullscreen presentation host. The guard applies at native `start_show`, including F5, ribbon/status actions, custom shows and command launches. Reading View remains an in-editor preview without a presenter viewport. A future multi-display mode requires a separate audience surface and host-managed lifecycle, navigation and focus.
+
+Office ribbons start collapsed in the GridCraft, WordCraft and DeckCraft adapters. The native tab row and expand/collapse interactions remain available. This is an embedding default; upstream application defaults are unchanged. Saving does not recreate the app or reset a ribbon the user has expanded.

@@ -31,6 +31,7 @@ impl Document {
         };
         let mut app = WordApp::new(Session::new(doc), services);
         app.ui.backstage = false;
+        app.ui.ribbon_collapsed = true;
         let observed = std::cell::Cell::new(app.session.rev());
         Ok(Self {
             app,
