@@ -138,6 +138,14 @@ impl WordMcpHeadless {
         wordcraft_engine::io::save_bytes("Document.docx", &backend.session.doc)
             .map_err(|_| error("The Word document could not be serialized."))
     }
+    pub fn mark_saved(&self) -> Result<(), JsValue> {
+        self.backend
+            .try_borrow_mut()
+            .map_err(|_| error("Document is busy"))?
+            .session
+            .dirty = false;
+        Ok(())
+    }
     pub fn message(&self, message: &str) -> Result<Option<String>, JsValue> {
         Ok(self
             .server

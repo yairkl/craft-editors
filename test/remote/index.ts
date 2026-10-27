@@ -106,6 +106,29 @@ export async function run(): Promise<void> {
       assert.equal((await closedTool('save_file', {})).isError, false);
       closed.close();
     }
+    if (format === 'pdf') {
+      assert.ok(api.mcp);
+      const client = agent(api.mcp);
+      const tool = (name: string, args: object) => client('tools/call', { name, arguments: args });
+      const opened = await tool('doc_open', { path: uri.fsPath });
+      assert.equal(opened.isError, false);
+      const id = (JSON.parse(opened.content?.[0]?.text ?? '{}') as { doc: number }).doc;
+      assert.equal((await tool('page_rotate', { doc: id, pages: [1], degrees: 90 })).isError, false);
+      assert.equal((await doc.request('test:inspect') as { rotations: number[] }).rotations[0], 90);
+      assert.equal((await tool('edit_undo', { doc: id })).isError, false);
+      assert.equal((await doc.request('test:inspect') as { rotations: number[] }).rotations[0], 0);
+      client.close();
+      const closedUri = vscode.Uri.joinPath(workspace.uri, 'remote tests עברית/agent-closed.pdf');
+      await vscode.workspace.fs.writeFile(closedUri, await vscode.workspace.fs.readFile(vscode.Uri.joinPath(workspace.uri, 'fixtures/minimal.pdf')));
+      const closed = agent(api.mcp);
+      const closedTool = (name: string, args: object) => closed('tools/call', { name, arguments: args });
+      const closedOpen = await closedTool('doc_open', { path: closedUri.fsPath });
+      assert.equal(closedOpen.isError, false);
+      const closedId = (JSON.parse(closedOpen.content?.[0]?.text ?? '{}') as { doc: number }).doc;
+      assert.equal((await closedTool('page_rotate', { doc: closedId, pages: [1], degrees: 90 })).isError, false);
+      assert.equal((await closedTool('doc_save', { doc: closedId })).isError, false);
+      closed.close();
+    }
     if (format === 'xlsx') await doc.request('test:edit', { row: 5, col: 0, text: 'SSH שלום' });
     else if (format === 'pdf') await doc.request('test:command', { command: 'page.rotate' });
     else if (format === 'svg') await doc.request('test:command', { command: 'text.create', params: { x: 40, y: 280, text: 'SSH שלום', size: 28 } });
@@ -146,11 +169,12 @@ export async function run(): Promise<void> {
 function agent(config: NonNullable<Api['mcp']>) {
   const child = spawn(config.command, config.args, { env: { ...process.env, ...config.env }, stdio: ['pipe', 'pipe', 'pipe'] });
   const lines = createInterface({ input: child.stdout });
-  const pending = new Map<number, { resolve(value: { isError?: boolean }): void; reject(error: Error): void }>();
+  type Reply = { isError?: boolean; content?: { text?: string }[] };
+  const pending = new Map<number, { resolve(value: Reply): void; reject(error: Error): void }>();
   let id = 0;
-  lines.on('line', line => { const response = JSON.parse(line) as { id: number; result: { isError?: boolean } }; const waiter = pending.get(response.id); if (waiter) { pending.delete(response.id); waiter.resolve(response.result); } });
+  lines.on('line', line => { const response = JSON.parse(line) as { id: number; result: Reply }; const waiter = pending.get(response.id); if (waiter) { pending.delete(response.id); waiter.resolve(response.result); } });
   child.on('exit', () => { for (const waiter of pending.values()) waiter.reject(new Error('MCP proxy exited')); pending.clear(); });
-  const call = (method: string, params: object): Promise<{ isError?: boolean }> => new Promise((resolve, reject) => {
+  const call = (method: string, params: object): Promise<Reply> => new Promise((resolve, reject) => {
     const requestId = ++id; const timer = setTimeout(() => { pending.delete(requestId); reject(new Error('MCP request timed out')); }, 15000);
     pending.set(requestId, { resolve: value => { clearTimeout(timer); resolve(value); }, reject: error => { clearTimeout(timer); reject(error); } });
     child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: requestId, method, params }) + '\n');

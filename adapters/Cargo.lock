@@ -1340,6 +1340,7 @@ dependencies = [
  "eframe 0.36.2",
  "egui 0.36.2",
  "js-sys",
+ "pdfcraft-automation",
  "pdfcraft-engine",
  "pdfcraft-fonts",
  "pdfcraft-render",
@@ -5073,6 +5074,21 @@ dependencies = [
  "pdfcraft-edit",
  "pdfcraft-model",
  "thiserror 2.0.21",
+]
+
+[[package]]
+name = "pdfcraft-automation"
+version = "0.13.0"
+dependencies = [
+ "base64 0.22.1",
+ "pdfcraft-cos",
+ "pdfcraft-engine",
+ "pdfcraft-organize",
+ "pdfcraft-platform",
+ "pdfcraft-render",
+ "serde_json",
+ "sha2 0.11.1",
+ "tempfile",
 ]
 
 [[package]]

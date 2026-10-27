@@ -172,6 +172,18 @@ impl DeckMcpHeadless {
         deckcraft_pptx::export(&doc.doc)
             .map_err(|_| error("The presentation could not be serialized."))
     }
+    pub fn mark_saved(&self) -> Result<(), JsValue> {
+        let mut backend = self
+            .backend
+            .try_borrow_mut()
+            .map_err(|_| error("Presentation is busy"))?;
+        let doc = backend
+            .session
+            .active_mut()
+            .ok_or_else(|| error("No presentation"))?;
+        doc.saved_doc = doc.doc.clone();
+        Ok(())
+    }
     pub fn message(&self, message: &str) -> Result<Option<String>, JsValue> {
         Ok(self
             .server

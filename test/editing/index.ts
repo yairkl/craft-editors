@@ -50,6 +50,8 @@ export async function run(): Promise<void> {
   await vscode.workspace.fs.writeFile(closedUri, original);
   assert.equal((await callTool('save_workbook', {})).result?.isError, false);
   assert.notDeepEqual(await vscode.workspace.fs.readFile(closedUri), original);
+  const savedWorkbook = await callTool('inspect_workbook', {});
+  assert.equal((JSON.parse(savedWorkbook.result?.content?.[0]?.text ?? '{}') as { dirty: boolean }).dirty, false, 'Headless workbook is marked saved only after the write succeeds');
   client.close();
   const dirtyCsvUri = vscode.Uri.joinPath(directory, 'agent-text-dirty.csv');
   await vscode.workspace.fs.writeFile(dirtyCsvUri, Buffer.from('Name,Value\nOne,1\n'));
@@ -127,6 +129,12 @@ export async function run(): Promise<void> {
   assert.equal((await liveTool('redo', {})).result?.isError, false);
   assert.equal(await doc.request('test:cell', { sheet: 0, row: 6, col: 0 }), 'live agent');
   assert.equal((await liveTool('undo', {})).result?.isError, false);
+  await doc.request('test:draft', { row: 1, col: 1, text: 'agent history draft' });
+  assert.equal((await liveTool('undo', {})).result?.isError, true, 'Agent history must not discard an active cell draft');
+  assert.equal(await doc.request('test:draft-text'), 'agent history draft');
+  const draftCancellation = new vscode.CancellationTokenSource();
+  await api.editing.revertCustomDocument(doc, draftCancellation.token);
+  draftCancellation.dispose();
   liveClient.close();
   const mcp = async (id: number, method: string, params: object) => {
     const reply = await doc.request('agent:mcp', { message: JSON.stringify({ jsonrpc: '2.0', id, method, params }) });
@@ -439,12 +447,13 @@ async function revert(doc: EditableDocument): Promise<void> {
 function createAgent(config: EditorApi['mcp']) {
   const process = spawn(config.command, config.args, { env: { ...globalThis.process.env, ...config.env }, stdio: ['pipe', 'pipe', 'pipe'] });
   const lines = createInterface({ input: process.stdout });
-  const waiting = new Map<number, { resolve: (value: { result?: { isError?: boolean } }) => void; reject: (error: Error) => void }>();
+  type Response = { result?: { isError?: boolean; content?: { text?: string }[] } };
+  const waiting = new Map<number, { resolve: (value: Response) => void; reject: (error: Error) => void }>();
   let sequence = 0;
-  lines.on('line', line => { const response = JSON.parse(line) as { id: number; result?: { isError?: boolean } }; const entry = waiting.get(response.id); if (entry) { waiting.delete(response.id); entry.resolve(response); } });
+  lines.on('line', line => { const response = JSON.parse(line) as Response & { id: number }; const entry = waiting.get(response.id); if (entry) { waiting.delete(response.id); entry.resolve(response); } });
   process.on('exit', () => { for (const entry of waiting.values()) entry.reject(new Error('MCP proxy exited')); waiting.clear(); });
   return {
-    call(method: string, params: object): Promise<{ result?: { isError?: boolean } }> {
+    call(method: string, params: object): Promise<Response> {
       const id = ++sequence;
       return new Promise((resolve, reject) => {
         const timer = setTimeout(() => { waiting.delete(id); reject(new Error(`MCP ${method} timed out`)); }, 15000);

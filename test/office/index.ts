@@ -40,6 +40,8 @@ export async function run(): Promise<void> {
       assert.equal((await closedTool('add_text_box', { x: 20, y: 20, w: 200, h: 40, text: 'closed slide agent' })).isError, false);
       assert.deepEqual(await vscode.workspace.fs.readFile(closedUri), original);
       assert.equal((await closedTool('save_presentation', {})).isError, false);
+      const savedDeck = await closedTool('inspect_document', {});
+      assert.equal((JSON.parse(savedDeck.content?.[0]?.text ?? '{}') as { dirty: boolean }).dirty, false);
       closed.close();
       const closedDoc = await open(api, closedUri);
       assert.ok(String(await closedDoc.request('test:text')).includes('closed slide agent'));
@@ -201,11 +203,12 @@ async function waitText(doc: EditableDocument, expected: unknown): Promise<void>
 function agent(config: NonNullable<Api['mcp']>) {
   const child = spawn(config.command, config.args, { env: { ...process.env, ...config.env }, stdio: ['pipe', 'pipe', 'pipe'] });
   const lines = createInterface({ input: child.stdout });
-  const pending = new Map<number, { resolve(value: { isError?: boolean }): void; reject(error: Error): void }>();
+  type Reply = { isError?: boolean; content?: { text?: string }[] };
+  const pending = new Map<number, { resolve(value: Reply): void; reject(error: Error): void }>();
   let sequence = 0;
-  lines.on('line', line => { const response = JSON.parse(line) as { id: number; result: { isError?: boolean } }; const waiter = pending.get(response.id); if (waiter) { pending.delete(response.id); waiter.resolve(response.result); } });
+  lines.on('line', line => { const response = JSON.parse(line) as { id: number; result: Reply }; const waiter = pending.get(response.id); if (waiter) { pending.delete(response.id); waiter.resolve(response.result); } });
   child.on('exit', () => { for (const waiter of pending.values()) waiter.reject(new Error('MCP proxy exited')); pending.clear(); });
-  const call = (method: string, params: object): Promise<{ isError?: boolean }> => new Promise((resolve, reject) => {
+  const call = (method: string, params: object): Promise<Reply> => new Promise((resolve, reject) => {
     const id = ++sequence; const timer = setTimeout(() => { pending.delete(id); reject(new Error('MCP request timed out')); }, 15000);
     pending.set(id, { resolve: value => { clearTimeout(timer); resolve(value); }, reject: error => { clearTimeout(timer); reject(error); } });
     child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n');

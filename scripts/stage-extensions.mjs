@@ -26,8 +26,8 @@ export function stageExtensions({ development = false, allowMissingRenderers = f
     const { engine } = extensions[name];
     if (engine) {
       for (const file of ['host', 'document', 'rendering', 'editing', 'rpc']) copy(`out/src/${file}.js`);
-      if (name === 'spreadsheets' || name === 'word' || name === 'powerpoint' || name === 'vector') {
-        for (const file of ['mcp-transport', 'mcp-proxy', name === 'spreadsheets' ? 'mcp' : 'document-mcp']) copy(`out/src/${file}.js`);
+      if (name === 'spreadsheets' || name === 'word' || name === 'powerpoint' || name === 'vector' || name === 'pdf') {
+        for (const file of ['mcp-files', 'mcp-transport', 'mcp-proxy', name === 'spreadsheets' ? 'mcp' : 'document-mcp']) copy(`out/src/${file}.js`);
       }
       copy(`out/src/entrypoints/${name}.js`);
       copy('out/protocol/probe.js');
@@ -41,7 +41,7 @@ export function stageExtensions({ development = false, allowMissingRenderers = f
       }
       const snippets = resolve(root, 'media/engines', engine, 'snippets');
       if (existsSync(snippets)) cpSync(snippets, resolve(destination, 'media/engines', engine, 'snippets'), { recursive: true });
-      if (engine === 'grid' || engine === 'word' || engine === 'deck' || engine === 'vector') {
+      if (engine === 'grid' || engine === 'word' || engine === 'deck' || engine === 'vector' || engine === 'pdf') {
         const node = resolve(root, 'media/engines', engine, 'node');
         if (existsSync(node)) cpSync(node, resolve(destination, 'media/engines', engine, 'node'), { recursive: true });
         else if (!allowMissingRenderers) throw new Error(`${name}: rebuild the renderer with the MCP runtime.`);

@@ -92,9 +92,13 @@ window.addEventListener('message', async ({ data }) => {
       let result;
       switch (data.operation) {
         case 'agent:mcp': {
-          if (!['xlsx', 'csv', 'docx', 'pptx', 'svg', 'vectorcraft'].includes(document.body.dataset.format) || typeof viewer.mcp_message !== 'function' || typeof data.message !== 'string' || data.message.length > 1048576) throw new Error('Invalid document agent request.');
+          if (!['xlsx', 'csv', 'docx', 'pptx', 'svg', 'vectorcraft', 'pdf'].includes(document.body.dataset.format) || typeof viewer.mcp_message !== 'function' || typeof data.message !== 'string' || data.message.length > 1048576) throw new Error('Invalid document agent request.');
           result = viewer.mcp_message(data.message) ?? null;
           break;
+        }
+        case 'agent:document-id': {
+          if (document.body.dataset.format !== 'pdf' || typeof viewer.mcp_document_id !== 'function') throw new Error('Document identity unavailable.');
+          result = viewer.mcp_document_id(); break;
         }
         case 'serialize': {
           const snapshot = viewer.serialize(data.flush === true, data.format);

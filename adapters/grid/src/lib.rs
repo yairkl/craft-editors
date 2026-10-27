@@ -132,10 +132,10 @@ impl gridcraft_mcp::Backend for McpBackend {
         if state.app.editor.is_some() || state.app.text_box_editor.is_some() {
             return Err("Finish the active spreadsheet edit before using agent tools".into());
         }
-        let result = state.app.run(command, args)?;
+        let result = state.app.run(command, args);
         state.observe();
         state.context.request_repaint();
-        Ok(result)
+        result
     }
     fn has_ui(&self) -> bool {
         false
@@ -195,6 +195,19 @@ impl McpHeadless {
             .try_borrow_mut()
             .map_err(|_| JsValue::from_str("MCP server is busy"))?;
         Ok(server.handle_line(message))
+    }
+
+    pub fn mark_saved(&self) -> Result<(), JsValue> {
+        let mut backend = self
+            .backend
+            .try_borrow_mut()
+            .map_err(|_| JsValue::from_str("Workbook is busy"))?;
+        let doc = backend
+            .session
+            .active_mut()
+            .ok_or_else(|| JsValue::from_str("No workbook"))?;
+        doc.saved = doc.wb.clone();
+        Ok(())
     }
 
     pub fn csv_features(&self) -> Result<String, JsValue> {

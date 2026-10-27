@@ -26,7 +26,7 @@ for (const id of ['grid', 'pdf', 'word', 'deck', 'vector']) {
   mkdirSync(directory, { recursive: true });
   run('wasm-bindgen', ['--target', 'web', '--out-dir', directory, '--out-name', 'viewer',
     resolve(root, `adapters/target/wasm32-unknown-unknown/release/craft_${id}_viewer.wasm`)]);
-  if (id === 'grid' || id === 'word' || id === 'deck' || id === 'vector') {
+  if (id === 'grid' || id === 'word' || id === 'deck' || id === 'vector' || id === 'pdf') {
     run('wasm-bindgen', ['--target', 'nodejs', '--out-dir', resolve(directory, 'node'), '--out-name', 'viewer',
       resolve(root, `adapters/target/wasm32-unknown-unknown/release/craft_${id}_viewer.wasm`)]);
   }

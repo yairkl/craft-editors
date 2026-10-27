@@ -186,6 +186,18 @@ impl VectorMcpHeadless {
         };
         Ok(vectorcraft_svg::export_full(&doc.doc, &options, Some(&native)).take_bytes())
     }
+    pub fn mark_saved(&self) -> Result<(), JsValue> {
+        let mut backend = self
+            .backend
+            .try_borrow_mut()
+            .map_err(|_| error("Vector document is busy"))?;
+        let doc = backend
+            .session
+            .active_mut()
+            .ok_or_else(|| error("No vector document"))?;
+        doc.mark_saved();
+        Ok(())
+    }
     pub fn message(&self, message: &str) -> Result<Option<String>, JsValue> {
         Ok(self
             .server

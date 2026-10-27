@@ -1,7 +1,7 @@
 {
   "rust": "rustc 1.95.0 (59807616e 2026-04-14)",
   "wasmBindgen": "0.2.129",
-  "adapterLockSha256": "2b7d41fafe63621371e805c4c9baf08f66067585647169609b835042a1d97d5a",
+  "adapterLockSha256": "4dd1183558dc56d813894da5f9081d306d62186a3d9aeb3b54bf02a29ffbf973",
   "fontAssets": {
     "schemaVersion": 1,
     "family": "Noto Sans Hebrew",
@@ -31,60 +31,68 @@
   },
   "artifacts": {
     "grid/viewer.js": {
-      "bytes": 161298,
-      "sha256": "7a4853908a74f939a6a6948e9d585be0e128213a6e96e6328f3d67ddd964bbae"
+      "bytes": 161471,
+      "sha256": "c19a210b858591a3a42416e4a6f84bc9187f4420e42a85821d9f1caf49523fc9"
     },
     "grid/viewer_bg.wasm": {
-      "bytes": 22946921,
-      "sha256": "5f62821beb63413e26990743d923bddf3afa386a38a77ed720bf921ce0f770d0"
+      "bytes": 22947398,
+      "sha256": "cd936fc313670c3a7409d45e1d7bedcade76f313c6a4e9e3934726394a514002"
     },
     "grid/node/viewer.js": {
-      "bytes": 157784,
-      "sha256": "9e08455e6387c5c8647a14c91437474cbde5a05a26e9b5847f261d4bddae182e"
+      "bytes": 157957,
+      "sha256": "11267a901ab7cb894efae22fedbcac3e9c998160ab8c7df28f83c16c8fde87b6"
     },
     "grid/node/viewer_bg.wasm": {
-      "bytes": 22946921,
-      "sha256": "5f62821beb63413e26990743d923bddf3afa386a38a77ed720bf921ce0f770d0"
+      "bytes": 22947398,
+      "sha256": "cd936fc313670c3a7409d45e1d7bedcade76f313c6a4e9e3934726394a514002"
     },
     "pdf/viewer.js": {
-      "bytes": 163866,
-      "sha256": "45244ff7669277a2ef49369e97555d88e37ebcae4e81e251719faad4cc4b5066"
+      "bytes": 167614,
+      "sha256": "245d58a5ea16c2d5051a39584550dc02124c3bc65044627fa7d369472a113b59"
     },
     "pdf/viewer_bg.wasm": {
-      "bytes": 46771498,
-      "sha256": "73071fd311f1438e37cee47653d606907661d6da5818c8b6aa795f236dd1f1d2"
+      "bytes": 48724611,
+      "sha256": "3382d80d6aa9029a6582d71b76e3b1fb0fb94d97a8996645a0068556c5c480b5"
+    },
+    "pdf/node/viewer.js": {
+      "bytes": 164110,
+      "sha256": "a56e1636d5d2e37a83262053cb8cd8ff8b0cafaa2b43268c0f6850ddc1df2ed3"
+    },
+    "pdf/node/viewer_bg.wasm": {
+      "bytes": 48724611,
+      "sha256": "3382d80d6aa9029a6582d71b76e3b1fb0fb94d97a8996645a0068556c5c480b5"
     },
     "word/viewer.js": {
-      "bytes": 159590,
-      "sha256": "799f05f8e4548190c2db6a90bd1619711ba4d2560f8aa5c0c9fafc1aedae3ba2"
+      "bytes": 159767,
+      "sha256": "e68adf5cd113e38fadeca909839c3297604796db14f86b2d767020e60911ec64"
     },
     "word/viewer_bg.wasm": {
-      "bytes": 44604136,
-      "sha256": "47963022fc1cf1fd56e8a1df0b4e7881ced314cfb063c03cf3dac8338c3785aa"
+      "bytes": 44604519,
+      "sha256": "ab197bbd8c3073e49afc349fba9789f38f6e86db4884de36eabb5ec54b3c7ef3"
     },
     "word/node/viewer.js": {
-      "bytes": 156088,
-      "sha256": "e60abd289add780bfd005937c2342dd6bc291d0012400cfd36c00840e95aad13"
+      "bytes": 156265,
+      "sha256": "21ed381edfa608393ca770b8bee8a694d0aba0c8ddd82817cf63bebf26e71192"
     },
     "word/node/viewer_bg.wasm": {
-      "bytes": 44604136,
-      "sha256": "47963022fc1cf1fd56e8a1df0b4e7881ced314cfb063c03cf3dac8338c3785aa"
+      "bytes": 44604519,
+      "sha256": "ab197bbd8c3073e49afc349fba9789f38f6e86db4884de36eabb5ec54b3c7ef3"
     },
     "deck/viewer.js": {
-      "bytes": 87825,
-      "sha256": "06c8d85c082fb484c0fe06140c46a9a43922facd7bbe24d068cce171a13c5c7e"
+      "bytes": 88002,
+      "sha256": "eef35596dfc2ac39885075fd05ad552de0b3b7de4b06cd7eb0f8b36cefafd220"
     },
     "deck/viewer_bg.wasm": {
-      "bytes": 27476437,
-      "sha256": "239e33121796f49bf24ef777bbb987c2aad6b976196bc143b97119db7df523b7"
+      "bytes": 27477061,
+      "sha256": "8b2026c3f56186d6a840480c670631866a6e989c47006f2cbb89e5d4e46c5a53"
     },
     "deck/node/viewer.js": {
-      "bytes": 84340,
-      "sha256": "c43c7b0eeac1041c1f49936bfab29572da4157abd6c5823f07de297dc3f292ce"
+      "bytes": 84517,
+      "sha256": "f573b8c4a481ae5617a025807dfbeb70b0d5ff2717db4545cfc3303c24afae66"
     },
     "deck/node/viewer_bg.wasm": {
-      "bytes": 27476437,
-      "sha256": "239e33121796f49bf24ef777bbb987c2aad6b976196bc143b97119db7df523b7"
+      "bytes": 27477061,
+      "sha256": "8b2026c3f56186d6a840480c670631866a6e989c47006f2cbb89e5d4e46c5a53"
     },
     "deck/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
@@ -95,20 +103,20 @@
       "sha256": "22a98f9d0c5a0532d291bdc9a3050439420b3d11143b4568fcfd3c66fff36995"
     },
     "vector/viewer.js": {
-      "bytes": 88454,
-      "sha256": "258fac82aa80587176ffd6f7496a633484d31972638da913e88c6bbb2ee9ed0f"
+      "bytes": 88633,
+      "sha256": "40b50357357bdc03c3e3b79a2aa363cb204a1da397695e242a2c8de5d473af34"
     },
     "vector/viewer_bg.wasm": {
-      "bytes": 67837535,
-      "sha256": "de40e6ce3070d4885628b9ce9fa5bd2c78e058e88f445786953da105887e1311"
+      "bytes": 67838090,
+      "sha256": "011aac260fa057c8f6e873b77563c02219e6c24b9fdb0f4863e9495d4de37dec"
     },
     "vector/node/viewer.js": {
-      "bytes": 84973,
-      "sha256": "0c6d3742167a877b13dfd7ac3ec4041f983fbada69f8d065d2d7636f04cd71b3"
+      "bytes": 85152,
+      "sha256": "ef8c0c2e6926bbfed7847ba0b50d8794b028abd90fa6432ae55444380c76cb5a"
     },
     "vector/node/viewer_bg.wasm": {
-      "bytes": 67837535,
-      "sha256": "de40e6ce3070d4885628b9ce9fa5bd2c78e058e88f445786953da105887e1311"
+      "bytes": 67838090,
+      "sha256": "011aac260fa057c8f6e873b77563c02219e6c24b9fdb0f4863e9495d4de37dec"
     },
     "vector/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
@@ -131,8 +139,8 @@
     "pdfcraft": [
       {
         "path": "upstream/patches/pdfcraft-embedding.patch",
-        "sha256": "c70a0c756b32b3b46c257bd2b13432f64c431ca9229515169e80938ed9202c10",
-        "purpose": "Delegate file lifecycle and history to VS Code; omit standalone chrome and restricted branding.",
+        "sha256": "52a9838b3c17a65ec9be853d8efcd1435c8ea5510c564bfc65522624fe5b2717",
+        "purpose": "Delegate file lifecycle and history to the embedding host, provide host snapshots, and expose the automation session for embedded MCP requests.",
         "removalCondition": "Remove when upstream exposes equivalent embedding services."
       }
     ],
