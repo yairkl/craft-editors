@@ -112,8 +112,8 @@
       "patches": [
         {
           "path": "upstream/patches/vectorcraft-embedding.patch",
-          "sha256": "799090be607cb12f6a96881b900c27a0646775ed60782980f6712b12b76b48d3",
-          "purpose": "Delegate file lifecycle and history to VS Code; omit standalone chrome and restricted branding.",
+          "sha256": "c4f9a5b71ff23e6aa3c1c7866d30a7c0e9dd3fd594ce2b8be7292034a3fed9f7",
+          "purpose": "Delegate file lifecycle and history to VS Code, omit standalone chrome and restricted branding, and allow the MCP crate to build for WebAssembly without native path writes.",
           "removalCondition": "Remove when upstream exposes equivalent embedding services."
         }
       ]

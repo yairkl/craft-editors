@@ -34,6 +34,7 @@ class WorkbookSession {
     return reply.result;
   }
   private live(): EditableDocument | undefined { return this.uri ? this.provider.getDocument(this.uri) : undefined; }
+  private dirtyText(uri: vscode.Uri): boolean { return vscode.workspace.textDocuments.some(doc => doc.uri.toString() === uri.toString() && doc.isDirty); }
   private checkMode(): EditableDocument | undefined {
     const live = this.live();
     if (this.mode === 'live' && !live) throw new Error('The workbook view was closed. Open the workbook again before continuing.');
@@ -46,6 +47,7 @@ class WorkbookSession {
   private async open(request: Message, args: Record<string, unknown>): Promise<string> {
     if (this.changed) throw new Error('Save the current headless workbook before opening another.');
     const uri = this.uriFor(args.path);
+    if (this.dirtyText(uri)) throw new Error('This file has unsaved changes in a text editor. Save or close that editor first.');
     const live = this.provider.getDocument(uri);
     if (live) { this.uri = uri; this.mode = 'live'; this.changed = false; return result(request.id, 'Opened the live workbook, including unsaved edits.'); }
     const data = await vscode.workspace.fs.readFile(uri);
@@ -58,6 +60,7 @@ class WorkbookSession {
   private async save(request: Message, args: Record<string, unknown>): Promise<string> {
     if (!this.uri) throw new Error('Open a workbook before saving.');
     const target = args.path ? this.uriFor(args.path) : this.uri;
+    if (this.dirtyText(this.uri) || this.dirtyText(target)) throw new Error('This file has unsaved changes in a text editor. Save or close that editor first.');
     const currentView = this.live();
     // A copy can recover unsaved headless changes even if the source was opened
     // in the editor after the agent started working on it.
@@ -82,6 +85,7 @@ class WorkbookSession {
     }
     if (this.provider.getDocument(target) || (this.live() && !recoveringCopy)) throw new Error('The workbook is open in an editor. Save or close it before writing from a headless session.');
     const output = Buffer.from(encoded.base64, 'base64');
+    if (output.byteLength > 32 * 1024 * 1024) throw new Error('The serialized workbook exceeds 32 MiB.');
     await vscode.workspace.fs.writeFile(target, output);
     if (target.toString() === this.uri.toString()) { this.baseline = hash(output); this.changed = false; }
     return result(request.id, 'Saved the workbook.');

@@ -86,6 +86,26 @@ export async function run(): Promise<void> {
       assert.equal((await closedTool('save_presentation', {})).isError, false);
       closed.close();
     }
+    if (format === 'svg') {
+      assert.ok(api.mcp);
+      const client = agent(api.mcp);
+      const tool = (name: string, args: object) => client('tools/call', { name, arguments: args });
+      const initial = await doc.request('test:text');
+      assert.equal((await tool('open_file', { path: uri.fsPath })).isError, false);
+      assert.equal((await tool('add_text', { x: 30, y: 280, text: 'SSH vector agent', size: 24 })).isError, false);
+      assert.ok(String(await doc.request('test:text')).includes('SSH vector agent'));
+      assert.equal((await tool('undo', {})).isError, false);
+      assert.equal(await doc.request('test:text'), initial);
+      client.close();
+      const closedUri = vscode.Uri.joinPath(workspace.uri, 'remote tests עברית/agent-closed.svg');
+      await vscode.workspace.fs.writeFile(closedUri, await vscode.workspace.fs.readFile(vscode.Uri.joinPath(workspace.uri, 'fixtures/minimal.svg')));
+      const closed = agent(api.mcp);
+      const closedTool = (name: string, args: object) => closed('tools/call', { name, arguments: args });
+      assert.equal((await closedTool('open_file', { path: closedUri.fsPath })).isError, false);
+      assert.equal((await closedTool('add_text', { x: 30, y: 280, text: 'SSH closed vector', size: 24 })).isError, false);
+      assert.equal((await closedTool('save_file', {})).isError, false);
+      closed.close();
+    }
     if (format === 'xlsx') await doc.request('test:edit', { row: 5, col: 0, text: 'SSH שלום' });
     else if (format === 'pdf') await doc.request('test:command', { command: 'page.rotate' });
     else if (format === 'svg') await doc.request('test:command', { command: 'text.create', params: { x: 40, y: 280, text: 'SSH שלום', size: 28 } });

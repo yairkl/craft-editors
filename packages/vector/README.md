@@ -1,5 +1,11 @@
 # Craft Vector (beta)
 
+## Vector tools for agents
+
+Craft Vector exposes the pinned VectorCraft MCP tools to GitHub Copilot and Cursor. Enable the Craft Vector server and ask the agent to open an SVG or VectorCraft document by path. Open documents use the live editor model and VS Code undo/save; closed documents use a headless session and are written only when the agent calls `save_file`. Headless saves detect external changes, refuse to overwrite an open editor, and preserve the source format. An unsaved headless session can be recovered to a separate path if its document becomes open. Unsaved changes in an SVG text editor must be saved or closed before the agent opens or saves the same file.
+
+Finish any active drawing interaction before using agent tools. Screenshots returned as image data are available in headless sessions; writing a screenshot to a native path and desktop-only controls are not available. For an open document, use VS Code Save As for a copy. The bridge is tested in a Linux Remote SSH extension host; actual Copilot and Cursor discovery needs end-to-end validation.
+
 Open an SVG or `.vectorcraft` file with **Reopen Editor With… → Craft Vector**. Configure it as the default if desired; SVG text editing stays available.
 
 Uses the native VectorCraft UI, with VS Code Save, Save As (same format), Undo/Redo, Revert and recovery. SVG saves normalize the XML and may change unsupported features. Test on copies of complex artwork. Native `.vectorcraft` keeps the richer model. Dark/light follows VS Code.

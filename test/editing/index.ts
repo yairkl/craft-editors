@@ -51,6 +51,17 @@ export async function run(): Promise<void> {
   assert.equal((await callTool('save_workbook', {})).result?.isError, false);
   assert.notDeepEqual(await vscode.workspace.fs.readFile(closedUri), original);
   client.close();
+  const dirtyCsvUri = vscode.Uri.joinPath(directory, 'agent-text-dirty.csv');
+  await vscode.workspace.fs.writeFile(dirtyCsvUri, Buffer.from('Name,Value\nOne,1\n'));
+  const dirtyCsv = await vscode.workspace.openTextDocument(dirtyCsvUri);
+  await vscode.window.showTextDocument(dirtyCsv);
+  const textEdit = new vscode.WorkspaceEdit(); textEdit.insert(dirtyCsvUri, new vscode.Position(0, 0), 'unsaved,');
+  assert.ok(await vscode.workspace.applyEdit(textEdit)); assert.equal(dirtyCsv.isDirty, true);
+  const guardedClient = createAgent(api.mcp);
+  assert.equal((await guardedClient.call('tools/call', { name: 'open_workbook', arguments: { path: dirtyCsvUri.fsPath } })).result?.isError, true, 'Agent must not ignore unsaved text-editor changes');
+  guardedClient.close();
+  await vscode.commands.executeCommand('workbench.action.files.revert');
+  await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
   const overlapUri = vscode.Uri.joinPath(directory, 'agent-overlap.xlsx');
   await vscode.workspace.fs.writeFile(overlapUri, original);
   const overlapClient = createAgent(api.mcp);

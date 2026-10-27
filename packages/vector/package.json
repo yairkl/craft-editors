@@ -25,7 +25,9 @@
     "Other"
   ],
   "main": "./out/src/entrypoints/vector.js",
+  "activationEvents": ["onStartupFinished"],
   "contributes": {
+    "mcpServerDefinitionProviders": [{ "id": "craft.vector.mcp", "label": "Craft Vector" }],
     "customEditors": [
       {
         "viewType": "craft.vector.preview",

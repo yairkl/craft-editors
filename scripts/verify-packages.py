@@ -30,7 +30,7 @@ for name in [*PROGRAMS, 'suite']:
                 assert 'extension/out/src/mcp.js' in files
                 assert 'extension/out/src/mcp-transport.js' in files
                 assert 'extension/out/src/mcp-proxy.js' in files
-            if name in ('word', 'powerpoint'):
+            if name in ('word', 'powerpoint', 'vector'):
                 assert prefix + 'node/viewer.js' in files and prefix + 'node/viewer_bg.wasm' in files
                 assert 'extension/out/src/document-mcp.js' in files
                 assert 'extension/out/src/mcp-transport.js' in files

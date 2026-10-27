@@ -3,6 +3,197 @@
 include!("../../native/runtime.rs");
 use vectorcraft_engine::{DocState, Session};
 use vectorcraft_ui_egui::{Services, VectorcraftApp};
+
+struct AgentBackend(std::rc::Rc<std::cell::RefCell<State>>);
+impl vectorcraft_mcp::Backend for AgentBackend {
+    fn call(
+        &mut self,
+        method: &str,
+        params: serde_json::Value,
+    ) -> Result<serde_json::Value, String> {
+        let mut state = self
+            .0
+            .try_borrow_mut()
+            .map_err(|_| "Vector document is busy".to_owned())?;
+        if method == "engine.commands" {
+            return serde_json::to_value(state.document.app.session.commands())
+                .map_err(|e| e.to_string());
+        }
+        if state
+            .document
+            .app
+            .session
+            .active()
+            .is_some_and(|doc| doc.interaction.is_some())
+        {
+            return Err("Finish the active vector interaction before using agent tools".into());
+        }
+        let (command, args) = if method == "engine.execute" || method == "command" {
+            let command = params
+                .get("command")
+                .and_then(serde_json::Value::as_str)
+                .ok_or("Missing command")?;
+            (
+                command,
+                params
+                    .get("params")
+                    .cloned()
+                    .unwrap_or_else(|| serde_json::json!({})),
+            )
+        } else if matches!(
+            method,
+            "document.inspect" | "document.node" | "document.json"
+        ) {
+            (method, params)
+        } else {
+            return Err("This operation is not available in the embedded editor".into());
+        };
+        if command.starts_with("file.")
+            || command.starts_with("ui.")
+            || command.starts_with("app.")
+            || command.starts_with("window.")
+            || command.starts_with("document.open")
+            || command.starts_with("document.save")
+            || command.starts_with("document.export")
+            || matches!(command, "edit.undo" | "edit.redo")
+        {
+            return Err("This operation is managed by the VS Code host".into());
+        }
+        let result = state
+            .document
+            .app
+            .session
+            .execute(command, &args)
+            .map_err(|e| e.to_string());
+        state.observe();
+        state.context.request_repaint();
+        result
+    }
+    fn has_ui(&self) -> bool {
+        false
+    }
+    fn describe(&self) -> String {
+        "live VS Code vector document".into()
+    }
+}
+
+#[wasm_bindgen]
+impl NativeViewer {
+    pub fn mcp_message(&self, message: &str) -> Result<Option<String>, JsValue> {
+        let mut agent = self
+            .agent
+            .try_borrow_mut()
+            .map_err(|_| error("Agent server is busy"))?;
+        let server = agent.get_or_insert_with(|| {
+            Box::new(vectorcraft_mcp::Server::new(Box::new(AgentBackend(
+                self.state.clone(),
+            ))))
+        });
+        let server = server
+            .downcast_mut::<vectorcraft_mcp::Server>()
+            .ok_or_else(|| error("Invalid agent server"))?;
+        Ok(server.handle_line(message))
+    }
+}
+
+struct SharedHeadless(std::rc::Rc<std::cell::RefCell<vectorcraft_mcp::Headless>>);
+impl vectorcraft_mcp::Backend for SharedHeadless {
+    fn call(
+        &mut self,
+        method: &str,
+        params: serde_json::Value,
+    ) -> Result<serde_json::Value, String> {
+        self.0
+            .try_borrow_mut()
+            .map_err(|_| "Vector document is busy".to_owned())?
+            .call(method, params)
+    }
+    fn has_ui(&self) -> bool {
+        false
+    }
+    fn describe(&self) -> String {
+        "headless vector document".into()
+    }
+}
+
+#[wasm_bindgen]
+pub struct VectorMcpHeadless {
+    backend: std::rc::Rc<std::cell::RefCell<vectorcraft_mcp::Headless>>,
+    server: std::cell::RefCell<vectorcraft_mcp::Server>,
+}
+impl Default for VectorMcpHeadless {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+#[wasm_bindgen]
+impl VectorMcpHeadless {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> Self {
+        let backend = std::rc::Rc::new(std::cell::RefCell::new(vectorcraft_mcp::Headless::new()));
+        let server = std::cell::RefCell::new(vectorcraft_mcp::Server::new(Box::new(
+            SharedHeadless(backend.clone()),
+        )));
+        Self { backend, server }
+    }
+    pub fn open_bytes(&self, bytes: Vec<u8>, format: &str) -> Result<(), JsValue> {
+        if bytes.len() > 32 * 1024 * 1024 {
+            return Err(error("Vector document exceeds 32 MiB."));
+        }
+        let doc = if format == "vectorcraft" {
+            vectorcraft_format::load(&bytes)
+                .map_err(|_| error("The VectorCraft document could not be opened."))?
+        } else if format == "svg" {
+            let svg = std::str::from_utf8(&bytes).map_err(|_| error("Invalid SVG text."))?;
+            if let Some(editing) = vectorcraft_svg::editing(svg).filter(|editing| editing.intact) {
+                let native = vectorcraft_format::base64_decode(&editing.data)
+                    .ok_or_else(|| error("The SVG editing data is invalid."))?;
+                vectorcraft_format::load(&native)
+                    .map_err(|_| error("The SVG editing model could not be opened."))?
+            } else {
+                vectorcraft_svg::import(svg).map_err(|_| error("The SVG could not be opened."))?
+            }
+        } else {
+            return Err(error("Unsupported vector format."));
+        };
+        let mut session = Session::new();
+        session.add_document(doc, None);
+        self.backend
+            .try_borrow_mut()
+            .map_err(|_| error("Vector document is busy"))?
+            .session = session;
+        Ok(())
+    }
+    pub fn save_bytes(&self, format: &str) -> Result<Vec<u8>, JsValue> {
+        let backend = self
+            .backend
+            .try_borrow()
+            .map_err(|_| error("Vector document is busy"))?;
+        let doc = backend
+            .session
+            .active()
+            .ok_or_else(|| error("No vector document"))?;
+        if format == "vectorcraft" {
+            return Ok(vectorcraft_format::save_file(&doc.doc));
+        }
+        if format != "svg" {
+            return Err(error("Unsupported vector format."));
+        }
+        let native = vectorcraft_format::save_file(&doc.doc);
+        let options = vectorcraft_svg::ExportOptions {
+            preserve_editing: true,
+            ..Default::default()
+        };
+        Ok(vectorcraft_svg::export_full(&doc.doc, &options, Some(&native)).take_bytes())
+    }
+    pub fn message(&self, message: &str) -> Result<Option<String>, JsValue> {
+        Ok(self
+            .server
+            .try_borrow_mut()
+            .map_err(|_| error("MCP server is busy"))?
+            .handle_line(message))
+    }
+}
 #[derive(Clone)]
 struct Snapshot {
     native: DocState,

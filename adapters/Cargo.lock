@@ -1414,6 +1414,7 @@ dependencies = [
  "vectorcraft-doc",
  "vectorcraft-engine",
  "vectorcraft-format",
+ "vectorcraft-mcp",
  "vectorcraft-svg",
  "vectorcraft-text",
  "vectorcraft-ui-egui",
@@ -8421,6 +8422,22 @@ dependencies = [
  "kurbo 0.13.1",
  "serde",
  "thiserror 2.0.21",
+]
+
+[[package]]
+name = "vectorcraft-mcp"
+version = "0.17.0"
+dependencies = [
+ "image",
+ "log",
+ "serde_json",
+ "vectorcraft-doc",
+ "vectorcraft-engine",
+ "vectorcraft-format",
+ "vectorcraft-geom",
+ "vectorcraft-render",
+ "vectorcraft-svg",
+ "vectorcraft-tools",
 ]
 
 [[package]]
