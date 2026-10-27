@@ -1434,6 +1434,7 @@ dependencies = [
  "web-sys",
  "wordcraft-engine",
  "wordcraft-fonts",
+ "wordcraft-mcp",
  "wordcraft-ui-egui",
 ]
 
@@ -9561,6 +9562,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "wordcraft-control-key"
+version = "0.11.0"
+
+[[package]]
 name = "wordcraft-doc"
 version = "0.11.0"
 dependencies = [
@@ -9692,6 +9697,18 @@ dependencies = [
  "wordcraft-geom",
  "wordcraft-metafile",
  "wordcraft-proof",
+]
+
+[[package]]
+name = "wordcraft-mcp"
+version = "0.11.0"
+dependencies = [
+ "log",
+ "serde_json",
+ "wordcraft-control-key",
+ "wordcraft-doc",
+ "wordcraft-engine",
+ "wordcraft-render",
 ]
 
 [[package]]

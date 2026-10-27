@@ -46,6 +46,26 @@ export async function run(): Promise<void> {
       assert.equal((await closedTool('save_workbook', {})).isError, false);
       closedClient.close();
     }
+    if (format === 'docx') {
+      assert.ok(api.mcp);
+      const client = agent(api.mcp);
+      const tool = (name: string, args: object) => client('tools/call', { name, arguments: args });
+      const initial = await doc.request('test:text');
+      assert.equal((await tool('open_document', { path: uri.fsPath })).isError, false);
+      assert.equal((await tool('type_text', { text: 'SSH Word agent ' })).isError, false);
+      assert.ok(String(await doc.request('test:text')).includes('SSH Word agent'));
+      assert.equal((await tool('execute', { command: 'edit.undo' })).isError, false);
+      assert.equal(await doc.request('test:text'), initial);
+      client.close();
+      const closedUri = vscode.Uri.joinPath(workspace.uri, 'remote tests עברית/agent-closed.docx');
+      await vscode.workspace.fs.writeFile(closedUri, await vscode.workspace.fs.readFile(vscode.Uri.joinPath(workspace.uri, 'fixtures/minimal.docx')));
+      const closed = agent(api.mcp);
+      const closedTool = (name: string, args: object) => closed('tools/call', { name, arguments: args });
+      assert.equal((await closedTool('open_document', { path: closedUri.fsPath })).isError, false);
+      assert.equal((await closedTool('type_text', { text: 'SSH closed Word ' })).isError, false);
+      assert.equal((await closedTool('save_document', {})).isError, false);
+      closed.close();
+    }
     if (format === 'xlsx') await doc.request('test:edit', { row: 5, col: 0, text: 'SSH שלום' });
     else if (format === 'pdf') await doc.request('test:command', { command: 'page.rotate' });
     else if (format === 'svg') await doc.request('test:command', { command: 'text.create', params: { x: 40, y: 280, text: 'SSH שלום', size: 28 } });

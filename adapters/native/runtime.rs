@@ -139,6 +139,8 @@ impl eframe::App for Shell {
 pub struct NativeViewer {
     state: Rc<RefCell<State>>,
     runner: eframe::WebRunner,
+    #[allow(dead_code)] // Used by adapters that expose an embedded MCP server.
+    agent: RefCell<Option<Box<dyn std::any::Any>>>,
 }
 #[wasm_bindgen]
 impl NativeViewer {
@@ -181,7 +183,11 @@ impl NativeViewer {
                 }),
             )
             .await?;
-        Ok(NativeViewer { state, runner })
+        Ok(NativeViewer {
+            state,
+            runner,
+            agent: RefCell::new(None),
+        })
     }
     pub fn set_theme(&self, dark: bool) -> Result<(), JsValue> {
         let mut state = self

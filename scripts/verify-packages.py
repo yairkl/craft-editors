@@ -30,6 +30,11 @@ for name in [*PROGRAMS, 'suite']:
                 assert 'extension/out/src/mcp.js' in files
                 assert 'extension/out/src/mcp-transport.js' in files
                 assert 'extension/out/src/mcp-proxy.js' in files
+            if name == 'word':
+                assert prefix + 'node/viewer.js' in files and prefix + 'node/viewer_bg.wasm' in files
+                assert 'extension/out/src/word-mcp.js' in files
+                assert 'extension/out/src/mcp-transport.js' in files
+                assert 'extension/out/src/mcp-proxy.js' in files
             assert all(f.startswith(prefix) for f in files if f.startswith('extension/media/engines/'))
             assert all(f.endswith(f'/{name}.js') for f in files if '/entrypoints/' in f)
             assert 'extension/' + installed['main'].removeprefix('./') in files

@@ -1,11 +1,13 @@
 import { strict as assert } from 'node:assert';
 import * as path from 'node:path';
 import { mkdir, writeFile } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
+import { createInterface } from 'node:readline';
 import * as vscode from 'vscode';
 import type { EditingProvider, EditableDocument } from '../../src/editing';
 import type { RenderResult } from '../../src/rendering';
 import { assertIsolation, fixture, root, selected } from '../environment';
-interface Api { editing: EditingProvider; onDidRender: vscode.Event<RenderResult> }
+interface Api { editing: EditingProvider; onDidRender: vscode.Event<RenderResult>; mcp?: { command: string; args: string[]; env: Record<string, string> } }
 export async function run(): Promise<void> {
   assertIsolation();
   const directory = vscode.Uri.file(path.join(root!, 'artifacts/office'));
@@ -18,6 +20,37 @@ export async function run(): Promise<void> {
     const uri = vscode.Uri.joinPath(directory, `roundtrip.${descriptor.format}`);
     await vscode.workspace.fs.writeFile(uri, original);
     let doc = await open(api, uri);
+    if (descriptor.format === 'docx') {
+      assert.ok(api.mcp);
+      const client = agent(api.mcp);
+      const tool = (name: string, args: object) => client('tools/call', { name, arguments: args });
+      assert.equal((await tool('open_document', { path: uri.fsPath })).isError, false);
+      const initial = await doc.request('test:text');
+      assert.equal((await tool('type_text', { text: 'live agent ' })).isError, false);
+      assert.ok(String(await doc.request('test:text')).includes('live agent'));
+      await waitFor(() => doc.dirty);
+      assert.equal((await tool('execute', { command: 'edit.undo' })).isError, false);
+      assert.equal(await doc.request('test:text'), initial);
+      client.close();
+      const closedUri = vscode.Uri.joinPath(directory, 'agent-closed.docx');
+      await vscode.workspace.fs.writeFile(closedUri, original);
+      const closed = agent(api.mcp);
+      const closedTool = (name: string, args: object) => closed('tools/call', { name, arguments: args });
+      assert.equal((await closedTool('open_document', { path: closedUri.fsPath })).isError, false);
+      assert.equal((await closedTool('type_text', { text: 'closed agent ' })).isError, false);
+      assert.deepEqual(await vscode.workspace.fs.readFile(closedUri), original);
+      const external = Buffer.from('external change');
+      await vscode.workspace.fs.writeFile(closedUri, external);
+      assert.equal((await closedTool('save_document', {})).isError, true, 'Headless save must not overwrite an external change');
+      assert.deepEqual(await vscode.workspace.fs.readFile(closedUri), external);
+      await vscode.workspace.fs.writeFile(closedUri, original);
+      assert.equal((await closedTool('save_document', {})).isError, false);
+      closed.close();
+      const closedDoc = await open(api, closedUri);
+      assert.ok(String(await closedDoc.request('test:text')).includes('closed agent'));
+      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+      await vscode.commands.executeCommand('vscode.openWith', uri, descriptor.preview);
+    }
     if (descriptor.format === 'pptx') {
       await doc.request('test:command', { command: 'show.start' });
       const state = await doc.request('test:inspect') as { show: unknown };
@@ -137,4 +170,19 @@ async function waitText(doc: EditableDocument, expected: unknown): Promise<void>
     if (Date.now() > deadline) throw new Error('Native history keyboard shortcut failed');
     await new Promise(resolve => setTimeout(resolve, 25));
   }
+}
+
+function agent(config: NonNullable<Api['mcp']>) {
+  const child = spawn(config.command, config.args, { env: { ...process.env, ...config.env }, stdio: ['pipe', 'pipe', 'pipe'] });
+  const lines = createInterface({ input: child.stdout });
+  const pending = new Map<number, { resolve(value: { isError?: boolean }): void; reject(error: Error): void }>();
+  let sequence = 0;
+  lines.on('line', line => { const response = JSON.parse(line) as { id: number; result: { isError?: boolean } }; const waiter = pending.get(response.id); if (waiter) { pending.delete(response.id); waiter.resolve(response.result); } });
+  child.on('exit', () => { for (const waiter of pending.values()) waiter.reject(new Error('MCP proxy exited')); pending.clear(); });
+  const call = (method: string, params: object): Promise<{ isError?: boolean }> => new Promise((resolve, reject) => {
+    const id = ++sequence; const timer = setTimeout(() => { pending.delete(id); reject(new Error('MCP request timed out')); }, 15000);
+    pending.set(id, { resolve: value => { clearTimeout(timer); resolve(value); }, reject: error => { clearTimeout(timer); reject(error); } });
+    child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n');
+  });
+  return Object.assign(call, { close: () => child.stdin.end() });
 }

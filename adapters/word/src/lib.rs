@@ -3,6 +3,149 @@
 include!("../../native/runtime.rs");
 use wordcraft_engine::{HostSnapshot, Session};
 use wordcraft_ui_egui::{Services, WordApp};
+
+struct AgentBackend(std::rc::Rc<std::cell::RefCell<State>>);
+impl wordcraft_mcp::Backend for AgentBackend {
+    fn call(
+        &mut self,
+        method: &str,
+        params: serde_json::Value,
+    ) -> Result<serde_json::Value, String> {
+        let mut state = self
+            .0
+            .try_borrow_mut()
+            .map_err(|_| "Document is busy".to_owned())?;
+        if method == "engine.commands" {
+            return Ok(state.document.app.session.registry.describe());
+        }
+        let (command, args) = if method == "engine.execute" || method == "command" {
+            let command = params
+                .get("command")
+                .and_then(serde_json::Value::as_str)
+                .ok_or("Missing command")?;
+            (
+                command,
+                params
+                    .get("params")
+                    .cloned()
+                    .unwrap_or_else(|| serde_json::json!({})),
+            )
+        } else {
+            (method, params)
+        };
+        if command.starts_with("file.")
+            || command.starts_with("ui.")
+            || command.starts_with("app.")
+            || command.starts_with("window.")
+            || matches!(command, "edit.undo" | "edit.redo")
+        {
+            return Err("This operation is managed by the VS Code host".into());
+        }
+        let result = state
+            .document
+            .app
+            .session
+            .run(command, &args)
+            .map_err(|e| e.to_string());
+        state.observe();
+        state.context.request_repaint();
+        result
+    }
+    fn has_ui(&self) -> bool {
+        false
+    }
+    fn describe(&self) -> String {
+        "live VS Code document".into()
+    }
+}
+
+#[wasm_bindgen]
+impl NativeViewer {
+    pub fn mcp_message(&self, message: &str) -> Result<Option<String>, JsValue> {
+        let mut agent = self
+            .agent
+            .try_borrow_mut()
+            .map_err(|_| error("Agent server is busy"))?;
+        let server = agent.get_or_insert_with(|| {
+            Box::new(wordcraft_mcp::Server::new(Box::new(AgentBackend(
+                self.state.clone(),
+            ))))
+        });
+        let server = server
+            .downcast_mut::<wordcraft_mcp::Server>()
+            .ok_or_else(|| error("Invalid agent server"))?;
+        Ok(server.handle_line(message))
+    }
+}
+
+struct SharedHeadless(std::rc::Rc<std::cell::RefCell<wordcraft_mcp::Headless>>);
+impl wordcraft_mcp::Backend for SharedHeadless {
+    fn call(
+        &mut self,
+        method: &str,
+        params: serde_json::Value,
+    ) -> Result<serde_json::Value, String> {
+        self.0
+            .try_borrow_mut()
+            .map_err(|_| "Document is busy".to_owned())?
+            .call(method, params)
+    }
+    fn has_ui(&self) -> bool {
+        false
+    }
+    fn describe(&self) -> String {
+        "headless document".into()
+    }
+}
+
+#[wasm_bindgen]
+pub struct WordMcpHeadless {
+    backend: std::rc::Rc<std::cell::RefCell<wordcraft_mcp::Headless>>,
+    server: std::cell::RefCell<wordcraft_mcp::Server>,
+}
+impl Default for WordMcpHeadless {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+#[wasm_bindgen]
+impl WordMcpHeadless {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> Self {
+        let backend = std::rc::Rc::new(std::cell::RefCell::new(wordcraft_mcp::Headless::default()));
+        let server = std::cell::RefCell::new(wordcraft_mcp::Server::new(Box::new(SharedHeadless(
+            backend.clone(),
+        ))));
+        Self { backend, server }
+    }
+    pub fn open_bytes(&self, bytes: Vec<u8>) -> Result<(), JsValue> {
+        if bytes.len() > 32 * 1024 * 1024 {
+            return Err(error("Document exceeds 32 MiB."));
+        }
+        let doc = wordcraft_engine::io::open_bytes("Document.docx", &bytes)
+            .map_err(|_| error("The Word document could not be opened."))?;
+        self.backend
+            .try_borrow_mut()
+            .map_err(|_| error("Document is busy"))?
+            .session = Session::new(doc);
+        Ok(())
+    }
+    pub fn save_bytes(&self) -> Result<Vec<u8>, JsValue> {
+        let backend = self
+            .backend
+            .try_borrow()
+            .map_err(|_| error("Document is busy"))?;
+        wordcraft_engine::io::save_bytes("Document.docx", &backend.session.doc)
+            .map_err(|_| error("The Word document could not be serialized."))
+    }
+    pub fn message(&self, message: &str) -> Result<Option<String>, JsValue> {
+        Ok(self
+            .server
+            .try_borrow_mut()
+            .map_err(|_| error("MCP server is busy"))?
+            .handle_line(message))
+    }
+}
 #[derive(Clone)]
 struct Snapshot {
     native: HostSnapshot,

@@ -1,8 +1,11 @@
 import * as vscode from 'vscode';
 import { activateHost } from '../host';
 import { EditingProvider } from '../editing';
+import { registerWordMcp } from '../word-mcp';
+import { existsSync } from 'node:fs';
+import * as path from 'node:path';
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
   const probe = activateHost(context, {
     format: 'docx', previewId: 'craft.word.preview', probeId: 'craft.word.integrationProbe',
   });
@@ -10,5 +13,10 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(provider, vscode.window.registerCustomEditorProvider(
     'craft.word.preview', provider, { supportsMultipleEditorsPerDocument: false, webviewOptions: { retainContextWhenHidden: true } },
   ));
-  return { ...probe, onDidRender: provider.onDidRender, editing: context.extensionMode === vscode.ExtensionMode.Test ? provider : undefined };
+  let mcp: Awaited<ReturnType<typeof registerWordMcp>> | undefined;
+  if (context.extensionMode !== vscode.ExtensionMode.Test || existsSync(path.join(context.extensionPath, 'media/engines/word/node/viewer.js'))) {
+    try { mcp = await registerWordMcp(context, provider); }
+    catch (error) { console.error('Craft Word MCP could not start:', error); void vscode.window.showWarningMessage('Craft Word agent tools could not start. Word editing remains available.'); }
+  }
+  return { ...probe, onDidRender: provider.onDidRender, editing: context.extensionMode === vscode.ExtensionMode.Test ? provider : undefined, mcp: context.extensionMode === vscode.ExtensionMode.Test ? mcp : undefined };
 }

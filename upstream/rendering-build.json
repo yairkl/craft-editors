@@ -1,7 +1,7 @@
 {
   "rust": "rustc 1.95.0 (59807616e 2026-04-14)",
   "wasmBindgen": "0.2.129",
-  "adapterLockSha256": "cc503323b25f3e0a8889432e13115fde93565317447f0a92c67c716e5606a536",
+  "adapterLockSha256": "b35f1ed372e2a6b4c83fd3e02d7e7b1fc04fd98d4145495039880da130449a76",
   "fontAssets": {
     "schemaVersion": 1,
     "family": "Noto Sans Hebrew",
@@ -51,24 +51,32 @@
       "sha256": "45244ff7669277a2ef49369e97555d88e37ebcae4e81e251719faad4cc4b5066"
     },
     "pdf/viewer_bg.wasm": {
-      "bytes": 46672385,
-      "sha256": "3bf04f07bc1fa1c830e147297db875497dcfbf32e0eb6e5f37ee28514483658f"
+      "bytes": 46672426,
+      "sha256": "c9f4f65e5ecb8592a87ec387cbc0f0581e06bff8ef0621eb41776ae5e8ba707a"
     },
     "word/viewer.js": {
-      "bytes": 156863,
-      "sha256": "29acafb2482172e315ccaf8b5e9aae3f7f40e20b361a24873d0d79ab5da80783"
+      "bytes": 159590,
+      "sha256": "799f05f8e4548190c2db6a90bd1619711ba4d2560f8aa5c0c9fafc1aedae3ba2"
     },
     "word/viewer_bg.wasm": {
-      "bytes": 44441190,
-      "sha256": "1a07067a8d4decac45c34e6d2875e50bf0a84d8f3a3c2fee5b2b4fe3271a3bf1"
+      "bytes": 44527904,
+      "sha256": "d3ae49f975a6cd514fbb6295b104e10f948cb8dc27da5890600389120418950a"
+    },
+    "word/node/viewer.js": {
+      "bytes": 156088,
+      "sha256": "e60abd289add780bfd005937c2342dd6bc291d0012400cfd36c00840e95aad13"
+    },
+    "word/node/viewer_bg.wasm": {
+      "bytes": 44527904,
+      "sha256": "d3ae49f975a6cd514fbb6295b104e10f948cb8dc27da5890600389120418950a"
     },
     "deck/viewer.js": {
       "bytes": 85095,
       "sha256": "1f5166fd6980f25f8d132fa596eb357e667ba5a232adb9dc2e46befb52254b62"
     },
     "deck/viewer_bg.wasm": {
-      "bytes": 27258758,
-      "sha256": "e785c83d7189b5a05435776f506032969e337e18301d5d4d552e3083f2b9cc5a"
+      "bytes": 27258833,
+      "sha256": "5b92b0c3bdf1b044ca9509990e907167a55f2a0641163c7fe1eff834d083eae5"
     },
     "deck/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
@@ -79,8 +87,8 @@
       "sha256": "a12061df45df89a641ab73dad1321fc73e5bb190f7ea990e4491000e069cee8f"
     },
     "vector/viewer_bg.wasm": {
-      "bytes": 67229711,
-      "sha256": "3ea42670759273770164e5459caca13047e8b9b671600f485164ab9f7a11b778"
+      "bytes": 67229722,
+      "sha256": "803d7dd42dfd177661156a4dfa0cd2c499fac7024b6876fd1f59778b513a21ea"
     },
     "vector/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
