@@ -12,7 +12,7 @@ Actual Microsoft Remote SSH 0.128.0 connection from desktop VS Code 1.143.0 on L
 
 Tests use original synthetic documents in paths containing spaces and Hebrew. Office/vector text and spreadsheet cells include Hebrew; PDF edits rotate a page. Each application runs as a workspace extension in the actual remote extension host. The installed VSIX archives also receive separate local production-mode installation tests. No personal SSH hosts, credentials or documents are used.
 
-The spreadsheet and Word MCP bridges were additionally exercised with VS Code 1.102.0 and Remote SSH 0.120.0: a test MCP client edited and undid each live remote document, then edited and saved a closed remote document. This checks the proxy and remote extension host, not actual Copilot or Cursor discovery.
+The spreadsheet, Word and PowerPoint MCP bridges were additionally exercised with VS Code 1.102.0 and Remote SSH 0.120.0: a test MCP client edited and undid each live remote document, then edited and saved a closed remote document. This checks the proxy and remote extension host, not actual Copilot or Cursor discovery.
 
 Reproduce with Docker, OpenSSH client tools and an installed desktop VS Code:
 

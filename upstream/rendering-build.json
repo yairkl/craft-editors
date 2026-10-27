@@ -1,7 +1,7 @@
 {
   "rust": "rustc 1.95.0 (59807616e 2026-04-14)",
   "wasmBindgen": "0.2.129",
-  "adapterLockSha256": "b35f1ed372e2a6b4c83fd3e02d7e7b1fc04fd98d4145495039880da130449a76",
+  "adapterLockSha256": "548dce15681460eaaf000eb193342c2996e20db8745ed8c02f9eb44fd7980f39",
   "fontAssets": {
     "schemaVersion": 1,
     "family": "Noto Sans Hebrew",
@@ -71,14 +71,26 @@
       "sha256": "d3ae49f975a6cd514fbb6295b104e10f948cb8dc27da5890600389120418950a"
     },
     "deck/viewer.js": {
-      "bytes": 85095,
-      "sha256": "1f5166fd6980f25f8d132fa596eb357e667ba5a232adb9dc2e46befb52254b62"
+      "bytes": 87825,
+      "sha256": "06c8d85c082fb484c0fe06140c46a9a43922facd7bbe24d068cce171a13c5c7e"
     },
     "deck/viewer_bg.wasm": {
-      "bytes": 27258833,
-      "sha256": "5b92b0c3bdf1b044ca9509990e907167a55f2a0641163c7fe1eff834d083eae5"
+      "bytes": 27407693,
+      "sha256": "0e4a8ac9b56da1e7355bf4fadb398dbdb83cd486b445cb4a5beb23767bd2f4eb"
+    },
+    "deck/node/viewer.js": {
+      "bytes": 84340,
+      "sha256": "c43c7b0eeac1041c1f49936bfab29572da4157abd6c5823f07de297dc3f292ce"
+    },
+    "deck/node/viewer_bg.wasm": {
+      "bytes": 27407693,
+      "sha256": "0e4a8ac9b56da1e7355bf4fadb398dbdb83cd486b445cb4a5beb23767bd2f4eb"
     },
     "deck/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
+      "bytes": 280,
+      "sha256": "22a98f9d0c5a0532d291bdc9a3050439420b3d11143b4568fcfd3c66fff36995"
+    },
+    "deck/node/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
       "sha256": "22a98f9d0c5a0532d291bdc9a3050439420b3d11143b4568fcfd3c66fff36995"
     },

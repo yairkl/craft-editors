@@ -1223,6 +1223,7 @@ version = "0.1.0"
 dependencies = [
  "deckcraft-engine",
  "deckcraft-fonts",
+ "deckcraft-mcp",
  "deckcraft-pptx",
  "deckcraft-ui-egui",
  "eframe 0.37.0",
@@ -1727,6 +1728,16 @@ name = "deckcraft-matroska"
 version = "0.11.1"
 dependencies = [
  "craft-media",
+]
+
+[[package]]
+name = "deckcraft-mcp"
+version = "0.11.1"
+dependencies = [
+ "deckcraft-engine",
+ "deckcraft-render",
+ "log",
+ "serde_json",
 ]
 
 [[package]]

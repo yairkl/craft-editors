@@ -6,20 +6,21 @@ import { registerAgentServer } from './mcp-transport';
 
 interface Headless { message(input: string): string | undefined; open_bytes(input: Uint8Array): void; save_bytes(): Uint8Array; free(): void }
 interface Message { id?: string | number; method?: string; params?: { name?: string; arguments?: Record<string, unknown> } }
+interface App { format: 'docx' | 'pptx'; open: string; save: string; create: string; execute: string; readonly: string[] }
 const hash = (data: Uint8Array): string => createHash('sha256').update(data).digest('hex');
 const result = (id: unknown, text: string, error = false): string => JSON.stringify({ jsonrpc: '2.0', id, result: { content: [{ type: 'text', text }], isError: error } });
 
-class WordSession {
+class DocumentSession {
   private uri: vscode.Uri | undefined;
   private baseline = '';
   private mode: 'none' | 'live' | 'headless' = 'none';
   private changed = false;
-  constructor(private readonly backend: Headless, private readonly provider: EditingProvider) {}
+  constructor(private readonly backend: Headless, private readonly provider: EditingProvider, private readonly app: App) {}
   dispose(): void { this.backend.free(); }
   private uriFor(value: unknown): vscode.Uri {
     if (typeof value !== 'string' || !value) throw new Error('Provide a document path or URI.');
     const uri = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(value) ? vscode.Uri.parse(value) : path.isAbsolute(value) ? vscode.Uri.file(value) : vscode.workspace.workspaceFolders?.[0] && vscode.Uri.joinPath(vscode.workspace.workspaceFolders[0].uri, value);
-    if (!uri || !/\.docx$/i.test(uri.path)) throw new Error('Choose a DOCX document. Relative paths require an open workspace.');
+    if (!uri || !uri.path.toLowerCase().endsWith(`.${this.app.format}`)) throw new Error(`Choose a ${this.app.format.toUpperCase()} document. Relative paths require an open workspace.`);
     return uri;
   }
   private live(): EditableDocument | undefined { return this.uri ? this.provider.getDocument(this.uri) : undefined; }
@@ -72,24 +73,24 @@ class WordSession {
     const name = request.params?.name;
     const args = request.params?.arguments ?? {};
     try {
-      if (name === 'open_document') return await this.open(request, args);
-      if (name === 'save_document') return await this.save(request, args);
-      if (name === 'new_document') throw new Error('Create a document in VS Code first.');
+      if (name === this.app.open) return await this.open(request, args);
+      if (name === this.app.save) return await this.save(request, args);
+      if (name === this.app.create) throw new Error('Create a document in VS Code first.');
+      if (name === 'export') throw new Error('Use VS Code Save As or the editor to export a presentation.');
       const live = this.checkMode();
-      if (name === 'execute' && typeof args.command === 'string') {
+      if (name === this.app.execute && typeof args.command === 'string') {
         const command = args.command;
         if (live && ['edit.undo', 'edit.redo'].includes(command)) { await this.provider.agentHistory(live, command === 'edit.redo', 1); return result(request.id, 'Updated the document history.'); }
-        if (command.startsWith('file.') || command.startsWith('app.') || command.startsWith('window.') || command.startsWith('ui.')) throw new Error('Use the dedicated document tools or VS Code for this operation.');
+        if (/^(file|app|window|ui|show)\./.test(command)) throw new Error('Use the dedicated document tools or VS Code for this operation.');
       }
       if (name === 'batch') {
         const commands = Array.isArray(args.commands) ? args.commands : [];
-        if (commands.some(value => { const command = typeof value === 'object' && value !== null ? (value as { command?: unknown }).command : undefined; return typeof command !== 'string' || /^(file|app|window|ui)\./.test(command) || (live && /^edit\.(undo|redo)$/.test(command)); })) throw new Error('File, UI and live history commands cannot run in a batch.');
+        if (commands.some(value => { const command = typeof value === 'object' && value !== null ? (value as { command?: unknown }).command : undefined; return typeof command !== 'string' || /^(file|app|window|ui|show)\./.test(command) || (live && /^edit\.(undo|redo)$/.test(command)); })) throw new Error('File, UI and live history commands cannot run in a batch.');
       }
       if (live) return await live.request('agent:mcp', { message: line }) as string | undefined;
-      if (this.mode === 'none' && !['list_commands', 'parity'].includes(name ?? '')) throw new Error('Open a document first with open_document.');
+      if (this.mode === 'none' && !['list_commands', 'parity'].includes(name ?? '')) throw new Error(`Open a document first with ${this.app.open}.`);
       const response = this.backend.message(line);
-      const readonly = ['list_commands', 'get_text', 'inspect_document', 'parity', 'render_page'];
-      if (this.mode === 'headless' && !readonly.includes(name ?? '') && response && !JSON.parse(response).result?.isError) this.changed = true;
+      if (this.mode === 'headless' && !this.app.readonly.includes(name ?? '') && response && !JSON.parse(response).result?.isError) this.changed = true;
       return response;
     } catch (error) { return result(request.id, error instanceof Error ? error.message : 'Document operation failed.', true); }
   }
@@ -97,5 +98,12 @@ class WordSession {
 
 export async function registerWordMcp(context: vscode.ExtensionContext, provider: EditingProvider): Promise<{ command: string; args: string[]; env: Record<string, string> }> {
   const runtime = require(path.join(context.extensionPath, 'media/engines/word/node/viewer.js')) as { WordMcpHeadless: new () => Headless };
-  return registerAgentServer(context, { id: 'craft.word.mcp', name: 'Craft Word', createSession: () => new WordSession(new runtime.WordMcpHeadless(), provider) });
+  const app: App = { format: 'docx', open: 'open_document', save: 'save_document', create: 'new_document', execute: 'execute', readonly: ['list_commands', 'get_text', 'inspect_document', 'parity', 'render_page'] };
+  return registerAgentServer(context, { id: 'craft.word.mcp', name: 'Craft Word', createSession: () => new DocumentSession(new runtime.WordMcpHeadless(), provider, app) });
+}
+
+export async function registerDeckMcp(context: vscode.ExtensionContext, provider: EditingProvider): Promise<{ command: string; args: string[]; env: Record<string, string> }> {
+  const runtime = require(path.join(context.extensionPath, 'media/engines/deck/node/viewer.js')) as { DeckMcpHeadless: new () => Headless };
+  const app: App = { format: 'pptx', open: 'open_presentation', save: 'save_presentation', create: 'new_presentation', execute: 'run_command', readonly: ['list_commands', 'inspect_document', 'inspect_slide', 'render_slide'] };
+  return registerAgentServer(context, { id: 'craft.powerpoint.mcp', name: 'Craft PowerPoint', createSession: () => new DocumentSession(new runtime.DeckMcpHeadless(), provider, app) });
 }

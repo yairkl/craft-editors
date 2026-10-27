@@ -20,6 +20,32 @@ export async function run(): Promise<void> {
     const uri = vscode.Uri.joinPath(directory, `roundtrip.${descriptor.format}`);
     await vscode.workspace.fs.writeFile(uri, original);
     let doc = await open(api, uri);
+    if (descriptor.format === 'pptx') {
+      assert.ok(api.mcp);
+      const client = agent(api.mcp);
+      const tool = (name: string, args: object) => client('tools/call', { name, arguments: args });
+      assert.equal((await tool('open_presentation', { path: uri.fsPath })).isError, false);
+      const initial = await doc.request('test:text');
+      assert.equal((await tool('add_text_box', { x: 20, y: 20, w: 200, h: 40, text: 'live slide agent' })).isError, false);
+      assert.ok(String(await doc.request('test:text')).includes('live slide agent'));
+      await waitFor(() => doc.dirty);
+      assert.equal((await tool('run_command', { command: 'edit.undo' })).isError, false);
+      assert.equal(await doc.request('test:text'), initial);
+      client.close();
+      const closedUri = vscode.Uri.joinPath(directory, 'agent-closed.pptx');
+      await vscode.workspace.fs.writeFile(closedUri, original);
+      const closed = agent(api.mcp);
+      const closedTool = (name: string, args: object) => closed('tools/call', { name, arguments: args });
+      assert.equal((await closedTool('open_presentation', { path: closedUri.fsPath })).isError, false);
+      assert.equal((await closedTool('add_text_box', { x: 20, y: 20, w: 200, h: 40, text: 'closed slide agent' })).isError, false);
+      assert.deepEqual(await vscode.workspace.fs.readFile(closedUri), original);
+      assert.equal((await closedTool('save_presentation', {})).isError, false);
+      closed.close();
+      const closedDoc = await open(api, closedUri);
+      assert.ok(String(await closedDoc.request('test:text')).includes('closed slide agent'));
+      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+      await vscode.commands.executeCommand('vscode.openWith', uri, descriptor.preview);
+    }
     if (descriptor.format === 'docx') {
       assert.ok(api.mcp);
       const client = agent(api.mcp);

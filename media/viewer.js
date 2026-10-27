@@ -92,7 +92,7 @@ window.addEventListener('message', async ({ data }) => {
       let result;
       switch (data.operation) {
         case 'agent:mcp': {
-          if (!['xlsx', 'csv', 'docx'].includes(document.body.dataset.format) || typeof viewer.mcp_message !== 'function' || typeof data.message !== 'string' || data.message.length > 1048576) throw new Error('Invalid document agent request.');
+          if (!['xlsx', 'csv', 'docx', 'pptx'].includes(document.body.dataset.format) || typeof viewer.mcp_message !== 'function' || typeof data.message !== 'string' || data.message.length > 1048576) throw new Error('Invalid document agent request.');
           result = viewer.mcp_message(data.message) ?? null;
           break;
         }

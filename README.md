@@ -80,7 +80,7 @@ The extension will inherit each engine's file-format limitations. It does not pr
 
 This is an independent integration project, not an official ArtCraft product. Upstream names identify the applications being integrated. Restricted upstream branding will not be redistributed in modified builds.
 
-Related proposal: [Unified VS Code Extension for Crafting Apps, ArtCraft #2244](https://github.com/storytold/artcraft/issues/2244). This project embeds WASM interfaces for interactive editing. Craft Spreadsheets and Craft Word also expose their upstream MCP tools through their extension hosts; see their respective agent instructions ([spreadsheets](packages/spreadsheets/README.md#spreadsheet-tools-for-agents), [Word](packages/word/README.md#document-tools-for-agents)). MCP integration for the other Craft apps remains future work.
+Related proposal: [Unified VS Code Extension for Crafting Apps, ArtCraft #2244](https://github.com/storytold/artcraft/issues/2244). This project embeds WASM interfaces for interactive editing. Craft Spreadsheets, Craft Word and Craft PowerPoint expose their upstream MCP tools through their extension hosts; see their agent instructions ([spreadsheets](packages/spreadsheets/README.md#spreadsheet-tools-for-agents), [Word](packages/word/README.md#document-tools-for-agents), [PowerPoint](packages/powerpoint/README.md#presentation-tools-for-agents)). MCP integration for PDF and vector remains future work.
 
 Other Office viewers already exist, including [cweijan's Office Viewer](https://marketplace.visualstudio.com/items?itemName=cweijan.vscode-office). This project's focus is integration with the Craft editing engines.
 

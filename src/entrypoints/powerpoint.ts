@@ -1,8 +1,11 @@
 import * as vscode from 'vscode';
 import { activateHost } from '../host';
 import { EditingProvider } from '../editing';
+import { registerDeckMcp } from '../document-mcp';
+import { existsSync } from 'node:fs';
+import * as path from 'node:path';
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
   const probe = activateHost(context, {
     format: 'pptx', previewId: 'craft.powerpoint.preview', probeId: 'craft.powerpoint.integrationProbe',
   });
@@ -10,5 +13,10 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(provider, vscode.window.registerCustomEditorProvider(
     'craft.powerpoint.preview', provider, { supportsMultipleEditorsPerDocument: false, webviewOptions: { retainContextWhenHidden: true } },
   ));
-  return { ...probe, onDidRender: provider.onDidRender, editing: context.extensionMode === vscode.ExtensionMode.Test ? provider : undefined };
+  let mcp: Awaited<ReturnType<typeof registerDeckMcp>> | undefined;
+  if (context.extensionMode !== vscode.ExtensionMode.Test || existsSync(path.join(context.extensionPath, 'media/engines/deck/node/viewer.js'))) {
+    try { mcp = await registerDeckMcp(context, provider); }
+    catch (error) { console.error('Craft PowerPoint MCP could not start:', error); void vscode.window.showWarningMessage('Craft PowerPoint agent tools could not start. Presentation editing remains available.'); }
+  }
+  return { ...probe, onDidRender: provider.onDidRender, editing: context.extensionMode === vscode.ExtensionMode.Test ? provider : undefined, mcp: context.extensionMode === vscode.ExtensionMode.Test ? mcp : undefined };
 }

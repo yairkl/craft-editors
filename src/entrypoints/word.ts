@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { activateHost } from '../host';
 import { EditingProvider } from '../editing';
-import { registerWordMcp } from '../word-mcp';
+import { registerWordMcp } from '../document-mcp';
 import { existsSync } from 'node:fs';
 import * as path from 'node:path';
 
