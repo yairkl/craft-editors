@@ -5,7 +5,26 @@ on:
 permissions:
   contents: read
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.select.outputs.code }}
+      fixtures: ${{ steps.select.outputs.fixtures }}
+      build: ${{ steps.select.outputs.build }}
+      wheel: ${{ steps.select.outputs.wheel }}
+      remote_script: ${{ steps.select.outputs.remote_script }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: python3 scripts/test-ci-changes.py
+      - id: select
+        if: github.event_name == 'pull_request'
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python3 scripts/ci-changes.py
   check:
+    needs: changes
     runs-on: ubuntu-latest
     steps:
       - name: Require a version tag for releases
@@ -18,19 +37,29 @@ jobs:
           [[ "$REF_NAME" == v* ]]
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
+        if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true' || needs.changes.outputs.remote_script == 'true'
         with:
           node-version: '22'
           cache: npm
       - uses: actions/setup-python@v5
+        if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.fixtures == 'true'
         with:
           python-version: '3.12'
       - run: npm ci
+        if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true'
       - run: npm run check
+        if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true'
       - run: npm test
+        if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true'
       - run: npm run fixtures:check
+        if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.fixtures == 'true'
+      - run: node --check scripts/test-remote-ssh.cjs
+        if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.remote_script == 'true'
       - run: xvfb-run -a npm run test:integration
+        if: github.event_name == 'workflow_dispatch'
   rendering:
-    needs: check
+    needs: [changes, check]
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.build == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -53,12 +82,18 @@ jobs:
       - run: rustup toolchain install 1.95.0 --profile minimal --component rustfmt,clippy --target wasm32-unknown-unknown
       - run: cargo +1.95.0 install wasm-bindgen-cli --version 0.2.129 --locked
       - run: cargo +1.95.0 fmt --manifest-path adapters/grid/Cargo.toml -p craft-grid-viewer -p craft-pdf-viewer -p craft-word-viewer -p craft-deck-viewer -p craft-vector-viewer --check
+        if: github.event_name == 'workflow_dispatch'
       - run: rustfmt +1.95.0 --edition 2024 --check adapters/native/runtime.rs adapters/native/fonts.rs
+        if: github.event_name == 'workflow_dispatch'
       - run: cargo +1.95.0 clippy --manifest-path adapters/Cargo.toml --locked --target wasm32-unknown-unknown --no-deps -- -D warnings
+        if: github.event_name == 'workflow_dispatch'
       - run: rustc +1.95.0 --edition 2024 --test adapters/grid/src/wheel.rs -o "$RUNNER_TEMP/wheel-tests" && "$RUNNER_TEMP/wheel-tests"
+        if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.wheel == 'true'
       - run: npm run renderers:build
       - run: xvfb-run -a npm run test:rendering
+        if: github.event_name == 'workflow_dispatch'
       - run: xvfb-run -a npm run test:editing
+        if: github.event_name == 'workflow_dispatch'
       - run: xvfb-run -a npm run test:office
         if: github.event_name == 'workflow_dispatch'
       - run: xvfb-run -a npm run test:languages
