@@ -7,6 +7,7 @@ const { randomUUID } = require('node:crypto');
 const { runTests, resolveCliArgsFromVSCodeExecutablePath } = require('@vscode/test-electron');
 const root = resolve(__dirname, '..');
 const executable = process.env.VSCODE_EXECUTABLE_PATH;
+const remoteSshVersion = process.env.CRAFT_REMOTE_SSH_VERSION || '0.128.0';
 if (!executable) throw new Error('Set VSCODE_EXECUTABLE_PATH to an installed desktop VS Code executable. Run under xvfb-run on headless Linux.');
 const scratch = mkdtempSync(join(tmpdir(), 'craft-ssh-'));
 const id = randomUUID().slice(0, 8);
@@ -44,7 +45,7 @@ async function main() {
       'window.restoreWindows': 'none', 'update.mode': 'none',
     }, null, 2));
     const [cli, ...cliArgs] = resolveCliArgsFromVSCodeExecutablePath(executable, { reuseMachineInstall: true });
-    run(cli, [...cliArgs, '--user-data-dir', user, '--extensions-dir', extensions, '--install-extension', 'ms-vscode-remote.remote-ssh@0.128.0', '--force'], { env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' } });
+    run(cli, [...cliArgs, '--user-data-dir', user, '--extensions-dir', extensions, '--install-extension', `ms-vscode-remote.remote-ssh@${remoteSshVersion}`, '--force'], { env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' } });
     run('docker', ['cp', join(root, 'dist/development') + '/.', `${name}:/home/crafttest/workspace/extensions`]);
     run('docker', ['cp', join(root, 'integration-tests/fixtures'), `${name}:/home/crafttest/workspace/fixtures`]);
     run('docker', ['cp', join(root, 'out/test/remote'), `${name}:/home/crafttest/workspace/remote-driver`]);
@@ -53,7 +54,7 @@ async function main() {
     await runTests({ vscodeExecutablePath: executable,
       extensionDevelopmentPath: ['spreadsheets', 'word', 'powerpoint', 'pdf', 'vector'].map(app => `${base}/extensions/${app}`),
       extensionTestsPath: `${base}/remote-driver/index.js`,
-      launchArgs: ['--remote', `ssh-remote+${name}`, '/home/crafttest/workspace', '--user-data-dir', user, '--extensions-dir', extensions,
+      launchArgs: [`--remote=ssh-remote+${name}`, '/home/crafttest/workspace', `--user-data-dir=${user}`, `--extensions-dir=${extensions}`,
         '--skip-welcome', '--skip-release-notes', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
     });
     const artifacts = join(root, 'artifacts/remote'); mkdirSync(artifacts, { recursive: true });
