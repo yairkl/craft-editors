@@ -26,6 +26,7 @@ export function stageExtensions({ development = false, allowMissingRenderers = f
     const { engine } = extensions[name];
     if (engine) {
       for (const file of ['host', 'document', 'rendering', 'editing', 'rpc']) copy(`out/src/${file}.js`);
+      if (name === 'spreadsheets') for (const file of ['mcp', 'mcp-transport', 'mcp-proxy']) copy(`out/src/${file}.js`);
       copy(`out/src/entrypoints/${name}.js`);
       copy('out/protocol/probe.js');
       for (const file of ['probe.js', 'probe.css', 'viewer.js', 'viewer.css']) copy(`media/${file}`);
@@ -38,6 +39,11 @@ export function stageExtensions({ development = false, allowMissingRenderers = f
       }
       const snippets = resolve(root, 'media/engines', engine, 'snippets');
       if (existsSync(snippets)) cpSync(snippets, resolve(destination, 'media/engines', engine, 'snippets'), { recursive: true });
+      if (engine === 'grid') {
+        const node = resolve(root, 'media/engines/grid/node');
+        if (existsSync(node)) cpSync(node, resolve(destination, 'media/engines/grid/node'), { recursive: true });
+        else if (!allowMissingRenderers) throw new Error('spreadsheets: rebuild the GridCraft renderer with the MCP runtime.');
+      }
       const notices = resolve(root, 'dist/notices', name);
       if (existsSync(notices)) cpSync(notices, resolve(destination, 'notices'), { recursive: true });
     }

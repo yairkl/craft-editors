@@ -1,7 +1,7 @@
 {
   "rust": "rustc 1.95.0 (59807616e 2026-04-14)",
   "wasmBindgen": "0.2.129",
-  "adapterLockSha256": "dabceea929e05be800a30e36ba410b32e81afb35d49c0e302d14c77826a25331",
+  "adapterLockSha256": "cc503323b25f3e0a8889432e13115fde93565317447f0a92c67c716e5606a536",
   "fontAssets": {
     "schemaVersion": 1,
     "family": "Noto Sans Hebrew",
@@ -31,36 +31,44 @@
   },
   "artifacts": {
     "grid/viewer.js": {
-      "bytes": 83413,
-      "sha256": "80bc8fe2feb357b3002b76588770e8a265c43546ce387c62852ea1d1d33063a9"
+      "bytes": 161298,
+      "sha256": "7a4853908a74f939a6a6948e9d585be0e128213a6e96e6328f3d67ddd964bbae"
     },
     "grid/viewer_bg.wasm": {
-      "bytes": 17898433,
-      "sha256": "7fe97340b19669e853d152d48b7fa28d96978c1d459c27844a86610056914e49"
+      "bytes": 22899807,
+      "sha256": "a41f9940127b2bcdc531bfb4f2315a2857c79e4c86abe5f0584903719bf46967"
+    },
+    "grid/node/viewer.js": {
+      "bytes": 157784,
+      "sha256": "9e08455e6387c5c8647a14c91437474cbde5a05a26e9b5847f261d4bddae182e"
+    },
+    "grid/node/viewer_bg.wasm": {
+      "bytes": 22899807,
+      "sha256": "a41f9940127b2bcdc531bfb4f2315a2857c79e4c86abe5f0584903719bf46967"
     },
     "pdf/viewer.js": {
       "bytes": 163866,
-      "sha256": "3c507f57da8e32a588075a1cf5b2e845c9dbe167dbbb4341e5c89b8fb0cf3cfb"
+      "sha256": "45244ff7669277a2ef49369e97555d88e37ebcae4e81e251719faad4cc4b5066"
     },
     "pdf/viewer_bg.wasm": {
-      "bytes": 46662424,
-      "sha256": "7079164193f5582206fa0a0ade7147ce843ad0b865ed5bd07171261e01032241"
+      "bytes": 46672385,
+      "sha256": "3bf04f07bc1fa1c830e147297db875497dcfbf32e0eb6e5f37ee28514483658f"
     },
     "word/viewer.js": {
       "bytes": 156863,
-      "sha256": "12aebcd56e39dd083c2ecb077bcceba919910a359befe72f9e2eb7dea5ae1227"
+      "sha256": "29acafb2482172e315ccaf8b5e9aae3f7f40e20b361a24873d0d79ab5da80783"
     },
     "word/viewer_bg.wasm": {
-      "bytes": 44426091,
-      "sha256": "5d98e13262f2f380f85923add79de6ab5f9e9ae3bd6e01197c8858247b720fde"
+      "bytes": 44441190,
+      "sha256": "1a07067a8d4decac45c34e6d2875e50bf0a84d8f3a3c2fee5b2b4fe3271a3bf1"
     },
     "deck/viewer.js": {
       "bytes": 85095,
       "sha256": "1f5166fd6980f25f8d132fa596eb357e667ba5a232adb9dc2e46befb52254b62"
     },
     "deck/viewer_bg.wasm": {
-      "bytes": 27246040,
-      "sha256": "a46617eb79eefabec601bd8f8514173a0c9095dfabd59ecde03096c10a9705d6"
+      "bytes": 27258758,
+      "sha256": "e785c83d7189b5a05435776f506032969e337e18301d5d4d552e3083f2b9cc5a"
     },
     "deck/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
@@ -68,11 +76,11 @@
     },
     "vector/viewer.js": {
       "bytes": 85332,
-      "sha256": "afbf80ba56239e7f37c386777d60e5657df200a35e1c024ec2f8e1ab9ddfbc9e"
+      "sha256": "a12061df45df89a641ab73dad1321fc73e5bb190f7ea990e4491000e069cee8f"
     },
     "vector/viewer_bg.wasm": {
-      "bytes": 67041664,
-      "sha256": "dbbdcac94c936233a3b7b0e55b8e6d253def180f0f868855b2badeea2f6b0e2e"
+      "bytes": 67229711,
+      "sha256": "3ea42670759273770164e5459caca13047e8b9b671600f485164ab9f7a11b778"
     },
     "vector/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,

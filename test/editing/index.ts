@@ -1,24 +1,101 @@
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
+import { createInterface } from 'node:readline';
 import { strict as assert } from 'node:assert';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import type { EditableDocument, EditingProvider } from '../../src/editing';
 import type { RenderResult } from '../../src/rendering';
 import { assertIsolation, fixture, root } from '../environment';
-interface EditorApi { editing: EditingProvider; onDidRender: vscode.Event<RenderResult> }
+interface EditorApi { editing: EditingProvider; onDidRender: vscode.Event<RenderResult>; mcp: { command: string; args: string[]; env: Record<string, string> } }
 export async function run(): Promise<void> {
   assertIsolation();
   const extension = vscode.extensions.getExtension<EditorApi>('craft-vscode-dev.craft-spreadsheets');
   assert.ok(extension);
+  const { McpHeadless } = require(path.join(extension.extensionPath, 'media/engines/grid/node/viewer.js')) as { McpHeadless: new () => { message(input: string): string | undefined; free(): void } };
+  const headless = new McpHeadless();
+  const headlessCall = (name: string, args: object): { content: { text: string }[]; isError: boolean } => {
+    const result = headless.message(JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args } }));
+    assert.ok(result);
+    return JSON.parse(result).result;
+  };
+  const headlessBytes = Buffer.from(await vscode.workspace.fs.readFile(fixture('minimal.xlsx'))).toString('base64');
+  assert.equal(headlessCall('execute_command', { command: 'file.open', params: { name: 'minimal.xlsx', base64: headlessBytes } }).isError, false);
+  assert.equal(headlessCall('set_cell', { cell: 'A6', input: 'headless edit' }).isError, false);
+  const saved = JSON.parse(headlessCall('execute_command', { command: 'file.saveBytes', params: { format: 'xlsx' } }).content[0]!.text) as { base64: string };
+  headless.free();
+  const reopened = new McpHeadless();
+  const reopen = (name: string, args: object) => JSON.parse(reopened.message(JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args } }))!).result as { content: { text: string }[]; isError: boolean };
+  assert.equal(reopen('execute_command', { command: 'file.open', params: { name: 'reopened.xlsx', base64: saved.base64 } }).isError, false);
+  assert.equal((JSON.parse(reopen('get_cell', { cell: 'A6' }).content[0]!.text) as { input: string }).input, 'headless edit');
+  reopened.free();
   const api = await extension.activate();
   assert.ok(api.editing);
   const directory = vscode.Uri.file(path.join(root!, 'artifacts/editing'));
   await vscode.workspace.fs.createDirectory(directory);
   const original = await vscode.workspace.fs.readFile(fixture('minimal.xlsx'));
-  const closedUri = vscode.Uri.joinPath(directory, 'revert-without-panel.xlsx');
+  const closedUri = vscode.Uri.joinPath(directory, 'agent-closed.xlsx');
   await vscode.workspace.fs.writeFile(closedUri, original);
+  const client = createAgent(api.mcp);
+  const init = await client.call('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'test', version: '1' } });
+  assert.ok(init.result);
+  const listing = await client.call('tools/list', {});
+  assert.ok((listing.result as { tools?: { name: string }[] } | undefined)?.tools?.some(tool => tool.name === 'set_cell'), 'GridCraft tools are discoverable over the proxy');
+  const callTool = (name: string, args: object) => client.call('tools/call', { name, arguments: args });
+  assert.equal((await callTool('open_workbook', { path: closedUri.fsPath })).result?.isError, false);
+  assert.equal((await callTool('set_cell', { cell: 'A6', input: 'closed agent' })).result?.isError, false);
+  assert.deepEqual(await vscode.workspace.fs.readFile(closedUri), original, 'Headless changes stay in memory until saved');
+  await vscode.workspace.fs.writeFile(closedUri, new TextEncoder().encode('external change'));
+  assert.equal((await callTool('save_workbook', {})).result?.isError, true, 'Headless save must detect external changes');
+  assert.equal(new TextDecoder().decode(await vscode.workspace.fs.readFile(closedUri)), 'external change');
+  await vscode.workspace.fs.writeFile(closedUri, original);
+  assert.equal((await callTool('save_workbook', {})).result?.isError, false);
+  assert.notDeepEqual(await vscode.workspace.fs.readFile(closedUri), original);
+  client.close();
+  const overlapUri = vscode.Uri.joinPath(directory, 'agent-overlap.xlsx');
+  await vscode.workspace.fs.writeFile(overlapUri, original);
+  const overlapClient = createAgent(api.mcp);
+  const overlapTool = (name: string, args: object) => overlapClient.call('tools/call', { name, arguments: args });
+  assert.equal((await overlapTool('open_workbook', { path: overlapUri.fsPath })).result?.isError, false);
+  assert.equal((await overlapTool('set_cell', { cell: 'A6', input: 'unsaved agent' })).result?.isError, false);
+  const overlapDoc = await open(api, overlapUri);
+  assert.equal((await overlapTool('save_workbook', {})).result?.isError, true, 'A headless session must not overwrite a newly opened editor');
+  assert.deepEqual(await vscode.workspace.fs.readFile(overlapUri), original);
+  assert.equal(overlapDoc.dirty, false);
+  const recoveryCopy = vscode.Uri.joinPath(directory, 'agent-overlap-copy.xlsx');
+  assert.equal((await overlapTool('save_workbook', { path: recoveryCopy.fsPath })).result?.isError, false, 'Unsaved headless edits can be recovered to a copy');
+  overlapClient.close();
+  await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+  const agentCsv = vscode.Uri.joinPath(directory, 'agent.csv');
+  const csvOriginal = new TextEncoder().encode('Name,Value\nOne,1\n');
+  await vscode.workspace.fs.writeFile(agentCsv, csvOriginal);
+  const csvClient = createAgent(api.mcp);
+  const csvTool = (name: string, args: object) => csvClient.call('tools/call', { name, arguments: args });
+  assert.equal((await csvTool('open_workbook', { path: agentCsv.fsPath })).result?.isError, false);
+  assert.equal((await csvTool('set_cell', { cell: 'B2', input: '=1+2' })).result?.isError, false);
+  assert.equal((await csvTool('save_workbook', {})).result?.isError, true, 'Headless CSV save must reject formulas');
+  assert.deepEqual(await vscode.workspace.fs.readFile(agentCsv), Buffer.from(csvOriginal));
+  const agentXlsx = vscode.Uri.joinPath(directory, 'agent-converted.xlsx');
+  assert.equal((await csvTool('save_workbook', { path: agentXlsx.fsPath })).result?.isError, false);
+  csvClient.close();
+  const liveSaveUri = vscode.Uri.joinPath(directory, 'agent-live-save.xlsx');
+  await vscode.workspace.fs.writeFile(liveSaveUri, original);
+  const liveSaveDoc = await open(api, liveSaveUri);
+  const liveSaveClient = createAgent(api.mcp);
+  const liveSaveTool = (name: string, args: object) => liveSaveClient.call('tools/call', { name, arguments: args });
+  assert.equal((await liveSaveTool('open_workbook', { path: liveSaveUri.fsPath })).result?.isError, false);
+  assert.equal((await liveSaveTool('set_cell', { cell: 'A6', input: 'saved live' })).result?.isError, false);
+  await waitFor(() => liveSaveDoc.dirty);
+  assert.equal((await liveSaveTool('save_workbook', {})).result?.isError, false);
+  assert.equal(liveSaveDoc.dirty, false);
+  liveSaveClient.close();
+  await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+  const reopenedLive = await open(api, liveSaveUri);
+  assert.equal(await reopenedLive.request('test:cell', { sheet: 0, row: 5, col: 0 }), 'saved live');
+  await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+  const revertClosedUri = vscode.Uri.joinPath(directory, 'revert-without-panel.xlsx');
+  await vscode.workspace.fs.writeFile(revertClosedUri, original);
   const closedToken = new vscode.CancellationTokenSource();
-  const closedDocument = await api.editing.openCustomDocument(closedUri, { backupId: undefined, untitledDocumentData: undefined }, closedToken.token);
+  const closedDocument = await api.editing.openCustomDocument(revertClosedUri, { backupId: undefined, untitledDocumentData: undefined }, closedToken.token);
   await api.editing.revertCustomDocument(closedDocument, closedToken.token);
   assert.deepEqual(closedDocument.cache, original, 'Revert without a live panel still reloads the source');
   assert.equal(closedDocument.dirty, false);
@@ -28,6 +105,29 @@ export async function run(): Promise<void> {
   await vscode.workspace.fs.writeFile(uri, original);
   let doc = await open(api, uri);
   assert.equal(await cell(doc), '42');
+  const liveClient = createAgent(api.mcp);
+  const liveTool = (name: string, args: object) => liveClient.call('tools/call', { name, arguments: args });
+  assert.equal((await liveTool('open_workbook', { path: uri.fsPath })).result?.isError, false);
+  assert.equal((await liveTool('set_cell', { cell: 'A7', input: 'live agent' })).result?.isError, false);
+  assert.equal(await doc.request('test:cell', { sheet: 0, row: 6, col: 0 }), 'live agent');
+  await waitFor(() => doc.dirty);
+  assert.equal((await liveTool('undo', {})).result?.isError, false);
+  assert.equal(await doc.request('test:cell', { sheet: 0, row: 6, col: 0 }), '');
+  assert.equal((await liveTool('redo', {})).result?.isError, false);
+  assert.equal(await doc.request('test:cell', { sheet: 0, row: 6, col: 0 }), 'live agent');
+  assert.equal((await liveTool('undo', {})).result?.isError, false);
+  liveClient.close();
+  const mcp = async (id: number, method: string, params: object) => {
+    const reply = await doc.request('agent:mcp', { message: JSON.stringify({ jsonrpc: '2.0', id, method, params }) });
+    assert.equal(typeof reply, 'string');
+    return JSON.parse(reply as string) as { result?: { isError?: boolean }; error?: object };
+  };
+  assert.ok((await mcp(1, 'initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'test', version: '1' } })).result);
+  assert.equal((await mcp(2, 'tools/call', { name: 'set_cell', arguments: { cell: 'A6', input: 'agent' } })).result?.isError, false);
+  assert.equal(await doc.request('test:cell', { sheet: 0, row: 5, col: 0 }), 'agent');
+  await waitFor(() => doc.dirty);
+  await vscode.commands.executeCommand('undo');
+  assert.equal(await doc.request('test:cell', { sheet: 0, row: 5, col: 0 }), '');
   await doc.request('test:draft', { row: 1, col: 1 });
   assert.equal(await edit(doc, '21'), '21', 'Cell replacement must replace even when an earlier native draft is active');
   assert.equal(await cell(doc, 2), '42', 'The native calculation engine recalculates formulas');
@@ -323,4 +423,24 @@ async function revert(doc: EditableDocument): Promise<void> {
   const before = doc.token;
   await vscode.commands.executeCommand('workbench.action.files.revert');
   await waitFor(() => doc.token !== before && !doc.dirty);
+}
+
+function createAgent(config: EditorApi['mcp']) {
+  const process = spawn(config.command, config.args, { env: { ...globalThis.process.env, ...config.env }, stdio: ['pipe', 'pipe', 'pipe'] });
+  const lines = createInterface({ input: process.stdout });
+  const waiting = new Map<number, { resolve: (value: { result?: { isError?: boolean } }) => void; reject: (error: Error) => void }>();
+  let sequence = 0;
+  lines.on('line', line => { const response = JSON.parse(line) as { id: number; result?: { isError?: boolean } }; const entry = waiting.get(response.id); if (entry) { waiting.delete(response.id); entry.resolve(response); } });
+  process.on('exit', () => { for (const entry of waiting.values()) entry.reject(new Error('MCP proxy exited')); waiting.clear(); });
+  return {
+    call(method: string, params: object): Promise<{ result?: { isError?: boolean } }> {
+      const id = ++sequence;
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => { waiting.delete(id); reject(new Error(`MCP ${method} timed out`)); }, 15000);
+        waiting.set(id, { resolve: value => { clearTimeout(timer); resolve(value); }, reject: error => { clearTimeout(timer); reject(error); } });
+        process.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n');
+      });
+    },
+    close(): void { process.stdin.end(); },
+  };
 }

@@ -1251,6 +1251,7 @@ dependencies = [
  "eframe 0.36.2",
  "egui 0.36.2",
  "gridcraft-engine",
+ "gridcraft-mcp",
  "gridcraft-ui-egui",
  "gridcraft-xlsx",
  "js-sys",
@@ -3198,6 +3199,15 @@ version = "0.11.1"
 dependencies = [
  "gridcraft-core",
  "regex",
+]
+
+[[package]]
+name = "gridcraft-mcp"
+version = "0.11.1"
+dependencies = [
+ "gridcraft-engine",
+ "log",
+ "serde_json",
 ]
 
 [[package]]

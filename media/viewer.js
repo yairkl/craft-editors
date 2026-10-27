@@ -91,6 +91,11 @@ window.addEventListener('message', async ({ data }) => {
       await engineReady;
       let result;
       switch (data.operation) {
+        case 'agent:mcp': {
+          if (!['xlsx', 'csv'].includes(document.body.dataset.format) || typeof data.message !== 'string' || data.message.length > 1048576) throw new Error('Invalid spreadsheet agent request.');
+          result = viewer.mcp_message(data.message) ?? null;
+          break;
+        }
         case 'serialize': {
           const snapshot = viewer.serialize(data.flush === true, data.format);
           result = { token: snapshot.token, bytes: snapshot.bytes.buffer.slice(snapshot.bytes.byteOffset, snapshot.bytes.byteOffset + snapshot.bytes.byteLength) };

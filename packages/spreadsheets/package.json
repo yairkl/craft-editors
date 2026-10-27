@@ -25,7 +25,16 @@
     "Other"
   ],
   "main": "./out/src/entrypoints/spreadsheets.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "contributes": {
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "craft.spreadsheets.mcp",
+        "label": "Craft Spreadsheets"
+      }
+    ],
     "customEditors": [
       {
         "viewType": "craft.spreadsheets.preview",

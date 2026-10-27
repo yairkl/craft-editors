@@ -26,6 +26,10 @@ for (const id of ['grid', 'pdf', 'word', 'deck', 'vector']) {
   mkdirSync(directory, { recursive: true });
   run('wasm-bindgen', ['--target', 'web', '--out-dir', directory, '--out-name', 'viewer',
     resolve(root, `adapters/target/wasm32-unknown-unknown/release/craft_${id}_viewer.wasm`)]);
+  if (id === 'grid') {
+    run('wasm-bindgen', ['--target', 'nodejs', '--out-dir', resolve(directory, 'node'), '--out-name', 'viewer',
+      resolve(root, 'adapters/target/wasm32-unknown-unknown/release/craft_grid_viewer.wasm')]);
+  }
   for (const name of readdirSync(directory, { recursive: true }).filter(name => /\.(js|wasm)$/.test(name))) {
     const bytes = readFileSync(resolve(directory, name));
     artifacts[`${id}/${name}`] = { bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') };
