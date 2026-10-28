@@ -6,7 +6,7 @@ It opens supported files by default unless you have saved another editor prefere
 
 Use the sheet selector and mouse-wheel scrolling to navigate spreadsheets.
 
-This is an early preview. Supports desktop VS Code 1.102+, files up to 32 MiB, and the engine's supported formats/features. Complex document fidelity and full script/font coverage remain under validation.
+This is an early preview. Supports desktop VS Code 1.102+, files up to 256 MiB by default, configurable to 1024 MiB using the editor's `maxFileSizeMiB` setting, and the engine's supported formats/features. Complex document fidelity and full script/font coverage remain under validation.
 
 Code and asset licenses are included under `notices/`.
 

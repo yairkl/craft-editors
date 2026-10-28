@@ -137,8 +137,8 @@ impl VectorMcpHeadless {
         Self { backend, server }
     }
     pub fn open_bytes(&self, bytes: Vec<u8>, format: &str) -> Result<(), JsValue> {
-        if bytes.len() > 32 * 1024 * 1024 {
-            return Err(error("Vector document exceeds 32 MiB."));
+        if bytes.len() > 1024 * 1024 * 1024 {
+            return Err(error("Vector document exceeds the 1 GiB adapter limit."));
         }
         let doc = if format == "vectorcraft" {
             vectorcraft_format::load(&bytes)

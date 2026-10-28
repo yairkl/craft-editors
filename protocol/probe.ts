@@ -1,6 +1,6 @@
 /** Diagnostic transport only. Editing will use a separate negotiated protocol. */
 export const PROBE_VERSION = 1;
-export const MAX_DOCUMENT_BYTES = 32 * 1024 * 1024;
+export const MAX_DOCUMENT_BYTES = 1024 * 1024 * 1024;
 export type DocumentFormat = 'xlsx' | 'csv' | 'pdf' | 'docx' | 'pptx' | 'svg' | 'vectorcraft';
 
 export interface Receipt {

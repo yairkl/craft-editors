@@ -56,7 +56,20 @@
         ],
         "priority": "option"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Craft PowerPoint",
+      "properties": {
+        "craft.powerpoint.maxFileSizeMiB": {
+          "type": "integer",
+          "default": 256,
+          "minimum": 1,
+          "maximum": 1024,
+          "scope": "resource",
+          "description": "Maximum document size in MiB for opening and saving. Large or complex documents may require substantially more memory."
+        }
+      }
+    }
   },
   "files": [
     "out/**",

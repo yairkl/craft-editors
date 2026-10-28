@@ -197,6 +197,37 @@ impl McpHeadless {
         Ok(server.handle_line(message))
     }
 
+    pub fn open_bytes(&self, bytes: Vec<u8>, name: &str) -> Result<(), JsValue> {
+        if bytes.len() > 1024 * 1024 * 1024 {
+            return Err(JsValue::from_str(
+                "Workbook exceeds the 1 GiB adapter limit.",
+            ));
+        }
+        let (workbook, _) = gridcraft_engine::io::open_bytes(name, &bytes)
+            .map_err(|_| JsValue::from_str("The workbook could not be opened."))?;
+        let mut backend = self
+            .backend
+            .try_borrow_mut()
+            .map_err(|_| JsValue::from_str("Workbook is busy"))?;
+        let mut session = Session::new();
+        session.add_document(DocState::new(workbook, None, name.into(), Trust::FromFile));
+        backend.session = session;
+        Ok(())
+    }
+
+    pub fn save_bytes(&self, name: &str) -> Result<Vec<u8>, JsValue> {
+        let backend = self
+            .backend
+            .try_borrow()
+            .map_err(|_| JsValue::from_str("Workbook is busy"))?;
+        let doc = backend
+            .session
+            .active()
+            .ok_or_else(|| JsValue::from_str("No workbook"))?;
+        gridcraft_engine::io::save_bytes(&doc.wb, name)
+            .map_err(|_| JsValue::from_str("Could not serialize the workbook."))
+    }
+
     pub fn mark_saved(&self) -> Result<(), JsValue> {
         let mut backend = self
             .backend
@@ -615,8 +646,10 @@ impl GridViewer {
         on_event: js_sys::Function,
         format: String,
     ) -> Result<GridViewer, JsValue> {
-        if bytes.len() > 32 * 1024 * 1024 {
-            return Err(JsValue::from_str("Document exceeds 32 MiB."));
+        if bytes.len() > 1024 * 1024 * 1024 {
+            return Err(JsValue::from_str(
+                "Document exceeds the 1 GiB adapter limit.",
+            ));
         }
         let commands = Rc::new(RefCell::new(Vec::new()));
         if !matches!(format.as_str(), "xlsx" | "csv") {

@@ -1,7 +1,7 @@
 import { realpath } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import * as vscode from 'vscode';
-import { MAX_DOCUMENT_BYTES } from '../protocol/probe';
+import { fileLimit, fileLimitError } from './file-limits';
 import { EditableDocument, EditingProvider } from './editing';
 
 /** Compare existing local/remote-host files by real path, including symlink aliases. */
@@ -28,11 +28,12 @@ export async function hasDirtyText(uri: vscode.Uri): Promise<boolean> {
 
 /** Reject known-oversized files before loading them, then check for growth. */
 export async function readAgentFile(uri: vscode.Uri): Promise<Uint8Array> {
+  const limit = fileLimit(uri);
   const stat = await vscode.workspace.fs.stat(uri);
   if ((stat.type & vscode.FileType.Directory) !== 0) throw new Error('Choose a document file.');
-  if (stat.size > MAX_DOCUMENT_BYTES) throw new Error('Document exceeds 32 MiB.');
+  if (stat.size > limit) throw fileLimitError(limit);
   const bytes = await vscode.workspace.fs.readFile(uri);
-  if (bytes.byteLength > MAX_DOCUMENT_BYTES) throw new Error('Document exceeds 32 MiB.');
+  if (bytes.byteLength > limit) throw fileLimitError(limit);
   return bytes;
 }
 

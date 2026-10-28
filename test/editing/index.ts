@@ -33,6 +33,35 @@ export async function run(): Promise<void> {
   const directory = vscode.Uri.file(path.join(root!, 'artifacts/editing'));
   await vscode.workspace.fs.createDirectory(directory);
   const original = await vscode.workspace.fs.readFile(fixture('minimal.xlsx'));
+  if (process.env.CRAFT_TEST_LARGE === '1') {
+    const largeUri = vscode.Uri.joinPath(directory, 'large.xlsx');
+    await vscode.workspace.fs.writeFile(largeUri, original);
+    execFileSync(process.platform === 'win32' ? 'python' : 'python3', ['-c',
+      'import sys, zipfile\nwith zipfile.ZipFile(sys.argv[1], "a", compression=zipfile.ZIP_STORED) as z: z.writestr("craft-large-test-padding", bytes(33 * 1024 * 1024))', largeUri.fsPath]);
+    const size = (await vscode.workspace.fs.stat(largeUri)).size;
+    assert.ok(size > 32 * 1024 * 1024);
+    const started = Date.now();
+    const largeClient = createAgent(api.mcp);
+    const response = (await largeClient.call('tools/call', { name: 'open_workbook', arguments: { path: largeUri.fsPath } })).result;
+    assert.equal(response?.isError, false, `Agent can open a large closed workbook: ${JSON.stringify(response)}`);
+    assert.equal((await largeClient.call('tools/call', { name: 'set_cell', arguments: { cell: 'A6', input: 'large agent' } })).result?.isError, false);
+    const agentCopy = vscode.Uri.joinPath(directory, 'large-agent-copy.xlsx');
+    try { await vscode.workspace.fs.delete(agentCopy); } catch (error) { if ((error as { code?: string }).code !== 'FileNotFound') throw error; }
+    assert.equal((await largeClient.call('tools/call', { name: 'save_workbook', arguments: { path: agentCopy.fsPath } })).result?.isError, false, 'Agent can save a large workbook');
+    assert.ok((await vscode.workspace.fs.stat(agentCopy)).size > 0);
+    await vscode.workspace.fs.delete(agentCopy);
+    largeClient.close();
+    const large = await open(api, largeUri);
+    assert.equal(await edit(large, '21'), '21');
+    assert.ok(await vscode.workspace.save(largeUri));
+    await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+    const reopened = await open(api, largeUri);
+    assert.equal(await cell(reopened), '21');
+    await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+    await vscode.workspace.fs.delete(largeUri);
+    console.log(`Large XLSX (${size} bytes) opened, edited, saved and reopened in ${Date.now() - started} ms.`);
+    return;
+  }
   const closedUri = vscode.Uri.joinPath(directory, 'agent-closed.xlsx');
   await vscode.workspace.fs.writeFile(closedUri, original);
   const client = createAgent(api.mcp);

@@ -17,3 +17,5 @@ Hebrew letters and niqqud are available through a bundled, hash-verified Noto Sa
 The command ribbon starts collapsed to give the document more space. Its tab row stays visible; double-click a ribbon tab, or use Ctrl+F1, to show the tools when needed.
 
 When a headless agent saves to a different path, the destination must not already exist. Choose a new filename to avoid replacing another document.
+
+Files up to 256 MiB are supported by default. Set `craft.word.maxFileSizeMiB` (up to 1024 MiB) to change the limit. Large or complex documents can use substantially more memory.

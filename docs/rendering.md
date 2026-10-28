@@ -29,7 +29,7 @@ Select an individual application or **All Craft extensions** in Run and Debug an
 
 VS Code owns file/window chrome and persistence. Restricted logo artwork is removed from modified builds. The shared HTML bootstrap adds no Save/Save As header. Native editing menus and tools remain available; advanced operations outside the beta's validated scope are documented in [the release notes](releases/v0.1.2-beta.4.md).
 
-The host reads through `workspace.fs`, caps source files at 32 MiB and transfers only the selected file's bytes. The CSP permits local modules/WASM and extension media. Startup failures and a 60-second timeout are visible in the editor. Save, cancellation, conflict checks, recovery and Revert are shared across all formats.
+The host reads through `workspace.fs`, limits source files to 256 MiB by default (`craft.<editor>.maxFileSizeMiB`, configurable up to 1024 MiB) and transfers the selected file's bytes. Files are held in memory and complex or compressed documents can require much more memory than their disk size. The current setting is checked when opening and saving. The CSP permits local modules/WASM and extension media. Startup failures and a 60-second timeout are visible in the editor. Save, cancellation, conflict checks, recovery and Revert are shared across all formats.
 
 ## Verification
 
@@ -63,3 +63,16 @@ Linux, macOS and Windows CI cover editor behavior; Linux Remote SSH lifecycle te
 DeckCraft slideshow/Presenter View launches are disabled in VS Code. Desktop child viewports fall back to windows inside the editor webview and cover the audience slide; they do not provide an independent monitor or fullscreen presentation host. The guard applies at native `start_show`, including F5, ribbon/status actions, custom shows and command launches. Reading View remains an in-editor preview without a presenter viewport. A future multi-display mode requires a separate audience surface and host-managed lifecycle, navigation and focus.
 
 Office ribbons start collapsed in the GridCraft, WordCraft and DeckCraft adapters. The native tab row and expand/collapse interactions remain available. This is an embedding default; upstream application defaults are unchanged. Saving does not recreate the app or reset a ribbon the user has expanded.
+
+## Large-file verification
+
+The release flow exercises synthetic XLSX and PDF files just over 33 MiB, including agent open, editor edits, save and reopen. The fixtures are padded small documents, so these checks verify file-size handling and transport, not real-world large-document performance or fidelity. In a local Linux x64 run with 28 logical CPUs and 62 GiB reported RAM, the padded XLSX and PDF each completed open/edit/save/reopen in about 2–3 seconds. `/usr/bin/time` reported maximum resident sets of roughly 380 MiB and 620 MiB for the individual processes observed during those runs, not total VS Code memory. Results vary with content and hardware.
+
+To reproduce these Linux checks after building the renderers, run:
+
+```sh
+CRAFT_TEST_LARGE=1 CRAFT_TEST_ONLY=spreadsheets xvfb-run -a npm run test:editing
+CRAFT_TEST_LARGE=1 CRAFT_TEST_ONLY=pdf xvfb-run -a npm run test:graphics
+```
+
+The 256 MiB default and 1024 MiB ceiling are not performance guarantees. Files are read in full, Office archives can expand substantially, and large or complex documents, remote hosts and multiple open editors can consume far more memory. Benchmark realistic files across apps and platforms before increasing the limit broadly.

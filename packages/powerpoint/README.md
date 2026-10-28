@@ -17,3 +17,5 @@ Slideshow, Presenter View and recording launches are unavailable in the embedded
 The command ribbon starts collapsed to give the document more space. Its tab row stays visible; click a ribbon tab to show the tools when needed.
 
 When a headless agent saves to a different path, the destination must not already exist. Choose a new filename to avoid replacing another document.
+
+Files up to 256 MiB are supported by default. Set `craft.powerpoint.maxFileSizeMiB` (up to 1024 MiB) to change the limit. Large or complex documents can use substantially more memory.

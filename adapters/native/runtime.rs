@@ -161,8 +161,8 @@ impl NativeViewer {
         on_event: js_sys::Function,
         format: String,
     ) -> Result<NativeViewer, JsValue> {
-        if bytes.len() > 32 * 1024 * 1024 {
-            return Err(error("Document exceeds 32 MiB."));
+        if bytes.len() > 1024 * 1024 * 1024 {
+            return Err(error("Document exceeds the 1 GiB adapter limit."));
         }
         let commands = Commands::default();
         let document = Document::open(&bytes, commands.clone(), &format)?;

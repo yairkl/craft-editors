@@ -106,6 +106,13 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
       - run: xvfb-run -a npm run test:graphics
         if: github.event_name == 'workflow_dispatch'
+      - name: Test large workbook and PDF
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          CRAFT_TEST_LARGE: '1'
+        run: |
+          CRAFT_TEST_ONLY=spreadsheets xvfb-run -a npm run test:editing
+          CRAFT_TEST_ONLY=pdf xvfb-run -a npm run test:graphics
       - run: xvfb-run -a npm run test:theme
         if: github.event_name == 'workflow_dispatch'
       - run: npm run package
