@@ -67,9 +67,15 @@ export async function verifyPreview(viewer, format, canvas, units) {
         await waitZoom(initialZoom + 10, 'Native keyboard zoom');
         canvas.dispatchEvent(new KeyboardEvent('keyup', { key: '=', code: 'Equal', ctrlKey: true, altKey: true, bubbles: true }));
         await frame();
-        canvas.dispatchEvent(new KeyboardEvent('keydown', { key: '-', code: 'Minus', ctrlKey: true, altKey: true, bubbles: true }));
-        await waitZoom(initialZoom, 'Native keyboard zoom out');
-        canvas.dispatchEvent(new KeyboardEvent('keyup', { key: '-', code: 'Minus', ctrlKey: true, altKey: true, bubbles: true }));
+        if (navigator.userAgent.includes('Mac') && !navigator.userAgent.includes('like Mac')) {
+          // GridCraft reserves Ctrl+Option+Minus for removing borders on macOS.
+          await wheel(2);
+          await waitZoom(initialZoom, 'Wheel zoom after native keyboard zoom');
+        } else {
+          canvas.dispatchEvent(new KeyboardEvent('keydown', { key: '-', code: 'Minus', ctrlKey: true, altKey: true, bubbles: true }));
+          await waitZoom(initialZoom, 'Native keyboard zoom out');
+          canvas.dispatchEvent(new KeyboardEvent('keyup', { key: '-', code: 'Minus', ctrlKey: true, altKey: true, bubbles: true }));
+        }
         canvas.dispatchEvent(new KeyboardEvent('keyup', { key: 'Control', code: 'ControlLeft', bubbles: true }));
         canvas.dispatchEvent(new KeyboardEvent('keyup', { key: 'Alt', code: 'AltLeft', bubbles: true }));
       } finally {
