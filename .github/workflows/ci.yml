@@ -1,6 +1,7 @@
 name: CI
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
   workflow_dispatch:
 permissions:
   contents: read
@@ -61,7 +62,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
   rendering:
     needs: [changes, check]
-    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.build == 'true'
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.build == 'true' || contains(github.event.pull_request.labels.*.name, 'test:windows-installed')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -200,6 +201,23 @@ jobs:
           path: artifacts/platform/*.png
           if-no-files-found: ignore
           retention-days: 1
+
+  windows-installed:
+    needs: [rendering]
+    if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'test:windows-installed')
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: craft-vsix-${{ github.run_id }}
+          path: dist/vsix
+      - run: npm run test:installed
 
   publish-release:
     needs: [rendering, platform-smoke]
