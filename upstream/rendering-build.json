@@ -58,16 +58,16 @@
       "sha256": "67bdea606e1c26988032d5504f3804ed7ea05b5e4fe79f98c410ba062e2c5cdb"
     },
     "pdf/viewer_bg.wasm": {
-      "bytes": 48725956,
-      "sha256": "aa7f19a970f57aac00b689df18f178cf05795f590a80f2cb57a01e28aca0c780"
+      "bytes": 48726502,
+      "sha256": "8d0982082826859a18d527756593c18acfd6dee2c0f91b83205b91cbefd313e1"
     },
     "pdf/node/viewer.js": {
       "bytes": 164110,
       "sha256": "1585f8624f0d6ef4c1ea681a68b43b5fd758839938e2386ca70c2954f6c986af"
     },
     "pdf/node/viewer_bg.wasm": {
-      "bytes": 48725956,
-      "sha256": "aa7f19a970f57aac00b689df18f178cf05795f590a80f2cb57a01e28aca0c780"
+      "bytes": 48726502,
+      "sha256": "8d0982082826859a18d527756593c18acfd6dee2c0f91b83205b91cbefd313e1"
     },
     "word/viewer.js": {
       "bytes": 159767,
@@ -146,7 +146,7 @@
     "pdfcraft": [
       {
         "path": "upstream/patches/pdfcraft-embedding.patch",
-        "sha256": "35825c8badd6374c7ede40cd431ca42e77f8925e5607a6cd1b40a8d55a6a01f5",
+        "sha256": "cd9014fd66ff79ee3835fe9101e1e328d32a2bc8276b29637f24bdd51da9e8e0",
         "purpose": "Delegate file lifecycle and history to the embedding host, provide host snapshots, and expose the automation session for embedded MCP requests.",
         "removalCondition": "Remove when upstream exposes equivalent embedding services."
       }
