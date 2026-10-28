@@ -161,14 +161,14 @@ index c0e12d5d095569b60f6c62e7d3713109eea4f8b9..e5f746d23ab5769f48a88aa0c066e039
              Ok(done) => done,
              Err(m) => {
 diff --git a/crates/ui-egui/src/create_ui.rs b/crates/ui-egui/src/create_ui.rs
-index 6dceb50657522aa4037840e7e06643c75213b8da..51a0e2bbc9d694f3eb815542a71272f6ec8701ba 100644
+index 6dceb50657522aa4037840e7e06643c75213b8da..b9a1c3261224815cd0fbe51733515fb8c4eb2740 100644
 --- a/crates/ui-egui/src/create_ui.rs
 +++ b/crates/ui-egui/src/create_ui.rs
 @@ -98,6 +98,7 @@ impl PdfCraftApp {
      }
  
      fn open_created_bytes(&mut self, name: &str, created: Result<Arc<Vec<u8>>, String>) -> Result<(), String> {
-+        if self.embedded { return Err("Create a separate PDF using VS Code or the standalone application.".into()); }
++        if self.embedded { return Err("Create a separate PDF using the host or the standalone application.".into()); }
          let bytes = created?;
          let id = self.session.open_new(name, bytes).map_err(|e| e.to_string())?;
          // The reading-colours preference is app-wide: the newly created document starts with it.

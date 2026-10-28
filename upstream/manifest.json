@@ -64,7 +64,7 @@
       "patches": [
         {
           "path": "upstream/patches/pdfcraft-embedding.patch",
-          "sha256": "52a9838b3c17a65ec9be853d8efcd1435c8ea5510c564bfc65522624fe5b2717",
+          "sha256": "35825c8badd6374c7ede40cd431ca42e77f8925e5607a6cd1b40a8d55a6a01f5",
           "purpose": "Delegate file lifecycle and history to the embedding host, provide host snapshots, and expose the automation session for embedded MCP requests.",
           "removalCondition": "Remove when upstream exposes equivalent embedding services."
         }
@@ -96,7 +96,7 @@
       "patches": [
         {
           "path": "upstream/patches/deckcraft-embedding.patch",
-          "sha256": "3c9d522656a69c370a2cb1760cfb89a4a64aeec7861bfb55d0a6184328ed8ccb",
+          "sha256": "90d3e15754449c5ba2e3601c8fea2f4c76f02e06e98485d0fbb040a52cdddb75",
           "purpose": "Delegate file lifecycle and history to the embedding host and omit standalone chrome.",
           "removalCondition": "Remove when upstream exposes equivalent embedding services and host snapshots."
         }
