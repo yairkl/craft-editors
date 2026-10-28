@@ -41,6 +41,7 @@ struct State {
     document: Document,
     context: egui::Context,
     commands: Commands,
+    keyboard_history: bool,
     capture: Capture,
     on_frame: Option<js_sys::Function>,
     on_event: js_sys::Function,
@@ -86,6 +87,9 @@ struct Shell(Rc<RefCell<State>>);
 impl eframe::App for Shell {
     fn raw_input_hook(&mut self, ctx: &egui::Context, raw: &mut egui::RawInput) {
         if let Ok(mut state) = self.0.try_borrow_mut() {
+            state.keyboard_history = raw.events.iter().any(|event| matches!(event,
+                egui::Event::Key { pressed: true, modifiers, .. } if modifiers.command || modifiers.ctrl
+            ));
             Document::screenshot_events(raw, &state.capture);
             let captured = state
                 .capture
@@ -126,9 +130,8 @@ impl eframe::App for Shell {
             state.observe();
             let commands = std::mem::take(&mut *state.commands.borrow_mut());
             // The host already receives keyboard history shortcuts; pointer commands still delegate.
-            let keyboard_history = ui.ctx().input(|input| input.events.iter().any(|event| matches!(event,
-                egui::Event::Key { pressed: true, modifiers, .. } if modifiers.command || modifiers.ctrl
-            )));
+            let keyboard_history = state.keyboard_history;
+            state.keyboard_history = false;
             for command in commands {
                 if keyboard_history && matches!(command.as_str(), "edit.undo" | "edit.redo") {
                     continue;
@@ -167,6 +170,7 @@ impl NativeViewer {
         let state = Rc::new(RefCell::new(State {
             document,
             commands,
+            keyboard_history: false,
             capture: Capture::default(),
             context: egui::Context::default(),
             on_frame: Some(on_frame),
