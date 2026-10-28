@@ -144,6 +144,18 @@ export async function run(): Promise<void> {
         doc = await open(api, uri, item.preview);
         assert.equal(await doc.request('test:cell', { sheet: 0, row: 7, col: 0 }), 'agent platform smoke');
         await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+        const csv = vscode.Uri.joinPath(directory, 'platform.csv');
+        await vscode.workspace.fs.writeFile(csv, new TextEncoder().encode('Name;Value\r\n"quoted, name";42\r\n'));
+        doc = await open(api, csv, item.preview);
+        assert.equal(await doc.request('test:cell', { sheet: 0, row: 1, col: 0 }), 'quoted, name');
+        await doc.request('test:edit', { row: 1, col: 1, text: 'שלום, "CSV"' });
+        assert.ok(await vscode.workspace.save(csv));
+        const csvText = new TextDecoder().decode(await vscode.workspace.fs.readFile(csv));
+        assert.ok(csvText.startsWith('Name;Value'), 'CSV delimiter survives saving');
+        await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+        doc = await open(api, csv, item.preview);
+        assert.equal(await doc.request('test:cell', { sheet: 0, row: 1, col: 1 }), 'שלום, "CSV"');
+        await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
       }
       console.log(`Platform smoke passed: ${process.platform} ${item.format}`);
     }
