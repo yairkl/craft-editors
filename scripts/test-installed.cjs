@@ -13,7 +13,11 @@ async function main() {
     engines: { vscode: '^1.102.0' }, main: './index.js', activationEvents: ['*'],
   }));
   writeFileSync(path.join(driver, 'index.js'), 'exports.activate = () => {};\n');
-  const [cli, ...cliArgs] = resolveCliArgsFromVSCodeExecutablePath(executable, { reuseMachineInstall: true });
+  // Windows code.cmd requires a shell; run the same CLI through Electron directly
+  // so paths and arguments do not need shell quoting.
+  const [cli, ...cliArgs] = process.platform === 'win32'
+    ? [executable, path.join(path.dirname(executable), 'resources', 'app', 'out', 'cli.js')]
+    : resolveCliArgsFromVSCodeExecutablePath(executable, { reuseMachineInstall: true });
   for (const names of [['spreadsheets'], ['pdf'], ['word'], ['powerpoint'], ['vector'], ['spreadsheets', 'pdf', 'word', 'powerpoint', 'vector', 'suite']]) {
     const label = names.join('-');
     const profile = path.join(root, `.vscode-test/installed-${label}`);
