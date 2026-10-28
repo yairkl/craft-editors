@@ -14,7 +14,7 @@ Following this proposal, we've built an independent VS Code integration for Grid
 - Native Rust/egui UIs run as WASM inside VS Code editor tabs. Files stay local to the VS Code session, with no processing service or external app dependency.
 - A shared host handles Save/Save As, cancellation, disk-conflict checks, exact-revision acknowledgments, VS Code Undo/Redo, Revert and recovery. Native app chrome is adapted for embedding, and light/dark follows VS Code.
 
-This explores interactive WASM editing alongside the CLI/MCP direction proposed here; it includes MCP bridges tested with a test client; real Copilot and Cursor discovery and every Remote SSH configuration remain unverified.
+This explores interactive WASM editing alongside the CLI/MCP direction proposed here; it includes MCP bridges tested with a test client; MCP discovery has been verified in VS Code and Cursor, while real-client editing and broader Remote SSH configurations remain to be validated.
 
 The beta includes integration tests for native edits, scroll zoom, save/reopen, history, recovery, package isolation and installed VSIX behavior. It is not a complete fidelity/platform claim: generated fixtures, Linux/macOS/Windows CI and actual Linux Remote SSH lifecycle tests are covered; complex documents, WSL, Cursor and wider SSH network/authentication cases need more testing. Unserializable drafts defer autosave/backup rather than interrupt typing.
 

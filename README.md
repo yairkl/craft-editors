@@ -40,7 +40,7 @@ Hebrew text support, including niqqud, is bundled and tested across the five edi
 
 ## Agent tools
 
-Each editor includes an MCP bridge intended to give compatible agents access to open and closed documents. The bridge has been tested with a test client, including a Linux Remote SSH host; discovery and use by actual GitHub Copilot and Cursor agents still need end-to-end verification. See the per-editor guides for [spreadsheets](packages/spreadsheets/README.md#spreadsheet-tools-for-agents), [Word](packages/word/README.md#document-tools-for-agents), [PowerPoint](packages/powerpoint/README.md#presentation-tools-for-agents), [PDF](packages/pdf/README.md#pdf-tools-for-agents), and [Vector](packages/vector/README.md#vector-tools-for-agents).
+Each editor includes an MCP bridge intended to give compatible agents access to open and closed documents. MCP discovery has been verified in VS Code and Cursor. A test client also exercises the bridge in a Linux Remote SSH host; broader real-client editing and remote workflows still need validation. See the per-editor guides for [spreadsheets](packages/spreadsheets/README.md#spreadsheet-tools-for-agents), [Word](packages/word/README.md#document-tools-for-agents), [PowerPoint](packages/powerpoint/README.md#presentation-tools-for-agents), [PDF](packages/pdf/README.md#pdf-tools-for-agents), and [Vector](packages/vector/README.md#vector-tools-for-agents).
 
 ## Preview limitations and feedback
 
