@@ -34,7 +34,8 @@
     "test:graphics": "npm run compile && node scripts/test-extensions.cjs graphics",
     "release:checksums": "node scripts/release-checksums.mjs",
     "test:languages": "npm run compile && node scripts/test-extensions.cjs languages",
-    "test:remote": "node scripts/test-remote-ssh.cjs"
+    "test:remote": "node scripts/test-remote-ssh.cjs",
+    "test:platform": "npm run compile && node scripts/test-extensions.cjs platform"
   },
   "devDependencies": {
     "@types/node": "22.20.5",

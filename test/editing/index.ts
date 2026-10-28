@@ -264,7 +264,7 @@ export async function run(): Promise<void> {
   assert.ok((await csv.request('test:csv-status') as { features: string[] }).features.includes('multiple worksheets'));
   const multiCopy = vscode.Uri.joinPath(directory, 'multiple.xlsx');
   await api.editing.saveWorkbookCopy(csv, multiCopy, csvToken.token);
-  const xmlSummary = JSON.parse(execFileSync('python3', [path.join(root!, 'test/editing/workbook-summary.py')], { input: await vscode.workspace.fs.readFile(multiCopy), encoding: 'utf8' })) as { sheets: number; formulas: string[]; bold: boolean };
+  const xmlSummary = JSON.parse(execFileSync(process.platform === 'win32' ? 'python' : 'python3', [path.join(root!, 'test/editing/workbook-summary.py')], { input: await vscode.workspace.fs.readFile(multiCopy), encoding: 'utf8' })) as { sheets: number; formulas: string[]; bold: boolean };
   assert.equal(xmlSummary.sheets, 2, 'XLSX copy keeps every worksheet');
   assert.ok(xmlSummary.formulas.includes('B2*2'));
   assert.equal(xmlSummary.bold, true, 'XLSX copy retains bold formatting');
