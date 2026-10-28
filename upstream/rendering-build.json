@@ -3,22 +3,29 @@
   "wasmBindgen": "0.2.129",
   "adapterLockSha256": "4dd1183558dc56d813894da5f9081d306d62186a3d9aeb3b54bf02a29ffbf973",
   "fontAssets": {
-    "schemaVersion": 1,
-    "family": "Noto Sans Hebrew",
-    "author": "The Noto Project Authors",
-    "license": "OFL-1.1",
-    "repository": "https://github.com/google/fonts",
-    "revision": "8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5",
-    "files": [
+    "schemaVersion": 2,
+    "fonts": [
       {
-        "path": "NotoSansHebrew.ttf",
-        "url": "https://raw.githubusercontent.com/google/fonts/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/notosanshebrew/NotoSansHebrew%5Bwdth%2Cwght%5D.ttf",
-        "sha256": "7ef36a2c3593758cdb622e1bdef4f84523e92fbc3ccc667438dd80ff54c2de88"
-      },
-      {
-        "path": "NotoSansHebrew-OFL.txt",
-        "url": "https://raw.githubusercontent.com/google/fonts/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/notosanshebrew/OFL.txt",
-        "sha256": "9b9fe028b5ba74d231659a1bbaf0ed09b11e759d1ca6a070999e16d151616b47"
+        "family": "Noto Sans Hebrew",
+        "author": "The Noto Project Authors",
+        "license": "OFL-1.1",
+        "repository": "https://github.com/google/fonts",
+        "revision": "8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5",
+        "files": [
+          {
+            "path": "NotoSansHebrew.ttf",
+            "url": "https://raw.githubusercontent.com/google/fonts/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/notosanshebrew/NotoSansHebrew%5Bwdth%2Cwght%5D.ttf",
+            "sha256": "7ef36a2c3593758cdb622e1bdef4f84523e92fbc3ccc667438dd80ff54c2de88",
+            "role": "font"
+          },
+          {
+            "path": "NotoSansHebrew-OFL.txt",
+            "url": "https://raw.githubusercontent.com/google/fonts/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/notosanshebrew/OFL.txt",
+            "sha256": "9b9fe028b5ba74d231659a1bbaf0ed09b11e759d1ca6a070999e16d151616b47",
+            "role": "license"
+          }
+        ],
+        "sourceDirectory": "ofl/notosanshebrew"
       }
     ]
   },
@@ -35,64 +42,64 @@
       "sha256": "9642590b6bf6b6459368dadeeceded0e396f37fc753257bfc09edf7b84adf995"
     },
     "grid/viewer_bg.wasm": {
-      "bytes": 22948479,
-      "sha256": "88167cb2e307b3118d153f5b566e7fc34a061f8e30322c9b4becccb3fac53af8"
+      "bytes": 22948571,
+      "sha256": "900953e1041cd5a623143d8438a4d3e4c0967e0fe90d14c441ba517cc091a3dc"
     },
     "grid/node/viewer.js": {
       "bytes": 157957,
       "sha256": "43d835d0e4c39202b80261581120f14232bf8546e40278d93becd25543bfe51f"
     },
     "grid/node/viewer_bg.wasm": {
-      "bytes": 22948479,
-      "sha256": "88167cb2e307b3118d153f5b566e7fc34a061f8e30322c9b4becccb3fac53af8"
+      "bytes": 22948571,
+      "sha256": "900953e1041cd5a623143d8438a4d3e4c0967e0fe90d14c441ba517cc091a3dc"
     },
     "pdf/viewer.js": {
       "bytes": 167614,
       "sha256": "67bdea606e1c26988032d5504f3804ed7ea05b5e4fe79f98c410ba062e2c5cdb"
     },
     "pdf/viewer_bg.wasm": {
-      "bytes": 48725866,
-      "sha256": "845ab9a9c324f47ba75f1f70022dc1dad14ac4d9287852796e54c34e42321189"
+      "bytes": 48726502,
+      "sha256": "8d0982082826859a18d527756593c18acfd6dee2c0f91b83205b91cbefd313e1"
     },
     "pdf/node/viewer.js": {
       "bytes": 164110,
       "sha256": "1585f8624f0d6ef4c1ea681a68b43b5fd758839938e2386ca70c2954f6c986af"
     },
     "pdf/node/viewer_bg.wasm": {
-      "bytes": 48725866,
-      "sha256": "845ab9a9c324f47ba75f1f70022dc1dad14ac4d9287852796e54c34e42321189"
+      "bytes": 48726502,
+      "sha256": "8d0982082826859a18d527756593c18acfd6dee2c0f91b83205b91cbefd313e1"
     },
     "word/viewer.js": {
       "bytes": 159767,
       "sha256": "7eac8fef2eb6c0bbb908ed1f324fb9c7345619a21422c561087bbe7fcde407b2"
     },
     "word/viewer_bg.wasm": {
-      "bytes": 44605646,
-      "sha256": "50beafe9bab856da0aa51214d458771635c844d75b213afd45ece012e211d711"
+      "bytes": 44606082,
+      "sha256": "a6754ad6ec7edbf299fe526d9cc4951404084f7ceeefb0d1a1bdbda4cdb149d6"
     },
     "word/node/viewer.js": {
       "bytes": 156265,
       "sha256": "9ce07881e7a5db29b804f02e1f2daec71d31b65d91b1425b0819a555c6c94748"
     },
     "word/node/viewer_bg.wasm": {
-      "bytes": 44605646,
-      "sha256": "50beafe9bab856da0aa51214d458771635c844d75b213afd45ece012e211d711"
+      "bytes": 44606082,
+      "sha256": "a6754ad6ec7edbf299fe526d9cc4951404084f7ceeefb0d1a1bdbda4cdb149d6"
     },
     "deck/viewer.js": {
       "bytes": 88002,
       "sha256": "b4790b6893ebee7f64d99be0b0e627a5dd250b9e8407a3eefa35b0cd30331b9b"
     },
     "deck/viewer_bg.wasm": {
-      "bytes": 27478043,
-      "sha256": "79196fe0be9b7b42b0e02fb090ad3f9364d578775d621c99b69fc38618fa4f20"
+      "bytes": 27478351,
+      "sha256": "63ce2586a95aa41feb52d0c3855ed937ffa1a57c4c611c042ebbbcce349f578c"
     },
     "deck/node/viewer.js": {
       "bytes": 84517,
       "sha256": "014e593a830efe28890a28afdc82a97148a8b12fae251dc31ac68ac3a588c10c"
     },
     "deck/node/viewer_bg.wasm": {
-      "bytes": 27478043,
-      "sha256": "79196fe0be9b7b42b0e02fb090ad3f9364d578775d621c99b69fc38618fa4f20"
+      "bytes": 27478351,
+      "sha256": "63ce2586a95aa41feb52d0c3855ed937ffa1a57c4c611c042ebbbcce349f578c"
     },
     "deck/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
@@ -107,16 +114,16 @@
       "sha256": "7b9c0a1ba9003e0577b3fd65f7eabb8262809a5f8a4502fe7a1e23fccec3ecf5"
     },
     "vector/viewer_bg.wasm": {
-      "bytes": 67839033,
-      "sha256": "93b120c56a2d1f2d3ac38c5cdb68dba29f915c6ede09a4b414b143b59db6f502"
+      "bytes": 67839403,
+      "sha256": "07aa1b43b496b833058cb1005b50ffc615a0859436acb075a953d24094617743"
     },
     "vector/node/viewer.js": {
       "bytes": 85152,
       "sha256": "11fef626ed62c7010e659982d289836904763768cc8b73b4ea913c7be4ac5f63"
     },
     "vector/node/viewer_bg.wasm": {
-      "bytes": 67839033,
-      "sha256": "93b120c56a2d1f2d3ac38c5cdb68dba29f915c6ede09a4b414b143b59db6f502"
+      "bytes": 67839403,
+      "sha256": "07aa1b43b496b833058cb1005b50ffc615a0859436acb075a953d24094617743"
     },
     "vector/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
@@ -132,39 +139,87 @@
       {
         "path": "upstream/patches/gridcraft-host-commands.patch",
         "sha256": "32e5b3fc0eb01d76f023f18df71e771518c8bc9b11d7fc71b231b93546660c6b",
-        "purpose": "Delegate native file lifecycle and committed undo/redo to VS Code without acknowledging writes early. Use consistent five-percentage-point spreadsheet zoom steps.",
+        "purpose": "Delegate native file lifecycle and committed undo/redo to an embedding host without acknowledging writes early.",
         "removalCondition": "Remove when the pinned upstream Services interface supplies the equivalent host-command hook."
       }
     ],
     "pdfcraft": [
       {
-        "path": "upstream/patches/pdfcraft-embedding.patch",
-        "sha256": "52a9838b3c17a65ec9be853d8efcd1435c8ea5510c564bfc65522624fe5b2717",
-        "purpose": "Delegate file lifecycle and history to the embedding host, provide host snapshots, and expose the automation session for embedded MCP requests.",
+        "path": "upstream/patches/pdfcraft-automation.patch",
+        "sha256": "f5ad3c25f083cf24ea176149acfe084d51297eaef11a2974589c669ec2a0635e",
+        "purpose": "Expose the embedded automation session.",
+        "removalCondition": "Remove when upstream exposes equivalent embedding services."
+      },
+      {
+        "path": "upstream/patches/pdfcraft-snapshots.patch",
+        "sha256": "2b37df753a9ac80b96781bf6b6f29a55ea25ba4080370abe16beffc28e259117",
+        "purpose": "Expose host-owned document snapshots.",
+        "removalCondition": "Remove when upstream exposes equivalent embedding services."
+      },
+      {
+        "path": "upstream/patches/pdfcraft-fonts.patch",
+        "sha256": "e533d16cec47d137c3fdfc7186bbb83bdc83489d218a7499c150f1ed13839f71",
+        "purpose": "Register host-provided font data for the Hebrew font selection path.",
+        "removalCondition": "Remove when upstream exposes equivalent embedding services."
+      },
+      {
+        "path": "upstream/patches/pdfcraft-rendering.patch",
+        "sha256": "64f76d00dd68d713631a8570a088a1f7bdb72499b41e5e9702af80167ce23a99",
+        "purpose": "Support embedded rendering behavior.",
+        "removalCondition": "Remove when upstream exposes equivalent embedding services."
+      },
+      {
+        "path": "upstream/patches/pdfcraft-ui-host.patch",
+        "sha256": "ab02d2d66506b2dbf9d9f197d76039a5da9c12612faf5217d8274181132b8462",
+        "purpose": "Provide embedded lifecycle, drafts and UI hooks.",
         "removalCondition": "Remove when upstream exposes equivalent embedding services."
       }
     ],
     "wordcraft": [
       {
-        "path": "upstream/patches/wordcraft-embedding.patch",
-        "sha256": "6e3ebc360d59ad3786d588e6a0c81dbc03c875628bd7aa53962a4c7ea0bfd354",
-        "purpose": "Delegate file lifecycle and history to the embedding host and omit standalone chrome.",
+        "path": "upstream/patches/wordcraft-snapshots.patch",
+        "sha256": "58fd26cf389c9dbf8b7c596a9fb77dd03ba152d284f6f4bf20d815b263bd4643",
+        "purpose": "Expose reusable host document snapshots.",
+        "removalCondition": "Remove when upstream exposes equivalent embedding services and host snapshots."
+      },
+      {
+        "path": "upstream/patches/wordcraft-ui-host.patch",
+        "sha256": "cdc4a7fa80d8bfdfd1e7f6f2e14cef5d16414c9de738be342a53524d0ccdeaaf",
+        "purpose": "Provide embedded lifecycle and UI hooks.",
         "removalCondition": "Remove when upstream exposes equivalent embedding services and host snapshots."
       }
     ],
     "deckcraft": [
       {
-        "path": "upstream/patches/deckcraft-embedding.patch",
-        "sha256": "3c9d522656a69c370a2cb1760cfb89a4a64aeec7861bfb55d0a6184328ed8ccb",
-        "purpose": "Delegate file lifecycle and history to the embedding host and omit standalone chrome.",
+        "path": "upstream/patches/deckcraft-host.patch",
+        "sha256": "de4c7a1f9446a6efdd0e15e0735f3ae6fea16c6d86edc915971291250c3ba9e3",
+        "purpose": "Provide embedded lifecycle and presentation behavior.",
+        "removalCondition": "Remove when upstream exposes equivalent embedding services and host snapshots."
+      },
+      {
+        "path": "upstream/patches/deckcraft-ui.patch",
+        "sha256": "bafea29335b0bdf29b377484b606e306fd1d23d84bf413688956c6f0ff1ca926",
+        "purpose": "Adjust native chrome for embedding.",
         "removalCondition": "Remove when upstream exposes equivalent embedding services and host snapshots."
       }
     ],
     "vectorcraft": [
       {
-        "path": "upstream/patches/vectorcraft-embedding.patch",
-        "sha256": "c4f9a5b71ff23e6aa3c1c7866d30a7c0e9dd3fd594ce2b8be7292034a3fed9f7",
-        "purpose": "Delegate file lifecycle and history to VS Code, omit standalone chrome and restricted branding, and allow the MCP crate to build for WebAssembly without native path writes.",
+        "path": "upstream/patches/vectorcraft-mcp-wasm.patch",
+        "sha256": "067ad2792e038e8bfc8f01055b4e141575bf52d2578f695597de4c79bcc0636d",
+        "purpose": "Allow headless MCP to build for WebAssembly.",
+        "removalCondition": "Remove when upstream exposes equivalent embedding services."
+      },
+      {
+        "path": "upstream/patches/vectorcraft-branding.patch",
+        "sha256": "e8ae8647015c43d69db3c1b637f918132173205c0b20286c42e6f84f8aa107c6",
+        "purpose": "Remove restricted branding from modified builds.",
+        "removalCondition": "Remove when upstream exposes equivalent embedding services."
+      },
+      {
+        "path": "upstream/patches/vectorcraft-ui-host.patch",
+        "sha256": "784d65179826e18c97cfe329caa160af43d6d25f7c2938d203d552521c8fcc7e",
+        "purpose": "Provide embedded lifecycle and UI hooks.",
         "removalCondition": "Remove when upstream exposes equivalent embedding services."
       }
     ]

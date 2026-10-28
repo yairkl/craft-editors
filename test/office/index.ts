@@ -68,6 +68,11 @@ export async function run(): Promise<void> {
       assert.equal((await closedTool('open_document', { path: closedUri.fsPath })).isError, false);
       assert.equal((await closedTool('type_text', { text: 'closed agent ' })).isError, false);
       assert.deepEqual(await vscode.workspace.fs.readFile(closedUri), original);
+      const existingCopy = vscode.Uri.joinPath(directory, 'agent-existing.docx');
+      const existingBytes = Buffer.from('existing destination');
+      await vscode.workspace.fs.writeFile(existingCopy, existingBytes);
+      assert.equal((await closedTool('save_document', { path: existingCopy.fsPath })).isError, true, 'A document copy must not overwrite an existing file');
+      assert.deepEqual(await vscode.workspace.fs.readFile(existingCopy), existingBytes);
       const external = Buffer.from('external change');
       await vscode.workspace.fs.writeFile(closedUri, external);
       assert.equal((await closedTool('save_document', {})).isError, true, 'Headless save must not overwrite an external change');

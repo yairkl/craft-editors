@@ -1,0 +1,65 @@
+diff --git a/crates/ui-egui/src/lib.rs b/crates/ui-egui/src/lib.rs
+index 094d7aba81e7fb138099e24153a57adc0bc4b9d5..8395330c197a5d24f4c67f8dc5c9f2bda0655a14 100644
+--- a/crates/ui-egui/src/lib.rs
++++ b/crates/ui-egui/src/lib.rs
+@@ -241,6 +241,10 @@ const STATUS_LINGER_MS: f64 = 6000.0;
+ /// Platform services injected by the host (desktop or web).
+ #[derive(Default)]
+ pub struct Services {
++    /// Embedded document host owns file lifecycle and committed undo/redo.
++    pub host_command: Option<Box<dyn Fn(&str) -> bool>>,
++    /// Omit standalone file and window chrome when embedded.
++    pub embedded: bool,
+     /// Open-file dialog for a purpose (`open`, `picture`, `audio`, `video`) → path.
+     pub pick_open: Option<PickFn>,
+     /// Save dialog with a suggested name → path.
+@@ -937,6 +941,7 @@ impl SlideApp {
+     /// Run a command by id (UI commands here, everything else in the engine). Errors show in the
+     /// status bar and are returned.
+     pub fn run(&mut self, id: &str, params: Value) -> Result<Value, String> {
++        if self.services.host_command.as_ref().is_some_and(|host| host(id)) { return Ok(Value::Null); }
+         let r = if UI_COMMANDS.iter().any(|c| c.0 == id) {
+             self.run_ui(id, &params)
+         } else {
+@@ -1305,7 +1310,13 @@ impl SlideApp {
+                     self.start_show(from, false);
+                 }
+             }
+-            "show.presenter" => self.ui.presenter_view = self.flag(p, self.ui.presenter_view),
++            "show.presenter" => {
++                if self.services.embedded {
++                    self.set_status("Presenter View needs a separate audience window and is unavailable in this host.");
++                } else {
++                    self.ui.presenter_view = self.flag(p, self.ui.presenter_view);
++                }
++            },
+             "show.end" => {
+                 self.show = None;
+                 self.media.stop_owned(media::Owner::Show);
+@@ -1440,6 +1451,10 @@ impl SlideApp {
+     /// Leave animation preview, stop editor-owned media, and create a show at the requested slide
+     /// with the current reading/presenter configuration; an out-of-range slide starts an ended show.
+     pub fn start_show(&mut self, from: usize, reading: bool) {
++        if self.services.embedded && !reading {
++            self.set_status("Presenting is unavailable in this host. Use Reading View here, or present with a standalone application.");
++            return;
++        }
+         self.anim_preview = None;
+         self.media.stop_owned(media::Owner::Editor);
+         if let Some(d) = self.session.active() {
+@@ -1668,6 +1683,7 @@ impl SlideApp {
+     }
+ 
+     pub fn save_as_dialog(&mut self, format: &str) {
++        if self.services.host_command.as_ref().is_some_and(|host| host("file.saveAs")) { return; }
+         let name = self.session.active().map(|d| d.title()).unwrap_or_else(|| "Presentation".into());
+         let ext = if format == "pptx" { "pptx" } else { "deckcraft" };
+         let suggested = format!("{name}.{ext}");
+@@ -1707,6 +1723,7 @@ impl SlideApp {
+     }
+ 
+     pub fn save(&mut self) {
++        if self.services.host_command.as_ref().is_some_and(|host| host("file.save")) { return; }
+         if self.session.active().and_then(|d| d.path.clone()).is_some() {
+             match self.session.execute("file.save", &json!({})) {
+                 Ok(_) => self.set_status("Saved"),

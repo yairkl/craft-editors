@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import * as vscode from 'vscode';
 import type { ProbeResult } from '../../src/host';
 import { readProbeDocument } from '../../src/document';
+import { readAgentFile, writeNewCopy } from '../../src/mcp-files';
 import { assertIsolation, fixture, forFormat, selected } from '../environment';
 
 interface ProbeApi { onDidProbe: vscode.Event<ProbeResult> }
@@ -25,11 +26,12 @@ export async function run(): Promise<void> {
   const changes = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
   let current = new Uint8Array([37, 80, 68, 70]);
   let reportedSize = current.byteLength;
+  let reads = 0;
   const fsProvider: vscode.FileSystemProvider = {
     onDidChangeFile: changes.event,
     watch: () => new vscode.Disposable(() => {}),
     stat: () => ({ type: vscode.FileType.File, ctime: 0, mtime: 0, size: reportedSize }),
-    readDirectory: () => [], readFile: () => current,
+    readDirectory: () => [], readFile: () => { reads++; return current; },
     createDirectory: () => { writes++; }, writeFile: () => { writes++; },
     delete: () => { writes++; }, rename: () => { writes++; },
   };
@@ -43,15 +45,41 @@ export async function run(): Promise<void> {
     await assert.rejects(readProbeDocument(memoryUri, cancellation.token, first.format === 'xlsx' ? 'pdf' : 'xlsx'), /supports only/);
     reportedSize = 33 * 1024 * 1024;
     await assert.rejects(readProbeDocument(memoryUri, cancellation.token), /32 MiB/);
+    const readsBeforeLarge = reads;
+    await assert.rejects(readAgentFile(memoryUri), /32 MiB/);
+    assert.equal(reads, readsBeforeLarge, 'Agent must reject a known-oversized file before reading it');
     reportedSize = 1;
     current = new Uint8Array(33 * 1024 * 1024);
     await assert.rejects(readProbeDocument(memoryUri, cancellation.token), /32 MiB/);
+    await assert.rejects(readAgentFile(memoryUri), /32 MiB/, 'Agent must reject a file that grows after stat');
     cancellation.cancel();
     await assert.rejects(readProbeDocument(memoryUri, cancellation.token), vscode.CancellationError);
     assert.equal(writes, 0);
   } finally {
     cancellation.dispose(); registration.dispose(); changes.dispose();
   }
+
+  // A remote provider must honor no-overwrite rename and clean up the staged copy.
+  const files = new Map<string, Uint8Array>([['/existing.xlsx', Uint8Array.of(1)]]);
+  let failWrite = false;
+  const copyChanges = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
+  const copies = vscode.workspace.registerFileSystemProvider('craft-copy-test', {
+    onDidChangeFile: copyChanges.event, watch: () => new vscode.Disposable(() => {}),
+    stat: uri => { const value = files.get(uri.path); if (!value) throw vscode.FileSystemError.FileNotFound(uri); return { type: vscode.FileType.File, ctime: 0, mtime: 0, size: value.length }; },
+    readDirectory: () => [], readFile: uri => { const value = files.get(uri.path); if (!value) throw vscode.FileSystemError.FileNotFound(uri); return value; },
+    createDirectory: () => {}, writeFile: (uri, data) => { files.set(uri.path, Uint8Array.from(data)); if (failWrite) throw vscode.FileSystemError.NoPermissions(uri); },
+    delete: uri => { if (!files.delete(uri.path)) throw vscode.FileSystemError.FileNotFound(uri); },
+    rename: (from, to, options) => { const value = files.get(from.path); if (!value) throw vscode.FileSystemError.FileNotFound(from); if (files.has(to.path) && !options.overwrite) throw vscode.FileSystemError.FileExists(to); files.set(to.path, value); files.delete(from.path); },
+  });
+  try {
+    await assert.rejects(writeNewCopy(vscode.Uri.parse('craft-copy-test:/existing.xlsx'), Uint8Array.of(2)));
+    assert.deepEqual(files.get('/existing.xlsx'), Uint8Array.of(1));
+    await writeNewCopy(vscode.Uri.parse('craft-copy-test:/new.xlsx'), Uint8Array.of(3));
+    assert.deepEqual(files.get('/new.xlsx'), Uint8Array.of(3));
+    failWrite = true;
+    await assert.rejects(writeNewCopy(vscode.Uri.parse('craft-copy-test:/failed.xlsx'), Uint8Array.of(4)));
+    assert.equal(files.size, 2, 'Temporary copies must be removed on success and failure');
+  } finally { copies.dispose(); copyChanges.dispose(); }
 
   for (const { format } of selected) {
     await verifyWebview(apis.get(format)!, fixture(`minimal.${format}`), format);

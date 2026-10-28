@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { EditableDocument, EditingProvider } from './editing';
 import { registerAgentServer } from './mcp-transport';
-import { findLive, hasDirtyText, sameResource } from './mcp-files';
+import { findLive, hasDirtyText, readAgentFile, sameResource, writeNewCopy } from './mcp-files';
 
 interface Headless { message(input: string): string | undefined; open_bytes(input: Uint8Array, format?: string): number | undefined | void; save_bytes(format?: string): Uint8Array; mark_saved?(input: Uint8Array): void; free(): void }
 interface Message { id?: string | number; method?: string; params?: { name?: string; arguments?: Record<string, unknown> } }
@@ -53,8 +53,7 @@ class DocumentSession {
       }
       return result(request.id, 'Opened the live document, including unsaved edits.');
     }
-    const data = await vscode.workspace.fs.readFile(uri);
-    if (data.length > 32 * 1024 * 1024) throw new Error('Document exceeds 32 MiB.');
+    const data = await readAgentFile(uri);
     if (await findLive(this.provider, uri) || await hasDirtyText(uri)) throw new Error('The document was opened or modified during loading; retry the request.');
     const id = this.backend.open_bytes(data, path.extname(uri.path).slice(1).toLowerCase());
     this.uri = uri; this.baseline = hash(data); this.mode = 'headless'; this.changed = false;
@@ -104,7 +103,8 @@ class DocumentSession {
     if (output.byteLength > 32 * 1024 * 1024) throw new Error('The serialized document exceeds 32 MiB.');
     if (sameTarget && hash(await vscode.workspace.fs.readFile(target)) !== this.baseline) throw new Error('The document changed on disk. Save to a different file.');
     if (await findLive(this.provider, target) || ((await this.live()) && !recoveringCopy) || await hasDirtyText(target)) throw new Error('The document is open or modified in an editor. Save or close it before writing from a headless session.');
-    await vscode.workspace.fs.writeFile(target, output);
+    if (sameTarget) await vscode.workspace.fs.writeFile(target, output);
+    else await writeNewCopy(target, output);
     if (sameTarget) { this.baseline = hash(output); this.backend.mark_saved?.(output); this.changed = false; }
     return result(request.id, 'Saved the document.');
   }

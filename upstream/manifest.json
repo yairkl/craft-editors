@@ -36,7 +36,7 @@
         {
           "path": "upstream/patches/gridcraft-host-commands.patch",
           "sha256": "32e5b3fc0eb01d76f023f18df71e771518c8bc9b11d7fc71b231b93546660c6b",
-          "purpose": "Delegate native file lifecycle and committed undo/redo to VS Code without acknowledging writes early. Use consistent five-percentage-point spreadsheet zoom steps.",
+          "purpose": "Delegate native file lifecycle and committed undo/redo to an embedding host without acknowledging writes early.",
           "removalCondition": "Remove when the pinned upstream Services interface supplies the equivalent host-command hook."
         }
       ]
@@ -63,9 +63,33 @@
       },
       "patches": [
         {
-          "path": "upstream/patches/pdfcraft-embedding.patch",
-          "sha256": "52a9838b3c17a65ec9be853d8efcd1435c8ea5510c564bfc65522624fe5b2717",
-          "purpose": "Delegate file lifecycle and history to the embedding host, provide host snapshots, and expose the automation session for embedded MCP requests.",
+          "path": "upstream/patches/pdfcraft-automation.patch",
+          "sha256": "f5ad3c25f083cf24ea176149acfe084d51297eaef11a2974589c669ec2a0635e",
+          "purpose": "Expose the embedded automation session.",
+          "removalCondition": "Remove when upstream exposes equivalent embedding services."
+        },
+        {
+          "path": "upstream/patches/pdfcraft-snapshots.patch",
+          "sha256": "2b37df753a9ac80b96781bf6b6f29a55ea25ba4080370abe16beffc28e259117",
+          "purpose": "Expose host-owned document snapshots.",
+          "removalCondition": "Remove when upstream exposes equivalent embedding services."
+        },
+        {
+          "path": "upstream/patches/pdfcraft-fonts.patch",
+          "sha256": "e533d16cec47d137c3fdfc7186bbb83bdc83489d218a7499c150f1ed13839f71",
+          "purpose": "Register host-provided font data for the Hebrew font selection path.",
+          "removalCondition": "Remove when upstream exposes equivalent embedding services."
+        },
+        {
+          "path": "upstream/patches/pdfcraft-rendering.patch",
+          "sha256": "64f76d00dd68d713631a8570a088a1f7bdb72499b41e5e9702af80167ce23a99",
+          "purpose": "Support embedded rendering behavior.",
+          "removalCondition": "Remove when upstream exposes equivalent embedding services."
+        },
+        {
+          "path": "upstream/patches/pdfcraft-ui-host.patch",
+          "sha256": "ab02d2d66506b2dbf9d9f197d76039a5da9c12612faf5217d8274181132b8462",
+          "purpose": "Provide embedded lifecycle, drafts and UI hooks.",
           "removalCondition": "Remove when upstream exposes equivalent embedding services."
         }
       ]
@@ -79,9 +103,15 @@
       "license": "MIT OR Apache-2.0",
       "patches": [
         {
-          "path": "upstream/patches/wordcraft-embedding.patch",
-          "sha256": "6e3ebc360d59ad3786d588e6a0c81dbc03c875628bd7aa53962a4c7ea0bfd354",
-          "purpose": "Delegate file lifecycle and history to the embedding host and omit standalone chrome.",
+          "path": "upstream/patches/wordcraft-snapshots.patch",
+          "sha256": "58fd26cf389c9dbf8b7c596a9fb77dd03ba152d284f6f4bf20d815b263bd4643",
+          "purpose": "Expose reusable host document snapshots.",
+          "removalCondition": "Remove when upstream exposes equivalent embedding services and host snapshots."
+        },
+        {
+          "path": "upstream/patches/wordcraft-ui-host.patch",
+          "sha256": "cdc4a7fa80d8bfdfd1e7f6f2e14cef5d16414c9de738be342a53524d0ccdeaaf",
+          "purpose": "Provide embedded lifecycle and UI hooks.",
           "removalCondition": "Remove when upstream exposes equivalent embedding services and host snapshots."
         }
       ]
@@ -95,9 +125,15 @@
       "license": "MIT OR Apache-2.0",
       "patches": [
         {
-          "path": "upstream/patches/deckcraft-embedding.patch",
-          "sha256": "3c9d522656a69c370a2cb1760cfb89a4a64aeec7861bfb55d0a6184328ed8ccb",
-          "purpose": "Delegate file lifecycle and history to the embedding host and omit standalone chrome.",
+          "path": "upstream/patches/deckcraft-host.patch",
+          "sha256": "de4c7a1f9446a6efdd0e15e0735f3ae6fea16c6d86edc915971291250c3ba9e3",
+          "purpose": "Provide embedded lifecycle and presentation behavior.",
+          "removalCondition": "Remove when upstream exposes equivalent embedding services and host snapshots."
+        },
+        {
+          "path": "upstream/patches/deckcraft-ui.patch",
+          "sha256": "bafea29335b0bdf29b377484b606e306fd1d23d84bf413688956c6f0ff1ca926",
+          "purpose": "Adjust native chrome for embedding.",
           "removalCondition": "Remove when upstream exposes equivalent embedding services and host snapshots."
         }
       ]
@@ -111,9 +147,21 @@
       "license": "MIT OR Apache-2.0",
       "patches": [
         {
-          "path": "upstream/patches/vectorcraft-embedding.patch",
-          "sha256": "c4f9a5b71ff23e6aa3c1c7866d30a7c0e9dd3fd594ce2b8be7292034a3fed9f7",
-          "purpose": "Delegate file lifecycle and history to VS Code, omit standalone chrome and restricted branding, and allow the MCP crate to build for WebAssembly without native path writes.",
+          "path": "upstream/patches/vectorcraft-mcp-wasm.patch",
+          "sha256": "067ad2792e038e8bfc8f01055b4e141575bf52d2578f695597de4c79bcc0636d",
+          "purpose": "Allow headless MCP to build for WebAssembly.",
+          "removalCondition": "Remove when upstream exposes equivalent embedding services."
+        },
+        {
+          "path": "upstream/patches/vectorcraft-branding.patch",
+          "sha256": "e8ae8647015c43d69db3c1b637f918132173205c0b20286c42e6f84f8aa107c6",
+          "purpose": "Remove restricted branding from modified builds.",
+          "removalCondition": "Remove when upstream exposes equivalent embedding services."
+        },
+        {
+          "path": "upstream/patches/vectorcraft-ui-host.patch",
+          "sha256": "784d65179826e18c97cfe329caa160af43d6d25f7c2938d203d552521c8fcc7e",
+          "purpose": "Provide embedded lifecycle and UI hooks.",
           "removalCondition": "Remove when upstream exposes equivalent embedding services."
         }
       ]

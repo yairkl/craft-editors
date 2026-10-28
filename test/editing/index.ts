@@ -75,6 +75,11 @@ export async function run(): Promise<void> {
   assert.deepEqual(await vscode.workspace.fs.readFile(overlapUri), original);
   assert.equal(overlapDoc.dirty, false);
   const recoveryCopy = vscode.Uri.joinPath(directory, 'agent-overlap-copy.xlsx');
+  const existingCopy = Buffer.from('existing destination');
+  await vscode.workspace.fs.writeFile(recoveryCopy, existingCopy);
+  assert.equal((await overlapTool('save_workbook', { path: recoveryCopy.fsPath })).result?.isError, true, 'A recovery copy must not overwrite an existing file');
+  assert.deepEqual(await vscode.workspace.fs.readFile(recoveryCopy), existingCopy);
+  await vscode.workspace.fs.delete(recoveryCopy);
   assert.equal((await overlapTool('save_workbook', { path: recoveryCopy.fsPath })).result?.isError, false, 'Unsaved headless edits can be recovered to a copy');
   overlapClient.close();
   await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
@@ -88,6 +93,7 @@ export async function run(): Promise<void> {
   assert.equal((await csvTool('save_workbook', {})).result?.isError, true, 'Headless CSV save must reject formulas');
   assert.deepEqual(await vscode.workspace.fs.readFile(agentCsv), Buffer.from(csvOriginal));
   const agentXlsx = vscode.Uri.joinPath(directory, 'agent-converted.xlsx');
+  try { await vscode.workspace.fs.delete(agentXlsx); } catch (error) { if ((error as { code?: string }).code !== 'FileNotFound') throw error; }
   assert.equal((await csvTool('save_workbook', { path: agentXlsx.fsPath })).result?.isError, false);
   csvClient.close();
   const liveSaveUri = vscode.Uri.joinPath(directory, 'agent-live-save.xlsx');

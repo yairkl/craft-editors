@@ -151,7 +151,13 @@ struct Document {
 }
 impl Document {
     fn open(bytes: &[u8], commands: Commands, _format: &str) -> Result<Self, JsValue> {
-        pdfcraft_fonts::register_host_hebrew_font(HEBREW_FONT_BYTES);
+        static PDF_FALLBACKS: &[pdfcraft_fonts::CraftFont] = &[pdfcraft_fonts::CraftFont {
+            family: "Noto Sans Hebrew",
+            style: "Regular",
+            scripts: &["Hebr"],
+            bytes: HEBREW_FONT_BYTES,
+        }];
+        pdfcraft_fonts::register_host_fonts(PDF_FALLBACKS);
         let mut app = PdfCraftApp::new();
         app.embedded = true;
         app.default_mode = pdfcraft_ui_egui::Mode::Read;

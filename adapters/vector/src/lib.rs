@@ -219,7 +219,10 @@ impl Document {
     fn open(bytes: &[u8], commands: Commands, _format: &str) -> Result<Self, JsValue> {
         static FONT: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
         FONT.get_or_init(|| {
-            vectorcraft_text::FontDb::global().add_font(HEBREW_FONT_BYTES.to_vec())
+            FALLBACK_FONTS
+                .iter()
+                .map(|(_, bytes)| vectorcraft_text::FontDb::global().add_font(bytes.to_vec()))
+                .sum()
         });
         let native = _format == "vectorcraft";
         let doc = if native {

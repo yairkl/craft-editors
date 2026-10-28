@@ -43,6 +43,10 @@ for name in [*PROGRAMS, 'suite']:
             if name in PROGRAMS:
                 assert 'extension/notices/fonts/NotoSansHebrew-OFL.txt' in files
             dependencies = json.loads(z.read('extension/notices/dependencies.json'))
+            for dependency in dependencies:
+                if dependency['license'] == 'MPL-2.0' and str(dependency['source']).startswith('registry+'):
+                    assert dependency.get('sourceArchive', '').startswith('https://crates.io/api/v1/crates/'), f"{name}: missing MPL source archive for {dependency['name']}"
+                    assert 'extension/notices/licenses/MPL-2.0.txt' in files, f"{name}: missing MPL license text"
             for other_name, (_, _, other_program) in PROGRAMS.items():
                 if other_name != name:
                     assert not any(p['name'].startswith(other_program + '-') for p in dependencies), f'{name}: sibling engine dependency'

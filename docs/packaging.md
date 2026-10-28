@@ -4,7 +4,7 @@ One repository maintains shared host code and separate installable extensions. A
 
 | Package | Extension ID | Default file type | Renderer |
 | --- | --- | --- | --- |
-| Craft Spreadsheets | `craft-vscode-dev.craft-spreadsheets` | `.xlsx` | GridCraft only |
+| Craft Spreadsheets | `craft-vscode-dev.craft-spreadsheets` | `.xlsx`, `.csv` | GridCraft only |
 | Craft Word | `craft-vscode-dev.craft-word` | `.docx` | WordCraft only |
 | Craft PowerPoint | `craft-vscode-dev.craft-powerpoint` | `.pptx` | DeckCraft only |
 | Craft PDF | `craft-vscode-dev.craft-pdf` | `.pdf` | PdfCraft only |
@@ -36,17 +36,9 @@ npm run packages:check
 
 To package only one already-built renderer, use `npm run package -- spreadsheets` or `npm run package -- word`, `npm run package -- powerpoint`, `npm run package -- pdf`, or `npm run package -- vector`. `npm run package -- suite` needs no Rust toolchain or renderer. Packaging individual renderers requires the pinned Rust toolchain and source checkouts to collect their dependency notices. The workspace's VSIX packager is development tooling and is never included in the installed extensions.
 
-`scripts/stage-extensions.mjs` copies an explicit list of common files and just the selected renderer. Production staging includes neither tests nor the browser test helper. Each manifest also has an explicit package file list. `scripts/collect-notices.mjs` follows each adapter's own Cargo dependency graph and includes available license/NOTICE/font texts plus a dependency inventory. The archived WASM bytes must match the built renderer. Public release still requires reviewing the resulting notices, supported platforms and fidelity limits.
+`scripts/stage-extensions.mjs` copies an explicit list of common files and just the selected renderer. Production staging includes neither tests nor the browser test helper. Each manifest also has an explicit package file list. `scripts/collect-notices.mjs` follows each adapter's own Cargo dependency graph and includes available license/NOTICE/font texts plus a dependency inventory. Registry dependencies declared MPL-2.0 also include the license text and exact-version source archive links. The archived WASM bytes must match the built renderer. Public release still requires reviewing the resulting notices, supported platforms and fidelity limits; see the [distribution audit](distribution-audit.md).
 
-The independent archives are:
-
-```text
-dist/vsix/craft-spreadsheets-0.0.4.vsix
-dist/vsix/craft-word-0.0.2.vsix
-dist/vsix/craft-powerpoint-0.0.2.vsix
-dist/vsix/craft-pdf-0.0.1.vsix
-dist/vsix/craft-suite-0.0.2.vsix
-```
+Each archive is named `craft-<application>-<version>.vsix` under `dist/vsix/`; versions come from the individual package manifests. The optional suite archive contains no renderer.
 
 In VS Code, use **Extensions → … → Install from VSIX…** and choose the formats you want. The individual extensions require no companion extension. For the local development Suite, install the five individual archives first, then the Suite archive. Once member IDs are published to Marketplace, the standard extension pack can install its members itself. These commands build local artifacts and do not publish anything.
 
@@ -56,20 +48,15 @@ Run `npm run compile`, then choose an individual application or **All Craft exte
 
 `npm run test:integration` exercises every extension alone and all five together. `npm run test:rendering` covers spreadsheet/PDF navigation and source preservation. `npm run test:editing` exercises the shared host's save failures, concurrent edits and recovery using spreadsheets. `npm run test:office` exercises DOCX/PPTX native input, rendering, undo/redo, save/reopen, Save As, Revert and recovery, standalone and together. Standalone runs assert sibling extensions are absent.
 
-`npm run packages:check` opens the actual ZIP/VSIX archives to verify renderer, entry point, file association and notice isolation; it verifies the Suite has no runtime code or WASM. `npm run test:installed` installs the real archives into disposable test profiles and checks default opening and actual rendering in production extension mode. The Suite is tested with all five members preinstalled. Headless Linux runs the VS Code commands with `xvfb-run -a`. CI performs all these checks on branch pushes, pull requests and version-tag pushes.
+`npm run packages:check` opens the actual ZIP/VSIX archives to verify renderer, entry point, file association and notice isolation; it verifies the Suite has no runtime code or WASM. `npm run test:installed` installs the real archives into disposable test profiles and checks default opening and actual rendering in production extension mode. The Suite is tested with all five members preinstalled. Headless Linux runs the VS Code commands with `xvfb-run -a`. PR checks are selected from changed files; full installed-package and integration suites run in the manually dispatched release flow.
 
-## CI artifact retention
+## CI artifact retention and releases
 
-| Artifact | Upload condition | Retention |
-| --- | --- | --- |
-| `craft-release-vsix-<tag>` | Successful push of a version tag matching `v*`, such as `v0.0.1` | one day |
-| `rendering-screenshots` | Failed rendering job, if screenshots exist | 1 day |
+Pushes, including tag pushes, do not start CI. Pull requests run checks selected from the changed files. When a PR builds packages, it uploads `craft-vsix-<run-id>` for one day; failure screenshots also expire after one day. The `test:windows-installed` label opts a PR into the Windows installed-package suite.
 
-Successful branch and pull-request runs upload no artifacts. They still build, package and install-test the extensions; local VSIX output does not consume retained artifact storage. Only `v*` tag pushes retain the VSIX archives. Creating or pushing a tag is a release action, not part of ordinary development merges.
+For a release, push a `v*` tag with a matching `docs/releases/<tag>.md`, then manually dispatch the CI workflow with that tag as its ref. The workflow runs the full release checks, creates a one-day transfer artifact, and publishes the VSIX archives and checksums as GitHub Release assets only when every required job succeeds. Tags containing a hyphen are prereleases. A failed job can be retried without moving the tag; package versions come from their manifests.
 
-To install on a clean computer, open the successful version-tag run in GitHub Actions and download its `craft-release-vsix-<tag>` artifact, extract it, and install the selected VSIX. For beta tags, use the permanent GitHub Release assets instead of the temporary Actions transfer artifact; public Release downloads do not require an Actions download login. No version-tag artifact exists until a `v*` tag is pushed. Beta tags (`v*-beta.*`) also create a GitHub prerelease after all checks pass; other tags only upload the artifact. Nothing is published to Marketplace, and the package files still use the versions declared in their manifests. Coordinate those versions with the release tag.
-
-Retention is explicitly configured in the workflow and is subject to repository/organization limits. Changes apply to new uploads; they do not shorten existing artifacts' expiry dates. Earlier development artifacts can be deleted without affecting local VSIX files. Action artifacts are temporary downloads; the beta release job attaches permanent VSIX assets and checksums before the transfer artifact expires.
+GitHub Release assets are the recommended installation source; Actions artifacts are temporary and subject to repository retention limits. Nothing is published to a marketplace yet.
 
 ## Migration from the earlier development bundle
 
@@ -84,7 +71,7 @@ The spreadsheet editing suite (`xvfb-run -a npm run test:editing`) additionally 
 
 ## First beta release
 
-See [v0.1.1-beta.1](releases/v0.1.1-beta.1.md). All VSIX manifests use numeric version `0.1.1` with `preview: true`; the GitHub tag/release carries the beta label. CI creates a prerelease only for a successful beta-tag run. It attaches each independent VSIX and `SHA256SUMS`. No branch build publishes files. A failed release job can be rerun; no automatic retagging or overwriting of published installers is performed.
+See [v0.1.1-beta.1](releases/v0.1.1-beta.1.md). All VSIX manifests use numeric version `0.1.1` with `preview: true`; the GitHub tag/release carries the beta label. CI creates a prerelease for a successful manually dispatched release run whose tag contains a hyphen. It attaches each independent VSIX and `SHA256SUMS`. No branch build publishes files. A failed release job can be rerun; no automatic retagging or overwriting of published installers is performed.
 
 `npm run test:graphics` checks native PDF/SVG edits, Ctrl+wheel zoom, native keyboard Undo/Redo, saved-file reopening, Save As, Revert and backup recovery, including `.vectorcraft` save/reopen. `npm run test:theme` now covers all five native palettes. Installed-package tests explicitly choose the optional SVG editor.
 

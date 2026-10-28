@@ -202,7 +202,12 @@ struct Document {
 impl Document {
     fn open(bytes: &[u8], commands: Commands, _format: &str) -> Result<Self, JsValue> {
         static FONT: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
-        FONT.get_or_init(|| deckcraft_fonts::FontDb::global().add_font(HEBREW_FONT_BYTES.to_vec()));
+        FONT.get_or_init(|| {
+            FALLBACK_FONTS
+                .iter()
+                .map(|(_, bytes)| deckcraft_fonts::FontDb::global().add_font(bytes.to_vec()))
+                .sum()
+        });
         let doc = deckcraft_pptx::import(bytes)
             .map_err(|_| error("The presentation could not be opened."))?;
         let mut session = Session::new();

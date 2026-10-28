@@ -1,0 +1,42 @@
+diff --git a/crates/fonts/src/craft.rs b/crates/fonts/src/craft.rs
+index e778a42ad73840d379317c9219006e25f7f5f044..70bbc8cacf632ecff7d67234eb73a260a7d595d3 100644
+--- a/crates/fonts/src/craft.rs
++++ b/crates/fonts/src/craft.rs
+@@ -92,14 +92,22 @@ pub fn document_devanagari_font() -> Option<&'static CraftFont> {
+ /// The `Hebr` craft-fonts faces for Hebrew interface text (file names, document titles, text
+ /// being edited), in manifest order. Empty when built without craft-fonts or when it has no
+ /// Hebrew face.
++static HOST_FONTS: std::sync::OnceLock<&'static [CraftFont]> = std::sync::OnceLock::new();
++/// Register the embedding host's fallback fonts before shaping any text.
++pub fn register_host_fonts(fonts: &'static [CraftFont]) {
++    let _ = HOST_FONTS.set(fonts);
++}
++fn host_fonts() -> &'static [CraftFont] {
++    HOST_FONTS.get().copied().unwrap_or(&[])
++}
+ pub fn ui_hebrew_fonts() -> Vec<&'static CraftFont> {
+-    CRAFT_FONTS.iter().filter(|f| f.covers("Hebr")).collect()
++    CRAFT_FONTS.iter().chain(host_fonts()).filter(|f| f.covers("Hebr")).collect()
+ }
+ 
+ /// The face for Hebrew text written into PDFs: the `Hebr` face of the asked weight, else its
+ /// Regular, else any `Hebr` face. `None` without craft-fonts or without a Hebrew face.
+ pub fn document_hebrew_font(bold: bool) -> Option<&'static CraftFont> {
+-    hebrew_face(CRAFT_FONTS, bold)
++    hebrew_face(CRAFT_FONTS, bold).or_else(|| hebrew_face(host_fonts(), bold))
+ }
+ 
+ fn hebrew_face(faces: &[CraftFont], bold: bool) -> Option<&CraftFont> {
+diff --git a/crates/fonts/src/lib.rs b/crates/fonts/src/lib.rs
+index 61061f550972a51cbaf483ca88fd042ae22ecd49..b864aeb6bfe97a895716ce2a1839ae18b47cade4 100644
+--- a/crates/fonts/src/lib.rs
++++ b/crates/fonts/src/lib.rs
+@@ -20,7 +20,7 @@ pub mod source_shaping;
+ mod std14;
+ mod std14_metrics;
+ pub use craft::{
+-    CRAFT_FONTS, CraftFont, SHIPPORI_MINCHO, document_arabic_font, document_devanagari_font, document_hebrew_font, document_japanese_font,
++    register_host_fonts, CRAFT_FONTS, CraftFont, SHIPPORI_MINCHO, document_arabic_font, document_devanagari_font, document_hebrew_font, document_japanese_font,
+     document_japanese_font_for_style, document_japanese_fonts_for_style, document_latin_fonts, document_thai_font, ui_arabic_fonts, ui_chinese_fonts,
+     ui_cjk_fonts, ui_devanagari_fonts, ui_hebrew_fonts, ui_japanese_fonts, ui_telugu_fonts, ui_thai_fonts,
+ };

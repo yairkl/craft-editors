@@ -166,11 +166,15 @@ struct Document {
 }
 impl Document {
     fn open(bytes: &[u8], commands: Commands, _format: &str) -> Result<Self, JsValue> {
-        static HEBREW_FONT: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
-        let count = HEBREW_FONT
-            .get_or_init(|| wordcraft_fonts::FontDb::global().add_font(HEBREW_FONT_BYTES.to_vec()));
+        static FALLBACK_FONT_COUNT: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
+        let count = FALLBACK_FONT_COUNT.get_or_init(|| {
+            FALLBACK_FONTS
+                .iter()
+                .map(|(_, bytes)| wordcraft_fonts::FontDb::global().add_font(bytes.to_vec()))
+                .sum()
+        });
         if *count == 0 {
-            return Err(error("The bundled Hebrew font could not be loaded."));
+            return Err(error("The bundled fallback fonts could not be loaded."));
         }
         let doc = wordcraft_engine::io::open_bytes("Document.docx", bytes)
             .map_err(|_| error("The Word document could not be opened."))?;

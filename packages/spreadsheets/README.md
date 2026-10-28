@@ -6,7 +6,7 @@ It opens supported files by default unless you have saved another editor prefere
 
 Use the sheet selector and mouse-wheel scrolling to navigate spreadsheets.
 
-This is a development build. Supports desktop VS Code 1.102+, files up to 32 MiB, and the engine's supported formats/features. Complex document fidelity and full script/font coverage remain under validation.
+This is an early preview. Supports desktop VS Code 1.102+, files up to 32 MiB, and the engine's supported formats/features. Complex document fidelity and full script/font coverage remain under validation.
 
 Code and asset licenses are included under `notices/`.
 
@@ -24,8 +24,10 @@ The command ribbon starts collapsed to give the document more space. Its tab row
 
 ## Spreadsheet tools for agents
 
-The extension provides GridCraft's MCP tools to GitHub Copilot in VS Code and to Cursor when its extension MCP API is available. Enable the Craft Spreadsheets server in the editor's MCP settings; VS Code may offer a refresh action to discover extension-provided servers. Ask the agent to open a workbook by its path before using spreadsheet tools. The server runs locally in the extension host and uses a private loopback connection; agent clients may ask for tool-use approval.
+The extension includes a GridCraft MCP bridge intended for GitHub Copilot in VS Code and Cursor; discovery has been verified in VS Code and Cursor. Enable the Craft Spreadsheets server in the editor's MCP settings; VS Code may offer a refresh action to discover extension-provided servers. Ask the agent to open a workbook by its path before using spreadsheet tools. The server runs locally in the extension host and uses a private loopback connection; agent clients may ask for tool-use approval.
 
 If the workbook is open in Craft Spreadsheets, tools use its live model, including unsaved changes. Edits become normal VS Code document edits and can be undone or saved in the editor. Finish an active cell or text-box draft before using agent tools. If the workbook is closed, the server uses an in-memory session; changes reach the file only when the agent calls `save_workbook`. A headless save refuses to overwrite a file that has changed externally or is open in the editor. If a headless session has unsaved changes when the file is opened in the editor, save those headless changes to a different path to preserve them.
 
-CSV saves are refused when the workbook contains features CSV cannot preserve; ask the agent to save to an XLSX path instead. For an open workbook, use VS Code Save As to save a copy. Screenshot and desktop-only tools are unavailable. The bridge has been exercised in a Linux Remote SSH extension host; actual Copilot and Cursor agent discovery, including remote sessions, requires further end-to-end validation.
+CSV saves are refused when the workbook contains features CSV cannot preserve; ask the agent to save to an XLSX path instead. For an open workbook, use VS Code Save As to save a copy. Screenshot and desktop-only tools are unavailable. The bridge has been exercised in a Linux Remote SSH extension host; real-client editing and remote workflows require further end-to-end validation.
+
+When a headless agent saves to a different path, the destination must not already exist. Choose a new filename to avoid replacing another document.

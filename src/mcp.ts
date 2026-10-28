@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { EditableDocument, EditingProvider } from './editing';
 import { registerAgentServer } from './mcp-transport';
-import { findLive, hasDirtyText, sameResource } from './mcp-files';
+import { findLive, hasDirtyText, readAgentFile, sameResource, writeNewCopy } from './mcp-files';
 
 interface Headless { message(input: string): string | undefined; csv_features(): string; mark_saved(input: Uint8Array): void; free(): void }
 interface Message { jsonrpc?: string; id?: string | number; method?: string; params?: { name?: string; arguments?: Record<string, unknown> } }
@@ -50,8 +50,7 @@ class WorkbookSession {
     if (await hasDirtyText(uri)) throw new Error('This file has unsaved changes in a text editor. Save or close that editor first.');
     const live = await findLive(this.provider, uri);
     if (live) { this.uri = live.uri; this.mode = 'live'; this.changed = false; return result(request.id, 'Opened the live workbook, including unsaved edits.'); }
-    const data = await vscode.workspace.fs.readFile(uri);
-    if (data.length > 32 * 1024 * 1024) throw new Error('Document exceeds 32 MiB.');
+    const data = await readAgentFile(uri);
     if (await findLive(this.provider, uri) || await hasDirtyText(uri)) throw new Error('The workbook was opened or modified during loading; retry the request.');
     this.execute('file.open', { name: path.basename(uri.path), base64: Buffer.from(data).toString('base64') });
     this.uri = uri; this.mode = 'headless'; this.baseline = hash(data); this.changed = false;
@@ -87,7 +86,8 @@ class WorkbookSession {
     if (await findLive(this.provider, target) || ((await this.live()) && !recoveringCopy) || await hasDirtyText(target)) throw new Error('The workbook is open or modified in an editor. Save or close it before writing from a headless session.');
     const output = Buffer.from(encoded.base64, 'base64');
     if (output.byteLength > 32 * 1024 * 1024) throw new Error('The serialized workbook exceeds 32 MiB.');
-    await vscode.workspace.fs.writeFile(target, output);
+    if (sameTarget) await vscode.workspace.fs.writeFile(target, output);
+    else await writeNewCopy(target, output);
     if (sameTarget) { this.baseline = hash(output); this.backend.mark_saved(output); this.changed = false; }
     return result(request.id, 'Saved the workbook.');
   }

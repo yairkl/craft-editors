@@ -1,134 +1,3 @@
-diff --git a/crates/automation/src/lib.rs b/crates/automation/src/lib.rs
-index e94354021f95ae5b642f49185b3599c7bdebdd9b..77a09c365b4a0adb6643476de79958578bc14a1a 100644
---- a/crates/automation/src/lib.rs
-+++ b/crates/automation/src/lib.rs
-@@ -184,6 +184,11 @@ impl Automation {
-         &self.session
-     }
- 
-+    /// Access the document session when the automation server is embedded by a host.
-+    pub fn session_mut(&mut self) -> &mut Session {
-+        &mut self.session
-+    }
-+
-     /// Save `bytes` that a caller writes on the session's behalf, such as `pdfcraft-cli run`
-     /// saving a rendered page. With a root, it is confined like a tool's own output (a relative
-     /// path resolves inside it). Written atomically either way (#2166), except to something
-diff --git a/crates/automation/src/mcp.rs b/crates/automation/src/mcp.rs
-index 84cc21b258f22bb258bb1e61395e230bb2186e36..9ed7755574e78023906053610bbb81c57e035dd3 100644
---- a/crates/automation/src/mcp.rs
-+++ b/crates/automation/src/mcp.rs
-@@ -86,6 +86,11 @@ impl McpServer {
-         &self.automation
-     }
- 
-+    /// Access the automation session when embedding the MCP server in a host.
-+    pub fn automation_mut(&mut self) -> &mut Automation {
-+        &mut self.automation
-+    }
-+
-     /// Serve until `input` reaches end of file.
-     pub fn serve(&mut self, mut input: impl BufRead, mut output: impl Write) -> std::io::Result<()> {
-         let mut buf = Vec::new();
-diff --git a/crates/engine/src/lib.rs b/crates/engine/src/lib.rs
-index f11671bf85c2fe8c3bdc3f3d01be50b4d1c77494..a29c07e746859e360da846d2a346096a36b5f021 100644
---- a/crates/engine/src/lib.rs
-+++ b/crates/engine/src/lib.rs
-@@ -395,6 +395,12 @@ impl Editor {
-     }
- }
- 
-+/// Exact in-memory state for an embedding host's revision history.
-+#[derive(Clone)]
-+pub struct HostSnapshot {
-+    editor: Option<Editor>,
-+    pub bytes: Arc<Vec<u8>>,
-+}
- pub struct Document {
-     pub id: DocId,
-     pub name: String,
-@@ -4155,6 +4161,30 @@ impl Session {
-         Ok(())
-     }
- 
-+    pub fn host_snapshot(&self, id: DocId) -> HostSnapshot {
-+        let Some(doc) = self.get(id) else {
-+            return HostSnapshot { editor: None, bytes: Arc::new(Vec::new()) };
-+        };
-+        HostSnapshot { editor: doc.editor.clone(), bytes: doc.bytes.clone() }
-+    }
-+    pub fn host_matches(&self, id: DocId, snapshot: &HostSnapshot) -> bool {
-+        self.get(id).is_some_and(|doc| Arc::ptr_eq(&doc.bytes, &snapshot.bytes) || doc.bytes == snapshot.bytes)
-+    }
-+    pub fn host_restore(&mut self, id: DocId, snapshot: &HostSnapshot) -> Result<(), EditError> {
-+        let doc = self.doc_mut(id)?;
-+        let previous = doc.editor.clone();
-+        doc.editor = snapshot.editor.clone();
-+        Self::adopt_keys(doc);
-+        if let Err(error) = Self::refresh(doc) {
-+            doc.editor = previous;
-+            Self::adopt_keys(doc);
-+            if Self::refresh(doc).is_err() { Self::show_released(doc); }
-+            return Err(error);
-+        }
-+        Self::sync_dirty(doc);
-+        doc.generation = doc.generation.saturating_add(1);
-+        Ok(())
-+    }
-     pub fn undo(&mut self, id: DocId) -> Result<Label, EditError> {
-         let doc = self.doc_mut(id)?;
-         let editor = doc.editor.as_mut().ok_or(EditError::NothingToUndo)?;
-diff --git a/crates/fonts/src/craft.rs b/crates/fonts/src/craft.rs
-index e778a42ad73840d379317c9219006e25f7f5f044..eb4dcd8da18b2864e96bcc6366271d8c3be09bc0 100644
---- a/crates/fonts/src/craft.rs
-+++ b/crates/fonts/src/craft.rs
-@@ -92,14 +92,19 @@ pub fn document_devanagari_font() -> Option<&'static CraftFont> {
- /// The `Hebr` craft-fonts faces for Hebrew interface text (file names, document titles, text
- /// being edited), in manifest order. Empty when built without craft-fonts or when it has no
- /// Hebrew face.
-+static HOST_HEBREW: std::sync::OnceLock<CraftFont> = std::sync::OnceLock::new();
-+/// Register the embedding host's lifetime-long Hebrew font before shaping any text.
-+pub fn register_host_hebrew_font(bytes: &'static [u8]) {
-+    let _ = HOST_HEBREW.set(CraftFont { family: "Noto Sans Hebrew", style: "Regular", scripts: &["Hebr"], bytes });
-+}
- pub fn ui_hebrew_fonts() -> Vec<&'static CraftFont> {
--    CRAFT_FONTS.iter().filter(|f| f.covers("Hebr")).collect()
-+    CRAFT_FONTS.iter().chain(HOST_HEBREW.get()).filter(|f| f.covers("Hebr")).collect()
- }
- 
- /// The face for Hebrew text written into PDFs: the `Hebr` face of the asked weight, else its
- /// Regular, else any `Hebr` face. `None` without craft-fonts or without a Hebrew face.
- pub fn document_hebrew_font(bold: bool) -> Option<&'static CraftFont> {
--    hebrew_face(CRAFT_FONTS, bold)
-+    hebrew_face(CRAFT_FONTS, bold).or_else(|| HOST_HEBREW.get())
- }
- 
- fn hebrew_face(faces: &[CraftFont], bold: bool) -> Option<&CraftFont> {
-diff --git a/crates/fonts/src/lib.rs b/crates/fonts/src/lib.rs
-index 61061f550972a51cbaf483ca88fd042ae22ecd49..4955e82c4320315f6e201603664b770487b35fe2 100644
---- a/crates/fonts/src/lib.rs
-+++ b/crates/fonts/src/lib.rs
-@@ -20,7 +20,7 @@ pub mod source_shaping;
- mod std14;
- mod std14_metrics;
- pub use craft::{
--    CRAFT_FONTS, CraftFont, SHIPPORI_MINCHO, document_arabic_font, document_devanagari_font, document_hebrew_font, document_japanese_font,
-+    register_host_hebrew_font, CRAFT_FONTS, CraftFont, SHIPPORI_MINCHO, document_arabic_font, document_devanagari_font, document_hebrew_font, document_japanese_font,
-     document_japanese_font_for_style, document_japanese_fonts_for_style, document_latin_fonts, document_thai_font, ui_arabic_fonts, ui_chinese_fonts,
-     ui_cjk_fonts, ui_devanagari_fonts, ui_hebrew_fonts, ui_japanese_fonts, ui_telugu_fonts, ui_thai_fonts,
- };
-diff --git a/crates/render/src/raster.rs b/crates/render/src/raster.rs
-index e906144e42a4fc9a4afa52653f2687220add4121..72471ce9a00862b03739626d86daaf6a96b78acc 100644
---- a/crates/render/src/raster.rs
-+++ b/crates/render/src/raster.rs
-@@ -408,7 +408,6 @@ fn warning_settings(settings: &InterpreterSettings, warnings: Arc<Mutex<Vec<Rend
-             // exhausted budget, or the colours that fell back: once per page is enough.
-             let warning = match warning {
-                 InterpreterWarning::ContentTruncated => RenderWarning::ContentTruncated,
--                InterpreterWarning::ColorFallback => RenderWarning::ColourFallback,
-                 InterpreterWarning::UnsupportedFont | InterpreterWarning::ImageDecodeFailure => return,
-             };
-             let mut warnings = lock(&target);
 diff --git a/crates/ui-egui/src/chrome.rs b/crates/ui-egui/src/chrome.rs
 index 2723d16c2311c96ee70b6da8629ad95594b0ac2d..fc44da9fa7c72285bf3fc0406cf0d91ed15ec31d 100644
 --- a/crates/ui-egui/src/chrome.rs
@@ -161,14 +30,14 @@ index c0e12d5d095569b60f6c62e7d3713109eea4f8b9..e5f746d23ab5769f48a88aa0c066e039
              Ok(done) => done,
              Err(m) => {
 diff --git a/crates/ui-egui/src/create_ui.rs b/crates/ui-egui/src/create_ui.rs
-index 6dceb50657522aa4037840e7e06643c75213b8da..51a0e2bbc9d694f3eb815542a71272f6ec8701ba 100644
+index 6dceb50657522aa4037840e7e06643c75213b8da..b9a1c3261224815cd0fbe51733515fb8c4eb2740 100644
 --- a/crates/ui-egui/src/create_ui.rs
 +++ b/crates/ui-egui/src/create_ui.rs
 @@ -98,6 +98,7 @@ impl PdfCraftApp {
      }
  
      fn open_created_bytes(&mut self, name: &str, created: Result<Arc<Vec<u8>>, String>) -> Result<(), String> {
-+        if self.embedded { return Err("Create a separate PDF using VS Code or the standalone application.".into()); }
++        if self.embedded { return Err("Create a separate PDF using the host or the standalone application.".into()); }
          let bytes = created?;
          let id = self.session.open_new(name, bytes).map_err(|e| e.to_string())?;
          // The reading-colours preference is app-wide: the newly created document starts with it.

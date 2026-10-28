@@ -1,89 +1,57 @@
 # Craft for VS Code
 
-An independent project to bring the Rust-based Crafting Apps into VS Code as document editors.
+Open and edit spreadsheets, documents, presentations, PDFs and vector drawings in VS Code or a compatible Cursor build. This independent community project embeds the open-source Craft applications in editor tabs. Document processing runs in the editor session, including a remote extension host when using Remote SSH.
 
-Open, view, and edit spreadsheets, documents, presentations, and PDFs in editor tabs, using the existing Craft engines and WebAssembly interfaces. Files remain local to the VS Code session; no document processing service is required.
+**Early preview:** Use copies of important files. Complex formatting and full file-format compatibility are still being tested. This project is not an official ArtCraft product.
 
-**Beta:** five independent native editors for XLSX/CSV, DOCX, PPTX, PDF, SVG and `.vectorcraft`. They share VS Code Save/Save As, Undo/Redo, Revert and recovery, and follow the editor's light/dark theme. Each extension contains only its own engine; Craft Suite is an optional pack. SVG visual editing is opt-in through **Reopen Editor With… → Craft Vector**.
+## Choose an editor
 
-CSV sessions offer **Save as XLSX** for workbook features. Formulas, formatting and extra sheets stay unsaved in CSV and trigger a conversion notice; value edits and sorting still save as CSV.
+Install only the editors you need; each includes its own engine and works without the others.
 
-Download the installers from [GitHub prereleases](https://github.com/yairkl/craft-vscode/releases). See [beta installation and known limits](docs/releases/v0.1.2-beta.4.md) and [packaging](docs/packaging.md). This is an independent community integration, not an official Storytold/ArtCraft product. Nothing is published to Marketplace yet.
-
-Pull requests run checks selected from changed files: code changes get TypeScript and unit checks, and product or fixture changes build VSIX packages and run focused Linux, macOS and Windows smoke tests against those packaged engines. Documentation and workflow-only changes do not rebuild the engines. Add the `test:windows-installed` label to a pull request to build the VSIX packages and run the installed-package suite on Windows; adding or removing the label starts a new CI run. The smoke suite exercises real OS keyboard and clipboard input, five document editors, save/reopen, undo, theme changes, Hebrew font coverage and a closed-file agent edit. A runner without working native input fails the check; it is not counted as verified. Editor integration suites and other heavy tests run during releases. Pushes do not start CI. To publish a release, push a `v*` tag with matching `docs/releases/<tag>.md`, then run the CI workflow manually in GitHub Actions and select that tag. The release run executes the full editor integration suites on Linux, Windows and Apple Silicon macOS, plus Linux Remote SSH, before publishing the VSIX files and SHA-256 checksums to GitHub Releases. Tags containing a hyphen publish as prereleases. Temporary VSIX artifacts and failure screenshots expire after one day. Cursor and macOS-to-Remote SSH remain separate verification targets; see [platform CI verification](docs/verification/platform-ci.md).
-
-Hebrew/niqqud fallback is included in all five apps; see [language/font support](docs/languages.md). Actual Linux Remote SSH lifecycle checks are recorded in [the verification report](docs/verification/remote-ssh.md).
-
-## Development
-
-Requirements: Node.js 22+, npm, Python 3 for fixtures/package checks, and desktop VS Code 1.102+. The individual extensions have no runtime npm dependencies or required companion extensions.
-
-```sh
-npm ci
-npm run check
-npm test
-npm run fixtures:check
-npm run test:integration
-```
-
-Integration tests download VS Code 1.102.0 and run in its Extension Development Host. Linux headless environments need `xvfb-run -a npm run test:integration`. Set `VSCODE_EXECUTABLE_PATH` to test a separately installed VS Code executable instead.
-
-Build the WASM renderers before launching the preview:
-
-```sh
-npm run upstream:fetch
-rustup toolchain install 1.95.0 --profile minimal --target wasm32-unknown-unknown
-cargo +1.95.0 install wasm-bindgen-cli --version 0.2.129 --locked
-npm run renderers:build
-npm run test:rendering
-npm run test:editing
-npm run test:office
-```
-
-Run `npm run compile`, then choose an individual Craft application or **All Craft extensions** in Run and Debug and press F5. Open a matching fixture under `integration-tests/fixtures/` normally; the corresponding extension is the default editor. Explicit user editor associations take precedence; use **Reopen Editor With… → Configure default editor** to change an existing choice. Files up to 32 MiB are read through VS Code filesystem APIs. Each extension also has an optional integration probe.
-
-See [rendering setup and verification](docs/rendering.md) for the adapter boundaries, tested behavior and remaining limits. Generated binaries stay out of git and are built locally or in CI; they are not downloaded at extension runtime.
-
-## Initial scope
-
-| Application | Initial format | Intended experience |
+| Editor | Files | What you can do |
 | --- | --- | --- |
-| [GridCraft](https://github.com/storytold/gridcraft) | `.xlsx` | Spreadsheet viewing and editing |
-| [WordCraft](https://github.com/storytold/wordcraft) | `.docx` | Document viewing and editing |
-| [DeckCraft](https://github.com/storytold/deckcraft) | `.pptx` | Presentation viewing and editing |
-| [PdfCraft](https://github.com/storytold/pdfcraft) | `.pdf` | Reading and supported PDF modifications |
+| Craft Spreadsheets | `.xlsx`, `.csv` | Edit cells and formulas, sort data, and use native worksheet tabs. |
+| Craft Word | `.docx` | Read and edit documents. |
+| Craft PowerPoint | `.pptx` | Read and edit presentations. |
+| Craft PDF | `.pdf` | Read PDFs and use supported editing tools. |
+| Craft Vector | `.svg`, `.vectorcraft` | View and edit vector drawings. |
 
-The first implementation milestone targets GridCraft and PdfCraft to validate the shared host. WordCraft and DeckCraft follow. Editing is part of the initial architecture, including Save, Save As, undo/redo, recovery, and external-change handling.
+An optional **Craft Suite** pack groups the five extensions. Legacy `.doc` and `.ppt`, password-protected documents and files larger than 32 MiB are not supported by this preview.
 
-Desktop VS Code on Windows, macOS, and Linux is the first release target. WSL and Remote-SSH are planned validation targets. Browser-hosted VS Code support remains subject to a separate compatibility check.
+## Install
 
-## Approach
+1. Download the desired VSIX files from the [latest beta release](https://github.com/yairkl/craft-vscode/releases/tag/v0.1.2-beta.4). Desktop VS Code 1.102 or newer, or a compatible Cursor build, is required.
+2. Open the Extensions view, select **… → Install from VSIX…**, and choose each downloaded file. Reload when prompted. No Rust, Node.js or standalone Craft app is needed.
+3. Open a supported file. To use Craft Vector for an SVG or `.vectorcraft` file, choose **Reopen Editor With… → Craft Vector**. For Remote SSH, install the desired extension on the SSH host and reload the remote window.
 
-- A shared TypeScript host provides file access and custom editor behavior behind independent application extensions.
-- Existing Rust/WASM builds provide document processing and the application UI.
-- Small adapters connect each application to a versioned document-host protocol.
-- Embedding improvements belong upstream in each application; temporary patches stay minimal and tracked.
-- Each extension contains only its own renderer. An optional Suite extension pack installs all published members together.
+The extensions are not yet published to the VS Code Marketplace or Open VSX. For the optional Suite in this beta, install its five member VSIX files first. See [installation details and preview limits](docs/releases/v0.1.2-beta.4.md).
 
-The extension will inherit each engine's file-format limitations. It does not promise Microsoft Office feature parity or lossless round trips for every document.
+## Working with files
 
-## Project documents
+Use VS Code Save, Save As, Undo, Redo and Revert. The editors follow VS Code's light/dark theme. Spreadsheet, Word and PowerPoint ribbons start collapsed; select a tab to show their tools.
 
-- [Design](docs/design.md): architecture, document lifecycle, ownership, and tradeoffs.
-- [Initial implementation plan](docs/plan.md): milestones, acceptance criteria, estimates, and risks.
-- [Contributing](CONTRIBUTING.md): project boundaries and development expectations.
-- [Upstream research](docs/upstream-research.md): inspected source pins, build entry points and embedding gaps.
-- [Native rendering/editing](docs/rendering.md): build/run instructions, verification and current limits.
-- [Independent packaging](docs/packaging.md): extension structure, installation, archive verification and migration.
+CSV stores plain values, not workbook features such as formulas, formatting or extra worksheets. You can still use those features in the editor; when needed, **Save as XLSX** appears so you can keep them. Value edits and sorting can be saved to CSV. See the [spreadsheet guide](packages/spreadsheets/README.md) for details.
 
-## Relationship to upstream
+PDF opens in reading mode, with editing tools available. PowerPoint Reading View works inside the editor; full-screen slideshow and Presenter View are not supported in this preview.
 
-This is an independent integration project, not an official ArtCraft product. Upstream names identify the applications being integrated. Restricted upstream branding will not be redistributed in modified builds.
+## Languages and accessibility
 
-Related proposal: [Unified VS Code Extension for Crafting Apps, ArtCraft #2244](https://github.com/storytold/artcraft/issues/2244). This project embeds WASM interfaces for interactive editing. Each Craft extension exposes its upstream MCP tools through its extension host; see the agent instructions for [spreadsheets](packages/spreadsheets/README.md#spreadsheet-tools-for-agents), [Word](packages/word/README.md#document-tools-for-agents), [PowerPoint](packages/powerpoint/README.md#presentation-tools-for-agents), [Vector](packages/vector/README.md#vector-tools-for-agents) and [PDF](packages/pdf/README.md#pdf-tools-for-agents). PDF exposes a selected set of tools suitable for the embedded editor.
+Hebrew text support, including niqqud, is bundled and tested across the five editors. Font, input, shaping and accessibility coverage varies by script and application. See [language and font support](docs/languages.md) for the tested scope and how to request additional languages.
 
-Other Office viewers already exist, including [cweijan's Office Viewer](https://marketplace.visualstudio.com/items?itemName=cweijan.vscode-office). This project's focus is integration with the Craft editing engines.
+## Agent tools
 
-## License
+Each editor includes an MCP bridge intended to give compatible agents access to open and closed documents. MCP discovery has been verified in VS Code and Cursor. A test client also exercises the bridge in a Linux Remote SSH host; broader real-client editing and remote workflows still need validation. See the per-editor guides for [spreadsheets](packages/spreadsheets/README.md#spreadsheet-tools-for-agents), [Word](packages/word/README.md#document-tools-for-agents), [PowerPoint](packages/powerpoint/README.md#presentation-tools-for-agents), [PDF](packages/pdf/README.md#pdf-tools-for-agents), and [Vector](packages/vector/README.md#vector-tools-for-agents).
 
-This repository is licensed under [MIT](LICENSE). Upstream code and bundled assets retain their own licenses and required notices. Generated VSIX files include their selected renderer and dependency notices; binaries stay out of git. The tracked smoke documents are original generated fixtures.
+## Preview limitations and feedback
+
+Complex Office, PDF and SVG fidelity; printing and signing; accessibility and IME input; and wider platform and font coverage are still being validated. An unfinished draft that cannot yet be serialized may not be recoverable after a crash. For details, see the [beta notes](docs/releases/v0.1.2-beta.4.md).
+
+Please [report an issue](https://github.com/yairkl/craft-vscode/issues) with your editor and OS versions, file type, and a shareable reproduction. Do not attach private documents. For security vulnerabilities, see [private reporting](SECURITY.md).
+
+## Development and relationship to upstream
+
+See [Contributing](CONTRIBUTING.md) for setup and tests, [design](docs/design.md) for the shared host and adapters, [rendering](docs/rendering.md) for engine builds, and [packaging](docs/packaging.md) for releases. Five separate application extensions share a TypeScript host while each embeds its own pinned Rust/WASM engine. The optional Suite contains no renderer.
+
+This project integrates [GridCraft](https://github.com/storytold/gridcraft), [WordCraft](https://github.com/storytold/wordcraft), [DeckCraft](https://github.com/storytold/deckcraft), [PdfCraft](https://github.com/storytold/pdfcraft), and [VectorCraft](https://github.com/storytold/vectorcraft). Upstream names identify those applications; restricted upstream branding is not redistributed in modified builds. See the [draft collaboration proposal](docs/collaboration-proposal.md) and the related [ArtCraft issue](https://github.com/storytold/artcraft/issues/2244).
+
+This repository is licensed under [MIT](LICENSE). Upstream code and bundled assets retain their own licenses and required notices, which are included in the VSIX packages.

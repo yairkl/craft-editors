@@ -34,8 +34,15 @@ export function collectNotices(selected) {
         mkdirSync(dirname(target), { recursive: true });
         copyFileSync(file, target);
       }
+      const notices = [...new Set(files.map(file => `${key}/${relative(source, file)}`))];
+      const isMplRegistry = pkg.license === 'MPL-2.0' && pkg.source === 'registry+https://github.com/rust-lang/crates.io-index';
+      if (isMplRegistry) {
+        mkdirSync(join(destination, 'licenses'), { recursive: true });
+        copyFileSync(resolve(root, 'licenses/MPL-2.0.txt'), join(destination, 'licenses/MPL-2.0.txt'));
+        notices.push('licenses/MPL-2.0.txt');
+      }
       inventory.push({ name: pkg.name, ...(pkg.name === 'self_cell' ? { licenseChoice: 'Apache-2.0' } : {}), version: pkg.version, license: pkg.license, source: pkg.source,
-        repository: pkg.repository, notices: [...new Set(files.map(file => `${key}/${relative(source, file)}`))].sort() });
+        repository: pkg.repository, ...(isMplRegistry ? { sourceArchive: `https://crates.io/api/v1/crates/${pkg.name}/${pkg.version}/download` } : {}), notices: notices.sort() });
     }
     // Workspace license/NOTICE and font assets often live above a crate directory.
     for (const sourceRoot of [...sourceRoots].sort()) {
@@ -52,7 +59,9 @@ export function collectNotices(selected) {
     if (name !== 'suite') {
       const fonts = JSON.parse(readFileSync(resolve(root, 'upstream/font-assets.json'), 'utf8'));
       mkdirSync(join(destination, 'fonts'), { recursive: true });
-      copyFileSync(resolve(root, 'upstream/font-assets/NotoSansHebrew-OFL.txt'), join(destination, 'fonts/NotoSansHebrew-OFL.txt'));
+      for (const font of fonts.fonts) for (const asset of font.files.filter(file => file.role === 'license')) {
+        copyFileSync(resolve(root, 'upstream/font-assets', asset.path), join(destination, 'fonts', asset.path));
+      }
       writeFileSync(join(destination, 'fonts/attribution.json'), JSON.stringify(fonts, null, 2) + '\n');
     }
     // Original source paths are not included in the distributable inventory.
