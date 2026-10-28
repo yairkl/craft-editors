@@ -115,6 +115,18 @@ window.addEventListener('message', async ({ data }) => {
           result = await checks.editCell(viewer, canvas, data.row, data.col, data.text);
           break;
         }
+        case 'test:host-shortcut': {
+          if (!capture) throw new Error('Test operation unavailable.');
+          let reachedHost = false;
+          const observe = () => { reachedHost = true; };
+          window.addEventListener('keydown', observe, { once: true });
+          canvas.focus();
+          canvas.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', code: 'KeyK', ctrlKey: true, altKey: true, bubbles: true, cancelable: true }));
+          canvas.dispatchEvent(new KeyboardEvent('keyup', { key: 'k', code: 'KeyK', ctrlKey: true, altKey: true, bubbles: true }));
+          canvas.dispatchEvent(new KeyboardEvent('keyup', { key: 'Control', code: 'ControlLeft', bubbles: true }));
+          window.removeEventListener('keydown', observe);
+          result = reachedHost; break;
+        }
         case 'test:editor-key': {
           if (!capture) throw new Error('Test operation unavailable.');
           const checks = await import('./editing-checks.js');

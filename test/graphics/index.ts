@@ -223,6 +223,7 @@ export async function run(): Promise<void> {
     assert.equal((await rendered).rendered, true);
     assert.equal(recovered.dirty, true);
     if (descriptor.format === 'pdf') assert.equal((await recovered.request('test:inspect') as State).rotations?.[0], 90);
+    assert.equal(await recovered.request('test:host-shortcut'), true, 'Keyboard events must reach the host keybinding listener');
     panel.dispose(); recovered.dispose(); await backup.delete();
     console.log(`${descriptor.format}: native edits, scroll zoom, Undo/Redo, Save/reopen, Save As, Revert and backup recovery passed.`);
   }

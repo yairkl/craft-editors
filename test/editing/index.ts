@@ -406,6 +406,18 @@ export async function run(): Promise<void> {
   await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
   const autoReopened = await open(api, finalUri);
   assert.equal(await cell(autoReopened), '3');
+  if (process.env.CRAFT_NATIVE_CLIPBOARD_TEST) {
+    await autoReopened.request('test:edit', { row: 1, col: 1, text: 'clipboard proof' });
+    execFileSync('xclip', ['-selection', 'clipboard'], { input: 'previous clipboard', stdio: ['pipe', 'ignore', 'ignore'] });
+    execFileSync('xdotool', ['key', '--clearmodifiers', 'ctrl+c']);
+    await new Promise(resolve => setTimeout(resolve, 400));
+    assert.equal(execFileSync('xclip', ['-selection', 'clipboard', '-o'], { encoding: 'utf8' }).trim(), 'clipboard proof');
+    await autoReopened.request('test:edit', { row: 3, col: 1, text: 'destination' });
+    execFileSync('xdotool', ['key', '--clearmodifiers', 'ctrl+v']);
+    await new Promise(resolve => setTimeout(resolve, 400));
+    assert.equal(await autoReopened.request('test:cell', { sheet: 0, row: 3, col: 1 }), 'clipboard proof');
+  }
+  assert.equal(await autoReopened.request('test:host-shortcut'), true, 'Keyboard events must reach the host keybinding listener');
   await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
   console.log('Autosave preserves native cell input, continued typing and incomplete formulas.');
   console.log('Native editing: cell/formula round trip, Undo/Redo, Save As, Revert, failed/cancelled saves, edits during write, and backup recovery passed.');

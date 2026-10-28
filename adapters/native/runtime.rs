@@ -175,7 +175,11 @@ impl NativeViewer {
         runner
             .start(
                 canvas,
-                eframe::WebOptions::default(),
+                eframe::WebOptions {
+                    // Let the containing editor resolve its own keybindings.
+                    should_stop_propagation: Box::new(|event| !matches!(event, egui::Event::Key { .. })),
+                    ..Default::default()
+                },
                 Box::new(move |cc| {
                     app_state.borrow_mut().context = cc.egui_ctx.clone();
                     Document::setup(&cc.egui_ctx);
