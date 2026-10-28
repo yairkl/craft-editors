@@ -46,7 +46,7 @@ Each editor includes an MCP bridge intended to give compatible agents access to 
 
 Complex Office, PDF and SVG fidelity; printing and signing; accessibility and IME input; and wider platform and font coverage are still being validated. An unfinished draft that cannot yet be serialized may not be recoverable after a crash. For details, see the [beta notes](docs/releases/v0.1.2-beta.4.md).
 
-Please [report an issue](https://github.com/yairkl/craft-vscode/issues) with your editor and OS versions, file type, and a shareable reproduction. Do not attach private documents.
+Please [report an issue](https://github.com/yairkl/craft-vscode/issues) with your editor and OS versions, file type, and a shareable reproduction. Do not attach private documents. For security vulnerabilities, see [private reporting](SECURITY.md).
 
 ## Development and relationship to upstream
 
