@@ -64,7 +64,7 @@
       "patches": [
         {
           "path": "upstream/patches/pdfcraft-embedding.patch",
-          "sha256": "35825c8badd6374c7ede40cd431ca42e77f8925e5607a6cd1b40a8d55a6a01f5",
+          "sha256": "cd9014fd66ff79ee3835fe9101e1e328d32a2bc8276b29637f24bdd51da9e8e0",
           "purpose": "Delegate file lifecycle and history to the embedding host, provide host snapshots, and expose the automation session for embedded MCP requests.",
           "removalCondition": "Remove when upstream exposes equivalent embedding services."
         }
