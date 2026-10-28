@@ -47,6 +47,8 @@ export class EditableDocument implements vscode.CustomDocument {
 export interface EditableDescriptor { format: 'xlsx' | 'csv' | 'docx' | 'pptx' | 'pdf' | 'svg' | 'vectorcraft'; engine: 'grid' | 'word' | 'deck' | 'pdf' | 'vector'; viewType: string; label: string; additionalFormats?: DocumentFormat[] }
 
 export class EditingProvider implements vscode.CustomEditorProvider<EditableDocument>, vscode.Disposable {
+  testUndoRequests = 0;
+  testRedoRequests = 0;
   private readonly changes = new vscode.EventEmitter<vscode.CustomDocumentEditEvent<EditableDocument>>();
   readonly onDidChangeCustomDocument = this.changes.event;
   private readonly renders = new vscode.EventEmitter<RenderResult>();
@@ -116,6 +118,8 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
           if (!doc.disposed && cached.token === doc.token) doc.cache = cached.bytes;
         }).catch(() => {});
       } else if (m.type === 'editor:command' && typeof m.command === 'string') {
+        if (capture && m.command === 'edit.undo') this.testUndoRequests++;
+        if (capture && m.command === 'edit.redo') this.testRedoRequests++;
         void this.command(doc, panel, m.command).catch(error => vscode.window.showErrorMessage(error instanceof Error ? error.message : 'Document operation failed.'));
       } else if (m.type === 'render:failed') {
         clearTimeout(renderTimer); reportFailure(m.failure);

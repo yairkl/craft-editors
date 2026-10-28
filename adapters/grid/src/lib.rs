@@ -582,7 +582,14 @@ impl eframe::App for GridShell {
                 .try_borrow_mut()
                 .map(|mut commands| std::mem::take(&mut *commands))
                 .unwrap_or_default();
+            // The host already receives keyboard history shortcuts; pointer commands still delegate.
+            let keyboard_history = ui.ctx().input(|input| input.events.iter().any(|event| matches!(event,
+                egui::Event::Key { pressed: true, modifiers, .. } if modifiers.command || modifiers.ctrl
+            )));
             for command in queued {
+                if keyboard_history && matches!(command.as_str(), "edit.undo" | "edit.redo") {
+                    continue;
+                }
                 emit(&state.on_event, "command", &[("command", command.into())]);
             }
             if state.on_frame.is_some() && state.app.grid.geo.is_some() {
@@ -647,6 +654,10 @@ impl GridViewer {
                 canvas,
                 eframe::WebOptions {
                     renderer: eframe::Renderer::Glow,
+                    // Let the containing editor resolve its own keybindings.
+                    should_stop_propagation: Box::new(|event| {
+                        !matches!(event, egui::Event::Key { .. })
+                    }),
                     ..Default::default()
                 },
                 Box::new(move |cc| {

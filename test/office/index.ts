@@ -144,6 +144,7 @@ export async function run(): Promise<void> {
     assert.equal((await rendered).rendered, true);
     assert.equal(await recovered.request('test:text'), recoveredText); assert.equal(recovered.dirty, true);
     await api.editing.saveCustomDocument(recovered, cancellation.token); assert.equal(recovered.dirty, false);
+    assert.equal(await recovered.request('test:host-shortcut'), true, 'Keyboard events must reach the host keybinding listener');
     panel.dispose(); recovered.dispose(); backup.delete();
     await vscode.commands.executeCommand('vscode.openWith', copy, descriptor.preview);
     const old = copied.token; await vscode.commands.executeCommand('workbench.action.files.revert');
