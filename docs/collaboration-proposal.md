@@ -4,7 +4,7 @@
 
 ---
 
-Hi @echelon, following this proposal, I built [Craft for VS Code](https://github.com/yairkl/craft-vscode), an independent community integration of GridCraft, WordCraft, DeckCraft, PdfCraft and VectorCraft. [Preview installers](https://github.com/yairkl/craft-vscode/releases) are available.
+Following this proposal, I built [Craft for VS Code](https://github.com/yairkl/craft-vscode), an independent community integration of GridCraft, WordCraft, DeckCraft, PdfCraft and VectorCraft. [Preview installers](https://github.com/yairkl/craft-vscode/releases) are available.
 
 Each editor is an independently installable extension, with an optional suite pack. The existing Rust/egui applications run as WASM inside VS Code editor tabs; a shared host handles VS Code file access, Save/Save As, undo/redo, revert and recovery. The integration supports Remote SSH and exposes a bridge to each app's existing MCP tools.
 
