@@ -1,29 +1,21 @@
 # Draft collaboration proposal
 
-Recommended destination: a beta/demo comment on the existing open VS Code integration proposal, https://github.com/storytold/artcraft/issues/2244. The repository has Issues enabled and no Discussions section. Cross-link accepted implementation work from small PRs in the relevant app repositories. This file is a draft; nothing has been sent upstream.
-
-Suggested comment heading: **[Proposal] Native Craft editors inside VS Code — beta integration and upstream embedding hooks**
+**Suggested destination:** a comment on the existing [ArtCraft VS Code integration request](https://github.com/storytold/artcraft/issues/2244), which is open. This is a draft for review; nothing has been sent upstream. Link the latest published GitHub prerelease after the release flow succeeds.
 
 ---
 
-Following this proposal, we've built an independent VS Code integration for GridCraft, WordCraft, DeckCraft, PdfCraft and VectorCraft:
+Following this proposal, we've built [Craft for VS Code](https://github.com/yairkl/craft-vscode), an independent community integration of GridCraft, WordCraft, DeckCraft, PdfCraft and VectorCraft. [Preview installers](https://github.com/yairkl/craft-vscode/releases) are available for testing.
 
-- Source: https://github.com/yairkl/craft-vscode
-- Installation beta: https://github.com/yairkl/craft-vscode/releases/tag/v0.1.3-beta.1
-- Each app is independently installable, with an optional extension pack.
-- Native Rust/egui UIs run as WASM inside VS Code editor tabs. Files stay local to the VS Code session, with no processing service or external app dependency.
-- A shared host handles Save/Save As, cancellation, disk-conflict checks, exact-revision acknowledgments, VS Code Undo/Redo, Revert and recovery. Native app chrome is adapted for embedding, and light/dark follows VS Code.
+Each editor is an independently installable extension, with an optional suite pack. The existing Rust/egui applications run as WASM inside VS Code editor tabs; a shared host handles VS Code file access, Save/Save As, undo/redo, revert and recovery. Linux Remote SSH lifecycle tests use the remote extension host and workspace filesystem. Each app also exposes a bridge to its existing MCP tools; the project owner has verified discovery in VS Code and Cursor.
 
-This explores interactive WASM editing alongside the CLI/MCP direction proposed here; it includes MCP bridges tested with a test client; MCP discovery has been verified in VS Code and Cursor, while real-client editing and broader Remote SSH configurations remain to be validated.
+This is an early preview, not a claim of full file-format fidelity. CI covers Linux, Apple Silicon macOS and Windows, and a Linux Remote SSH scenario. Content-filled large workbook and PDF fixtures have been tested locally; complex real-world documents, broader remote configurations, accessibility and IME input still need work. Some incomplete drafts cannot yet be recovered after a crash. The integration is independent and has not been published to a marketplace.
 
-The beta includes integration tests for native edits, scroll zoom, save/reopen, history, recovery, package isolation and installed VSIX behavior. It is not a complete fidelity/platform claim: generated fixtures, Linux/macOS/Windows CI and actual Linux Remote SSH lifecycle tests are covered; complex documents, WSL, Cursor and wider SSH network/authentication cases need more testing. Unserializable drafts defer autosave/backup rather than interrupt typing.
+We currently maintain pinned source revisions and hash-verified downstream [embedding patch groups](https://github.com/yairkl/craft-vscode/blob/master/docs/upstream-patch-review.md). Some UI groups still combine concerns; we would not propose them upstream wholesale. We would value your guidance on whether it would be useful to propose narrowly scoped changes such as:
 
-We maintain hash-verified patch groups against immutable upstream revisions; some UI groups still combine concerns and need to be split before submission. We'd like to discuss upstream support for:
+1. **Host-owned file lifecycle and history callbacks**, with saved-state acknowledgment only after the host confirms persistence.
+2. **Stable document snapshot and restoration interfaces** for host undo/redo and recovery, with standalone behavior unchanged.
+3. **Generic embedding capabilities** for optional chrome, host-supplied fonts and presentation surfaces, rather than VS Code-specific UI behavior.
 
-1. Optional host callbacks for file lifecycle and history, with no saved-state acknowledgment before the host confirms persistence.
-2. An embedded mode that omits standalone file/window chrome and trademark artwork while keeping native editing tools.
-3. Stable document snapshot/restore and serialization interfaces, so hosts can implement Undo/Redo and recovery without reaching into private engine state.
+Would you prefer this to remain a community-maintained project linked from the app documentation, or would you be interested in closer collaboration or official ownership? Before marketplace publication, we'd also welcome guidance on project naming, branding and publisher ownership.
 
-Would you prefer this to remain a community-maintained integration linked from the app docs, or consider official maintenance/organization ownership? Before Marketplace publication, we'd also like to agree on naming, publisher ownership and how the integration should describe its relationship to Storytold.
-
-We can submit the generic embedding changes as separate focused PRs, following each app's contribution and test requirements. The VS Code-specific packaging and lifecycle code can remain in the integration repository. The release includes independently installable VSIX files. We can share an original-fixture demo and submit narrowly scoped, independently tested changes if that would be useful.
+If useful, we can share a short demo with original fixtures and prepare small, independently tested pull requests in the relevant app repositories. VS Code packaging and editor-specific behavior can remain in this repository. No upstream acceptance or endorsement is assumed.
