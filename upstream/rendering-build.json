@@ -35,64 +35,64 @@
       "sha256": "9642590b6bf6b6459368dadeeceded0e396f37fc753257bfc09edf7b84adf995"
     },
     "grid/viewer_bg.wasm": {
-      "bytes": 22948063,
-      "sha256": "7ad0120d12241aa2351bb510cda337f14debf692533bb819b0c562a2ebae2f6f"
+      "bytes": 22948479,
+      "sha256": "439d406d3b242183c09e447753ebc0312299627ded9f43382fa5f2b612a6eca4"
     },
     "grid/node/viewer.js": {
       "bytes": 157957,
       "sha256": "43d835d0e4c39202b80261581120f14232bf8546e40278d93becd25543bfe51f"
     },
     "grid/node/viewer_bg.wasm": {
-      "bytes": 22948063,
-      "sha256": "7ad0120d12241aa2351bb510cda337f14debf692533bb819b0c562a2ebae2f6f"
+      "bytes": 22948479,
+      "sha256": "439d406d3b242183c09e447753ebc0312299627ded9f43382fa5f2b612a6eca4"
     },
     "pdf/viewer.js": {
       "bytes": 167614,
       "sha256": "67bdea606e1c26988032d5504f3804ed7ea05b5e4fe79f98c410ba062e2c5cdb"
     },
     "pdf/viewer_bg.wasm": {
-      "bytes": 48725583,
-      "sha256": "3eaa6a0fa6152745f90e5365d8b6add542716b5963e969d14066be44a75b1b7e"
+      "bytes": 48726008,
+      "sha256": "3938e24c22873a9c30c9fbbb5c355b4b85059933e4f79e8b746053bbd97c295f"
     },
     "pdf/node/viewer.js": {
       "bytes": 164110,
       "sha256": "1585f8624f0d6ef4c1ea681a68b43b5fd758839938e2386ca70c2954f6c986af"
     },
     "pdf/node/viewer_bg.wasm": {
-      "bytes": 48725583,
-      "sha256": "3eaa6a0fa6152745f90e5365d8b6add542716b5963e969d14066be44a75b1b7e"
+      "bytes": 48726008,
+      "sha256": "3938e24c22873a9c30c9fbbb5c355b4b85059933e4f79e8b746053bbd97c295f"
     },
     "word/viewer.js": {
       "bytes": 159767,
       "sha256": "7eac8fef2eb6c0bbb908ed1f324fb9c7345619a21422c561087bbe7fcde407b2"
     },
     "word/viewer_bg.wasm": {
-      "bytes": 44605361,
-      "sha256": "37b60263d274b125c01902db318c2f48c3dc499f38c7a2f9bb64a98d4c5fca55"
+      "bytes": 44605929,
+      "sha256": "b12bdaa44786c9ca34f20c88fae5ed9a1475be3c8cbcde6f064531164c7dc452"
     },
     "word/node/viewer.js": {
       "bytes": 156265,
       "sha256": "9ce07881e7a5db29b804f02e1f2daec71d31b65d91b1425b0819a555c6c94748"
     },
     "word/node/viewer_bg.wasm": {
-      "bytes": 44605361,
-      "sha256": "37b60263d274b125c01902db318c2f48c3dc499f38c7a2f9bb64a98d4c5fca55"
+      "bytes": 44605929,
+      "sha256": "b12bdaa44786c9ca34f20c88fae5ed9a1475be3c8cbcde6f064531164c7dc452"
     },
     "deck/viewer.js": {
       "bytes": 88002,
       "sha256": "b4790b6893ebee7f64d99be0b0e627a5dd250b9e8407a3eefa35b0cd30331b9b"
     },
     "deck/viewer_bg.wasm": {
-      "bytes": 27477757,
-      "sha256": "4fa280dee830b7832174cb99b29a1ffc5b7a13e19f744d2fec1b6f3227a26eaf"
+      "bytes": 27478172,
+      "sha256": "b83b89a56625a02d404a91bb98dab36dc072e7ad524011f0e46e13ec53f3f0fa"
     },
     "deck/node/viewer.js": {
       "bytes": 84517,
       "sha256": "014e593a830efe28890a28afdc82a97148a8b12fae251dc31ac68ac3a588c10c"
     },
     "deck/node/viewer_bg.wasm": {
-      "bytes": 27477757,
-      "sha256": "4fa280dee830b7832174cb99b29a1ffc5b7a13e19f744d2fec1b6f3227a26eaf"
+      "bytes": 27478172,
+      "sha256": "b83b89a56625a02d404a91bb98dab36dc072e7ad524011f0e46e13ec53f3f0fa"
     },
     "deck/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
@@ -107,16 +107,16 @@
       "sha256": "7b9c0a1ba9003e0577b3fd65f7eabb8262809a5f8a4502fe7a1e23fccec3ecf5"
     },
     "vector/viewer_bg.wasm": {
-      "bytes": 67838747,
-      "sha256": "05654aa3ccfc05a5e7fbded744c05f945efd1e53696b18a474a16c2fe88e6e84"
+      "bytes": 67839174,
+      "sha256": "8429b2739c98cb8991b0f1c63f58ae742d55aada6a494d1ea7f0b553afad53a1"
     },
     "vector/node/viewer.js": {
       "bytes": 85152,
       "sha256": "11fef626ed62c7010e659982d289836904763768cc8b73b4ea913c7be4ac5f63"
     },
     "vector/node/viewer_bg.wasm": {
-      "bytes": 67838747,
-      "sha256": "05654aa3ccfc05a5e7fbded744c05f945efd1e53696b18a474a16c2fe88e6e84"
+      "bytes": 67839174,
+      "sha256": "8429b2739c98cb8991b0f1c63f58ae742d55aada6a494d1ea7f0b553afad53a1"
     },
     "vector/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,

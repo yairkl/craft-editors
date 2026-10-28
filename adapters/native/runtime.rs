@@ -125,7 +125,14 @@ impl eframe::App for Shell {
             }
             state.observe();
             let commands = std::mem::take(&mut *state.commands.borrow_mut());
+            // The host already receives keyboard history shortcuts; pointer commands still delegate.
+            let keyboard_history = ui.ctx().input(|input| input.events.iter().any(|event| matches!(event,
+                egui::Event::Key { pressed: true, modifiers, .. } if modifiers.command || modifiers.ctrl
+            )));
             for command in commands {
+                if keyboard_history && matches!(command.as_str(), "edit.undo" | "edit.redo") {
+                    continue;
+                }
                 emit(&state.on_event, "command", &[("command", command.into())]);
             }
             if state.on_frame.is_some() && state.document.ready() {

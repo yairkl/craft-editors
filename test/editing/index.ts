@@ -117,6 +117,20 @@ export async function run(): Promise<void> {
   const uri = vscode.Uri.joinPath(directory, 'roundtrip.xlsx');
   await vscode.workspace.fs.writeFile(uri, original);
   let doc = await open(api, uri);
+  if (process.env.CRAFT_UNDO_REPRO) {
+    await doc.request('test:edit', { row: 1, col: 1, text: 'first' });
+    await doc.request('test:edit', { row: 1, col: 1, text: 'second' });
+    const before = api.editing.testUndoRequests;
+    execFileSync('xdotool', ['key', '--clearmodifiers', 'ctrl+z']);
+    await new Promise(resolve => setTimeout(resolve, 800));
+    assert.equal(api.editing.testUndoRequests, before, 'A host-handled undo must not be dispatched twice');
+    assert.equal(await doc.request('test:cell', { sheet: 0, row: 1, col: 1 }), 'first');
+    await doc.request('test:command', { command: 'edit.redo' });
+    await waitFor(() => doc.token !== 0);
+    await new Promise(resolve => setTimeout(resolve, 100));
+    assert.equal(await doc.request('test:cell', { sheet: 0, row: 1, col: 1 }), 'second', 'Toolbar redo still delegates to the host');
+    return;
+  }
   assert.equal(await cell(doc), '42');
   const liveClient = createAgent(api.mcp);
   const liveTool = (name: string, args: object) => liveClient.call('tools/call', { name, arguments: args });
@@ -416,6 +430,10 @@ export async function run(): Promise<void> {
     execFileSync('xdotool', ['key', '--clearmodifiers', 'ctrl+v']);
     await new Promise(resolve => setTimeout(resolve, 400));
     assert.equal(await autoReopened.request('test:cell', { sheet: 0, row: 3, col: 1 }), 'clipboard proof');
+    const beforeUndoRequests = api.editing.testUndoRequests;
+    execFileSync('xdotool', ['key', '--clearmodifiers', 'ctrl+z']);
+    await new Promise(resolve => setTimeout(resolve, 800));
+    assert.equal(api.editing.testUndoRequests, beforeUndoRequests, 'A keyboard undo already dispatched by VS Code must not be dispatched again by the embedded editor');
   }
   assert.equal(await autoReopened.request('test:host-shortcut'), true, 'Keyboard events must reach the host keybinding listener');
   await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
