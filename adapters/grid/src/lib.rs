@@ -70,6 +70,165 @@ struct State {
     snapshots: BTreeMap<u32, Snapshot>,
     commands: Rc<RefCell<Vec<String>>>,
 }
+
+/// Runs GridCraft's existing MCP tools against the model owned by this view.
+/// File lifecycle and history are intentionally reserved for the VS Code host.
+struct McpBackend(Rc<RefCell<State>>);
+impl gridcraft_mcp::Backend for McpBackend {
+    fn call(
+        &mut self,
+        method: &str,
+        params: serde_json::Value,
+    ) -> Result<serde_json::Value, String> {
+        let mut state = self
+            .0
+            .try_borrow_mut()
+            .map_err(|_| "Workbook is busy".to_owned())?;
+        if method == "engine.commands" {
+            let query = params
+                .get("search")
+                .and_then(serde_json::Value::as_str)
+                .map(str::to_lowercase);
+            let commands: Vec<_> = state
+                .app
+                .session
+                .commands()
+                .into_iter()
+                .filter(|command| {
+                    query.as_ref().is_none_or(|q| {
+                        command.id.to_lowercase().contains(q)
+                            || command.label.to_lowercase().contains(q)
+                    })
+                })
+                .filter_map(|command| serde_json::to_value(command).ok())
+                .collect();
+            return Ok(serde_json::Value::Array(commands));
+        }
+        let (command, args) = if method == "engine.execute" {
+            let command = params
+                .get("command")
+                .and_then(serde_json::Value::as_str)
+                .ok_or("Missing command")?;
+            (
+                command,
+                params
+                    .get("params")
+                    .cloned()
+                    .unwrap_or_else(|| serde_json::json!({})),
+            )
+        } else {
+            (method, params)
+        };
+        if command.starts_with("file.")
+            || command.starts_with("window.")
+            || command.starts_with("app.")
+            || command.starts_with("ui.")
+            || matches!(command, "edit.undo" | "edit.redo")
+        {
+            return Err("This operation is managed by the VS Code host".into());
+        }
+        // A live draft may contain a partial formula. Never commit or overwrite it
+        // as a side effect of an agent command.
+        if state.app.editor.is_some() || state.app.text_box_editor.is_some() {
+            return Err("Finish the active spreadsheet edit before using agent tools".into());
+        }
+        let result = state.app.run(command, args);
+        state.observe();
+        state.context.request_repaint();
+        result
+    }
+    fn has_ui(&self) -> bool {
+        false
+    }
+    fn describe(&self) -> String {
+        "live VS Code workbook".into()
+    }
+}
+
+/// A separate in-memory session for workbooks that are not open in a view.
+#[wasm_bindgen]
+pub struct McpHeadless {
+    server: RefCell<gridcraft_mcp::Server>,
+    backend: Rc<RefCell<gridcraft_mcp::Headless>>,
+}
+
+impl Default for McpHeadless {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+struct SharedHeadless(Rc<RefCell<gridcraft_mcp::Headless>>);
+impl gridcraft_mcp::Backend for SharedHeadless {
+    fn call(
+        &mut self,
+        method: &str,
+        params: serde_json::Value,
+    ) -> Result<serde_json::Value, String> {
+        self.0
+            .try_borrow_mut()
+            .map_err(|_| "Workbook is busy".to_owned())?
+            .call(method, params)
+    }
+    fn has_ui(&self) -> bool {
+        false
+    }
+    fn describe(&self) -> String {
+        "headless workbook".into()
+    }
+}
+
+#[wasm_bindgen]
+impl McpHeadless {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> Self {
+        let backend = Rc::new(RefCell::new(gridcraft_mcp::Headless::new()));
+        let server = RefCell::new(gridcraft_mcp::Server::new(Box::new(SharedHeadless(
+            backend.clone(),
+        ))));
+        Self { server, backend }
+    }
+
+    pub fn message(&self, message: &str) -> Result<Option<String>, JsValue> {
+        let mut server = self
+            .server
+            .try_borrow_mut()
+            .map_err(|_| JsValue::from_str("MCP server is busy"))?;
+        Ok(server.handle_line(message))
+    }
+
+    pub fn mark_saved(&self) -> Result<(), JsValue> {
+        let mut backend = self
+            .backend
+            .try_borrow_mut()
+            .map_err(|_| JsValue::from_str("Workbook is busy"))?;
+        let doc = backend
+            .session
+            .active_mut()
+            .ok_or_else(|| JsValue::from_str("No workbook"))?;
+        doc.saved = doc.wb.clone();
+        Ok(())
+    }
+
+    pub fn csv_features(&self) -> Result<String, JsValue> {
+        let backend = self
+            .backend
+            .try_borrow()
+            .map_err(|_| JsValue::from_str("Workbook is busy"))?;
+        let doc = backend
+            .session
+            .active()
+            .ok_or_else(|| JsValue::from_str("No workbook"))?;
+        let styles: Vec<_> = doc
+            .saved
+            .styles
+            .iter()
+            .map(|(_, style)| style.clone())
+            .collect();
+        serde_json::to_string(&csv_features(&doc.wb, &styles))
+            .map_err(|_| JsValue::from_str("Could not inspect CSV features"))
+    }
+}
 fn emit(callback: &js_sys::Function, kind: &str, fields: &[(&str, JsValue)]) {
     let event = js_sys::Object::new();
     if js_sys::Reflect::set(&event, &"kind".into(), &kind.into()).is_err() {
@@ -438,6 +597,7 @@ impl eframe::App for GridShell {
 pub struct GridViewer {
     runner: eframe::WebRunner,
     state: Rc<RefCell<State>>,
+    mcp: RefCell<gridcraft_mcp::Server>,
 }
 #[wasm_bindgen]
 impl GridViewer {
@@ -497,7 +657,17 @@ impl GridViewer {
             )
             .await
             .map_err(|_| JsValue::from_str("GridCraft could not start. WebGL is required."))?;
-        Ok(Self { runner, state })
+        let mcp = RefCell::new(gridcraft_mcp::Server::new(Box::new(McpBackend(
+            state.clone(),
+        ))));
+        Ok(Self { runner, state, mcp })
+    }
+    pub fn mcp_message(&self, message: &str) -> Result<Option<String>, JsValue> {
+        let mut server = self
+            .mcp
+            .try_borrow_mut()
+            .map_err(|_| JsValue::from_str("MCP server is busy"))?;
+        Ok(server.handle_line(message))
     }
     pub fn set_theme(&self, dark: bool) -> Result<(), JsValue> {
         let mut state = self

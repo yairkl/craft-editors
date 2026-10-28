@@ -1223,6 +1223,7 @@ version = "0.1.0"
 dependencies = [
  "deckcraft-engine",
  "deckcraft-fonts",
+ "deckcraft-mcp",
  "deckcraft-pptx",
  "deckcraft-ui-egui",
  "eframe 0.37.0",
@@ -1251,6 +1252,7 @@ dependencies = [
  "eframe 0.36.2",
  "egui 0.36.2",
  "gridcraft-engine",
+ "gridcraft-mcp",
  "gridcraft-ui-egui",
  "gridcraft-xlsx",
  "js-sys",
@@ -1338,6 +1340,7 @@ dependencies = [
  "eframe 0.36.2",
  "egui 0.36.2",
  "js-sys",
+ "pdfcraft-automation",
  "pdfcraft-engine",
  "pdfcraft-fonts",
  "pdfcraft-render",
@@ -1412,6 +1415,7 @@ dependencies = [
  "vectorcraft-doc",
  "vectorcraft-engine",
  "vectorcraft-format",
+ "vectorcraft-mcp",
  "vectorcraft-svg",
  "vectorcraft-text",
  "vectorcraft-ui-egui",
@@ -1433,6 +1437,7 @@ dependencies = [
  "web-sys",
  "wordcraft-engine",
  "wordcraft-fonts",
+ "wordcraft-mcp",
  "wordcraft-ui-egui",
 ]
 
@@ -1725,6 +1730,16 @@ name = "deckcraft-matroska"
 version = "0.11.1"
 dependencies = [
  "craft-media",
+]
+
+[[package]]
+name = "deckcraft-mcp"
+version = "0.11.1"
+dependencies = [
+ "deckcraft-engine",
+ "deckcraft-render",
+ "log",
+ "serde_json",
 ]
 
 [[package]]
@@ -3198,6 +3213,15 @@ version = "0.11.1"
 dependencies = [
  "gridcraft-core",
  "regex",
+]
+
+[[package]]
+name = "gridcraft-mcp"
+version = "0.11.1"
+dependencies = [
+ "gridcraft-engine",
+ "log",
+ "serde_json",
 ]
 
 [[package]]
@@ -5050,6 +5074,21 @@ dependencies = [
  "pdfcraft-edit",
  "pdfcraft-model",
  "thiserror 2.0.21",
+]
+
+[[package]]
+name = "pdfcraft-automation"
+version = "0.13.0"
+dependencies = [
+ "base64 0.22.1",
+ "pdfcraft-cos",
+ "pdfcraft-engine",
+ "pdfcraft-organize",
+ "pdfcraft-platform",
+ "pdfcraft-render",
+ "serde_json",
+ "sha2 0.11.1",
+ "tempfile",
 ]
 
 [[package]]
@@ -8402,6 +8441,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "vectorcraft-mcp"
+version = "0.17.0"
+dependencies = [
+ "image",
+ "log",
+ "serde_json",
+ "vectorcraft-doc",
+ "vectorcraft-engine",
+ "vectorcraft-format",
+ "vectorcraft-geom",
+ "vectorcraft-render",
+ "vectorcraft-svg",
+ "vectorcraft-tools",
+]
+
+[[package]]
 name = "vectorcraft-metafile"
 version = "0.17.0"
 dependencies = [
@@ -9551,6 +9606,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "wordcraft-control-key"
+version = "0.11.0"
+
+[[package]]
 name = "wordcraft-doc"
 version = "0.11.0"
 dependencies = [
@@ -9682,6 +9741,18 @@ dependencies = [
  "wordcraft-geom",
  "wordcraft-metafile",
  "wordcraft-proof",
+]
+
+[[package]]
+name = "wordcraft-mcp"
+version = "0.11.0"
+dependencies = [
+ "log",
+ "serde_json",
+ "wordcraft-control-key",
+ "wordcraft-doc",
+ "wordcraft-engine",
+ "wordcraft-render",
 ]
 
 [[package]]

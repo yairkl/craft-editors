@@ -1,7 +1,7 @@
 {
   "rust": "rustc 1.95.0 (59807616e 2026-04-14)",
   "wasmBindgen": "0.2.129",
-  "adapterLockSha256": "dabceea929e05be800a30e36ba410b32e81afb35d49c0e302d14c77826a25331",
+  "adapterLockSha256": "4dd1183558dc56d813894da5f9081d306d62186a3d9aeb3b54bf02a29ffbf973",
   "fontAssets": {
     "schemaVersion": 1,
     "family": "Noto Sans Hebrew",
@@ -31,50 +31,98 @@
   },
   "artifacts": {
     "grid/viewer.js": {
-      "bytes": 83413,
-      "sha256": "80bc8fe2feb357b3002b76588770e8a265c43546ce387c62852ea1d1d33063a9"
+      "bytes": 161471,
+      "sha256": "c19a210b858591a3a42416e4a6f84bc9187f4420e42a85821d9f1caf49523fc9"
     },
     "grid/viewer_bg.wasm": {
-      "bytes": 17898433,
-      "sha256": "7fe97340b19669e853d152d48b7fa28d96978c1d459c27844a86610056914e49"
+      "bytes": 22947398,
+      "sha256": "cd936fc313670c3a7409d45e1d7bedcade76f313c6a4e9e3934726394a514002"
+    },
+    "grid/node/viewer.js": {
+      "bytes": 157957,
+      "sha256": "11267a901ab7cb894efae22fedbcac3e9c998160ab8c7df28f83c16c8fde87b6"
+    },
+    "grid/node/viewer_bg.wasm": {
+      "bytes": 22947398,
+      "sha256": "cd936fc313670c3a7409d45e1d7bedcade76f313c6a4e9e3934726394a514002"
     },
     "pdf/viewer.js": {
-      "bytes": 163866,
-      "sha256": "3c507f57da8e32a588075a1cf5b2e845c9dbe167dbbb4341e5c89b8fb0cf3cfb"
+      "bytes": 167614,
+      "sha256": "245d58a5ea16c2d5051a39584550dc02124c3bc65044627fa7d369472a113b59"
     },
     "pdf/viewer_bg.wasm": {
-      "bytes": 46662424,
-      "sha256": "7079164193f5582206fa0a0ade7147ce843ad0b865ed5bd07171261e01032241"
+      "bytes": 48724611,
+      "sha256": "3382d80d6aa9029a6582d71b76e3b1fb0fb94d97a8996645a0068556c5c480b5"
+    },
+    "pdf/node/viewer.js": {
+      "bytes": 164110,
+      "sha256": "a56e1636d5d2e37a83262053cb8cd8ff8b0cafaa2b43268c0f6850ddc1df2ed3"
+    },
+    "pdf/node/viewer_bg.wasm": {
+      "bytes": 48724611,
+      "sha256": "3382d80d6aa9029a6582d71b76e3b1fb0fb94d97a8996645a0068556c5c480b5"
     },
     "word/viewer.js": {
-      "bytes": 156863,
-      "sha256": "12aebcd56e39dd083c2ecb077bcceba919910a359befe72f9e2eb7dea5ae1227"
+      "bytes": 159767,
+      "sha256": "e68adf5cd113e38fadeca909839c3297604796db14f86b2d767020e60911ec64"
     },
     "word/viewer_bg.wasm": {
-      "bytes": 44426091,
-      "sha256": "5d98e13262f2f380f85923add79de6ab5f9e9ae3bd6e01197c8858247b720fde"
+      "bytes": 44604519,
+      "sha256": "ab197bbd8c3073e49afc349fba9789f38f6e86db4884de36eabb5ec54b3c7ef3"
+    },
+    "word/node/viewer.js": {
+      "bytes": 156265,
+      "sha256": "21ed381edfa608393ca770b8bee8a694d0aba0c8ddd82817cf63bebf26e71192"
+    },
+    "word/node/viewer_bg.wasm": {
+      "bytes": 44604519,
+      "sha256": "ab197bbd8c3073e49afc349fba9789f38f6e86db4884de36eabb5ec54b3c7ef3"
     },
     "deck/viewer.js": {
-      "bytes": 85095,
-      "sha256": "1f5166fd6980f25f8d132fa596eb357e667ba5a232adb9dc2e46befb52254b62"
+      "bytes": 88002,
+      "sha256": "eef35596dfc2ac39885075fd05ad552de0b3b7de4b06cd7eb0f8b36cefafd220"
     },
     "deck/viewer_bg.wasm": {
-      "bytes": 27246040,
-      "sha256": "a46617eb79eefabec601bd8f8514173a0c9095dfabd59ecde03096c10a9705d6"
+      "bytes": 27477061,
+      "sha256": "8b2026c3f56186d6a840480c670631866a6e989c47006f2cbb89e5d4e46c5a53"
+    },
+    "deck/node/viewer.js": {
+      "bytes": 84517,
+      "sha256": "f573b8c4a481ae5617a025807dfbeb70b0d5ff2717db4545cfc3303c24afae66"
+    },
+    "deck/node/viewer_bg.wasm": {
+      "bytes": 27477061,
+      "sha256": "8b2026c3f56186d6a840480c670631866a6e989c47006f2cbb89e5d4e46c5a53"
     },
     "deck/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
       "sha256": "22a98f9d0c5a0532d291bdc9a3050439420b3d11143b4568fcfd3c66fff36995"
     },
+    "deck/node/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
+      "bytes": 280,
+      "sha256": "22a98f9d0c5a0532d291bdc9a3050439420b3d11143b4568fcfd3c66fff36995"
+    },
     "vector/viewer.js": {
-      "bytes": 85332,
-      "sha256": "afbf80ba56239e7f37c386777d60e5657df200a35e1c024ec2f8e1ab9ddfbc9e"
+      "bytes": 88633,
+      "sha256": "40b50357357bdc03c3e3b79a2aa363cb204a1da397695e242a2c8de5d473af34"
     },
     "vector/viewer_bg.wasm": {
-      "bytes": 67041664,
-      "sha256": "dbbdcac94c936233a3b7b0e55b8e6d253def180f0f868855b2badeea2f6b0e2e"
+      "bytes": 67838090,
+      "sha256": "011aac260fa057c8f6e873b77563c02219e6c24b9fdb0f4863e9495d4de37dec"
+    },
+    "vector/node/viewer.js": {
+      "bytes": 85152,
+      "sha256": "ef8c0c2e6926bbfed7847ba0b50d8794b028abd90fa6432ae55444380c76cb5a"
+    },
+    "vector/node/viewer_bg.wasm": {
+      "bytes": 67838090,
+      "sha256": "011aac260fa057c8f6e873b77563c02219e6c24b9fdb0f4863e9495d4de37dec"
     },
     "vector/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
+      "bytes": 280,
+      "sha256": "22a98f9d0c5a0532d291bdc9a3050439420b3d11143b4568fcfd3c66fff36995"
+    },
+    "vector/node/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
       "sha256": "22a98f9d0c5a0532d291bdc9a3050439420b3d11143b4568fcfd3c66fff36995"
     }
@@ -91,8 +139,8 @@
     "pdfcraft": [
       {
         "path": "upstream/patches/pdfcraft-embedding.patch",
-        "sha256": "c70a0c756b32b3b46c257bd2b13432f64c431ca9229515169e80938ed9202c10",
-        "purpose": "Delegate file lifecycle and history to VS Code; omit standalone chrome and restricted branding.",
+        "sha256": "52a9838b3c17a65ec9be853d8efcd1435c8ea5510c564bfc65522624fe5b2717",
+        "purpose": "Delegate file lifecycle and history to the embedding host, provide host snapshots, and expose the automation session for embedded MCP requests.",
         "removalCondition": "Remove when upstream exposes equivalent embedding services."
       }
     ],
@@ -115,8 +163,8 @@
     "vectorcraft": [
       {
         "path": "upstream/patches/vectorcraft-embedding.patch",
-        "sha256": "799090be607cb12f6a96881b900c27a0646775ed60782980f6712b12b76b48d3",
-        "purpose": "Delegate file lifecycle and history to VS Code; omit standalone chrome and restricted branding.",
+        "sha256": "c4f9a5b71ff23e6aa3c1c7866d30a7c0e9dd3fd594ce2b8be7292034a3fed9f7",
+        "purpose": "Delegate file lifecycle and history to VS Code, omit standalone chrome and restricted branding, and allow the MCP crate to build for WebAssembly without native path writes.",
         "removalCondition": "Remove when upstream exposes equivalent embedding services."
       }
     ]

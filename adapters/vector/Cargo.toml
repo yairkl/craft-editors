@@ -9,6 +9,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 vectorcraft-engine = { path = "../../upstream/checkouts/vectorcraft/crates/engine" }
+vectorcraft-mcp = { path = "../../upstream/checkouts/vectorcraft/crates/mcp", default-features = false }
 vectorcraft-ui-egui = { path = "../../upstream/checkouts/vectorcraft/crates/ui-egui" }
 vectorcraft-svg = { path = "../../upstream/checkouts/vectorcraft/crates/svg" }
 egui = "=0.37.0"

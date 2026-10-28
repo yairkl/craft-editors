@@ -25,7 +25,9 @@
     "Other"
   ],
   "main": "./out/src/entrypoints/word.js",
+  "activationEvents": ["onStartupFinished"],
   "contributes": {
+    "mcpServerDefinitionProviders": [{ "id": "craft.word.mcp", "label": "Craft Word" }],
     "customEditors": [
       {
         "viewType": "craft.word.preview",

@@ -256,5 +256,13 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
   }
   /** Integration tests use the same provider methods that VS Code calls. */
   getDocument(uri: vscode.Uri): EditableDocument | undefined { return this.documents.get(uri.toString()); }
+  getDocuments(): readonly EditableDocument[] { return [...this.documents.values()]; }
+  async agentHistory(doc: EditableDocument, redo: boolean, steps: number): Promise<void> {
+    const panel = this.panels.get(doc);
+    if (!panel) throw new Error('The workbook view is closed.');
+    panel.reveal(panel.viewColumn, true);
+    if (!panel.active) throw new Error('Activate this workbook before using agent undo or redo.');
+    for (let step = 0; step < steps; step++) await vscode.commands.executeCommand(redo ? 'redo' : 'undo');
+  }
   dispose(): void { this.changes.dispose(); this.renders.dispose(); for (const doc of this.documents.values()) doc.dispose(); }
 }

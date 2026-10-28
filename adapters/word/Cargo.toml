@@ -9,6 +9,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 wordcraft-engine = { path = "../../upstream/checkouts/wordcraft/crates/engine" }
+wordcraft-mcp = { path = "../../upstream/checkouts/wordcraft/crates/mcp" }
 wordcraft-ui-egui = { path = "../../upstream/checkouts/wordcraft/crates/ui-egui" }
 egui = "=0.36.2"
 eframe = { version = "=0.36.2", default-features = false, features = ["glow", "default_fonts"] }

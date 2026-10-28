@@ -9,6 +9,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 deckcraft-engine = { path = "../../upstream/checkouts/deckcraft/crates/engine" }
+deckcraft-mcp = { path = "../../upstream/checkouts/deckcraft/crates/mcp" }
 deckcraft-ui-egui = { path = "../../upstream/checkouts/deckcraft/crates/ui-egui" }
 deckcraft-pptx = { path = "../../upstream/checkouts/deckcraft/crates/pptx" }
 egui = "=0.37.0"

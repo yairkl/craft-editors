@@ -1,5 +1,11 @@
 # Craft Word
 
+## Document tools for agents
+
+Craft Word provides the pinned WordCraft MCP tools to GitHub Copilot and Cursor through the extension host. Enable the Craft Word MCP server, then ask the agent to open a DOCX document by path. An open document uses the live editor model and VS Code undo/save; a closed document uses a headless session and is written only when the agent calls `save_document`. Headless saves detect external changes and cannot overwrite an open editor. If the document becomes open while the agent has unsaved headless changes, save those changes to a different path.
+
+Agent commands can change the live document's selection. Desktop-only UI tools and password-protected document opening are unavailable. Use VS Code Save As for a copy of an open document. The bridge is tested in a Linux Remote SSH extension host; actual Copilot and Cursor discovery needs end-to-end validation.
+
 Open and edit `.docx` files with WordCraft's native interface. Files open in this editor by default unless you have saved another preference. Use VS Code Save, Save As, undo/redo and Revert. No other Craft extension is required; only this program's engine is bundled.
 
 This is an early editing preview. Generated fixtures are tested on Linux; complex format fidelity and other platforms require further validation. Keep copies of important documents. Files stay local to the VS Code session.

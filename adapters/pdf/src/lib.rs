@@ -4,6 +4,142 @@ include!("../../native/runtime.rs");
 use eframe::App;
 use pdfcraft_engine::{DocId, HostSnapshot, Session};
 use pdfcraft_ui_egui::PdfCraftApp;
+
+fn agent_automation() -> pdfcraft_automation::Automation {
+    fn now() -> i64 {
+        (js_sys::Date::now() / 1000.0) as i64
+    }
+    fn offset() -> i64 {
+        -(js_sys::Date::new_0().get_timezone_offset() as i64) * 60
+    }
+    pdfcraft_automation::Automation::new().with_wall_clock(now, offset)
+}
+
+#[wasm_bindgen]
+impl NativeViewer {
+    pub fn mcp_document_id(&self) -> Result<u32, JsValue> {
+        let state = self.state.try_borrow().map_err(|_| error("PDF is busy"))?;
+        u32::try_from(state.document.id.0).map_err(|_| error("Invalid PDF document id"))
+    }
+
+    pub fn mcp_message(&self, message: &str) -> Result<Option<String>, JsValue> {
+        let mut state = self
+            .state
+            .try_borrow_mut()
+            .map_err(|_| error("PDF is busy"))?;
+        if state.document.app.host_pending() {
+            return Err(error("Finish the active PDF edit before using agent tools"));
+        }
+        let mut agent = self
+            .agent
+            .try_borrow_mut()
+            .map_err(|_| error("Agent server is busy"))?;
+        let server = agent.get_or_insert_with(|| {
+            Box::new(pdfcraft_automation::mcp::McpServer::new(agent_automation()))
+        });
+        let server = server
+            .downcast_mut::<pdfcraft_automation::mcp::McpServer>()
+            .ok_or_else(|| error("Invalid agent server"))?;
+        let before = state.document.snapshot();
+        std::mem::swap(
+            &mut state.document.app.session,
+            server.automation_mut().session_mut(),
+        );
+        let reply = server.handle_line(message);
+        std::mem::swap(
+            &mut state.document.app.session,
+            server.automation_mut().session_mut(),
+        );
+        if state.document.changed(&before) {
+            if let Some(info) = state
+                .document
+                .app
+                .session
+                .get(state.document.id)
+                .map(|doc| doc.info.clone())
+            {
+                for view in &mut state.document.app.views {
+                    view.document_changed(&info);
+                }
+            }
+            state.observe();
+            state.context.request_repaint();
+        }
+        Ok(reply)
+    }
+}
+
+#[wasm_bindgen]
+pub struct PdfMcpHeadless {
+    server: std::cell::RefCell<pdfcraft_automation::mcp::McpServer>,
+    id: std::cell::Cell<Option<DocId>>,
+}
+impl Default for PdfMcpHeadless {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+#[wasm_bindgen]
+impl PdfMcpHeadless {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> Self {
+        Self {
+            server: std::cell::RefCell::new(pdfcraft_automation::mcp::McpServer::new(
+                agent_automation(),
+            )),
+            id: std::cell::Cell::new(None),
+        }
+    }
+    pub fn open_bytes(&self, bytes: Vec<u8>, _format: &str) -> Result<u32, JsValue> {
+        if bytes.len() > 32 * 1024 * 1024 {
+            return Err(error("PDF exceeds 32 MiB."));
+        }
+        let mut automation = agent_automation();
+        let id = automation
+            .session_mut()
+            .open("Document.pdf", None, std::sync::Arc::new(bytes), None)
+            .map_err(|_| {
+                error("The PDF could not be opened. Password-protected files are not supported.")
+            })?;
+        let number = u32::try_from(id.0).map_err(|_| error("Invalid PDF document id"))?;
+        *self
+            .server
+            .try_borrow_mut()
+            .map_err(|_| error("PDF is busy"))? =
+            pdfcraft_automation::mcp::McpServer::new(automation);
+        self.id.set(Some(id));
+        Ok(number)
+    }
+    pub fn save_bytes(&self, _format: &str) -> Result<Vec<u8>, JsValue> {
+        let server = self.server.try_borrow().map_err(|_| error("PDF is busy"))?;
+        let id = self.id.get().ok_or_else(|| error("No PDF document"))?;
+        server
+            .automation()
+            .session()
+            .save_bytes(id)
+            .map(|bytes| bytes.as_ref().clone())
+            .map_err(|_| error("The PDF could not be serialized."))
+    }
+    pub fn mark_saved(&self, bytes: Vec<u8>) -> Result<(), JsValue> {
+        let mut server = self
+            .server
+            .try_borrow_mut()
+            .map_err(|_| error("PDF is busy"))?;
+        let id = self.id.get().ok_or_else(|| error("No PDF document"))?;
+        server
+            .automation_mut()
+            .session_mut()
+            .mark_saved(id, std::sync::Arc::new(bytes), None)
+            .map_err(|_| error("The saved PDF could not be acknowledged."))
+    }
+    pub fn message(&self, message: &str) -> Result<Option<String>, JsValue> {
+        Ok(self
+            .server
+            .try_borrow_mut()
+            .map_err(|_| error("MCP server is busy"))?
+            .handle_line(message))
+    }
+}
 #[derive(Clone)]
 struct Snapshot {
     native: HostSnapshot,

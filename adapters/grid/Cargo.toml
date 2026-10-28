@@ -9,6 +9,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 gridcraft-engine = { path = "../../upstream/checkouts/gridcraft/crates/engine" }
+gridcraft-mcp = { path = "../../upstream/checkouts/gridcraft/crates/mcp" }
 gridcraft-xlsx = { path = "../../upstream/checkouts/gridcraft/crates/xlsx" }
 gridcraft-ui-egui = { path = "../../upstream/checkouts/gridcraft/crates/ui-egui" }
 egui = "=0.36.2"

@@ -25,7 +25,9 @@
     "Other"
   ],
   "main": "./out/src/entrypoints/pdf.js",
+  "activationEvents": ["onStartupFinished"],
   "contributes": {
+    "mcpServerDefinitionProviders": [{ "id": "craft.pdf.mcp", "label": "Craft PDF" }],
     "customEditors": [
       {
         "viewType": "craft.pdf.preview",

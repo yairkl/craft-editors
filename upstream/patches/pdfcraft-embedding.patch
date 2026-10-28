@@ -1,3 +1,35 @@
+diff --git a/crates/automation/src/lib.rs b/crates/automation/src/lib.rs
+index e94354021f95ae5b642f49185b3599c7bdebdd9b..77a09c365b4a0adb6643476de79958578bc14a1a 100644
+--- a/crates/automation/src/lib.rs
++++ b/crates/automation/src/lib.rs
+@@ -184,6 +184,11 @@ impl Automation {
+         &self.session
+     }
+ 
++    /// Access the document session when the automation server is embedded by a host.
++    pub fn session_mut(&mut self) -> &mut Session {
++        &mut self.session
++    }
++
+     /// Save `bytes` that a caller writes on the session's behalf, such as `pdfcraft-cli run`
+     /// saving a rendered page. With a root, it is confined like a tool's own output (a relative
+     /// path resolves inside it). Written atomically either way (#2166), except to something
+diff --git a/crates/automation/src/mcp.rs b/crates/automation/src/mcp.rs
+index 84cc21b258f22bb258bb1e61395e230bb2186e36..9ed7755574e78023906053610bbb81c57e035dd3 100644
+--- a/crates/automation/src/mcp.rs
++++ b/crates/automation/src/mcp.rs
+@@ -86,6 +86,11 @@ impl McpServer {
+         &self.automation
+     }
+ 
++    /// Access the automation session when embedding the MCP server in a host.
++    pub fn automation_mut(&mut self) -> &mut Automation {
++        &mut self.automation
++    }
++
+     /// Serve until `input` reaches end of file.
+     pub fn serve(&mut self, mut input: impl BufRead, mut output: impl Write) -> std::io::Result<()> {
+         let mut buf = Vec::new();
 diff --git a/crates/engine/src/lib.rs b/crates/engine/src/lib.rs
 index f11671bf85c2fe8c3bdc3f3d01be50b4d1c77494..a29c07e746859e360da846d2a346096a36b5f021 100644
 --- a/crates/engine/src/lib.rs

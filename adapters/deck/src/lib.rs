@@ -3,6 +3,195 @@
 include!("../../native/runtime.rs");
 use deckcraft_engine::{DocState, Session};
 use deckcraft_ui_egui::{Services, SlideApp};
+
+struct AgentBackend(std::rc::Rc<std::cell::RefCell<State>>);
+impl deckcraft_mcp::Backend for AgentBackend {
+    fn call(
+        &mut self,
+        method: &str,
+        params: serde_json::Value,
+    ) -> Result<serde_json::Value, String> {
+        let mut state = self
+            .0
+            .try_borrow_mut()
+            .map_err(|_| "Presentation is busy".to_owned())?;
+        if method == "engine.commands" {
+            return serde_json::to_value(state.document.app.session.commands())
+                .map_err(|e| e.to_string());
+        }
+        if state
+            .document
+            .app
+            .session
+            .active()
+            .is_some_and(|doc| doc.composition.is_some() || doc.interaction.is_some())
+        {
+            return Err("Finish the active presentation edit before using agent tools".into());
+        }
+        if method == "ui.text" {
+            let text = params
+                .get("text")
+                .and_then(serde_json::Value::as_str)
+                .ok_or("Missing text")?;
+            let result = state
+                .document
+                .app
+                .session
+                .type_text(text)
+                .map_err(|e| e.to_string());
+            state.observe();
+            state.context.request_repaint();
+            return result;
+        }
+        let (command, args) = if method == "engine.execute" || method == "command" {
+            let command = params
+                .get("command")
+                .and_then(serde_json::Value::as_str)
+                .ok_or("Missing command")?;
+            (
+                command,
+                params
+                    .get("params")
+                    .cloned()
+                    .unwrap_or_else(|| serde_json::json!({})),
+            )
+        } else if method == "document.inspect" {
+            (method, params)
+        } else {
+            return Err("This operation is not available in the embedded editor".into());
+        };
+        if command.starts_with("file.")
+            || command.starts_with("ui.")
+            || command.starts_with("app.")
+            || command.starts_with("window.")
+            || command.starts_with("show.")
+            || matches!(command, "edit.undo" | "edit.redo")
+        {
+            return Err("This operation is managed by the VS Code host".into());
+        }
+        let result = state
+            .document
+            .app
+            .session
+            .execute(command, &args)
+            .map_err(|e| e.to_string());
+        state.observe();
+        state.context.request_repaint();
+        result
+    }
+    fn has_ui(&self) -> bool {
+        false
+    }
+    fn describe(&self) -> String {
+        "live VS Code presentation".into()
+    }
+}
+
+#[wasm_bindgen]
+impl NativeViewer {
+    pub fn mcp_message(&self, message: &str) -> Result<Option<String>, JsValue> {
+        let mut agent = self
+            .agent
+            .try_borrow_mut()
+            .map_err(|_| error("Agent server is busy"))?;
+        let server = agent.get_or_insert_with(|| {
+            Box::new(deckcraft_mcp::Server::new(Box::new(AgentBackend(
+                self.state.clone(),
+            ))))
+        });
+        let server = server
+            .downcast_mut::<deckcraft_mcp::Server>()
+            .ok_or_else(|| error("Invalid agent server"))?;
+        Ok(server.handle_line(message))
+    }
+}
+
+struct SharedHeadless(std::rc::Rc<std::cell::RefCell<deckcraft_mcp::Headless>>);
+impl deckcraft_mcp::Backend for SharedHeadless {
+    fn call(
+        &mut self,
+        method: &str,
+        params: serde_json::Value,
+    ) -> Result<serde_json::Value, String> {
+        self.0
+            .try_borrow_mut()
+            .map_err(|_| "Presentation is busy".to_owned())?
+            .call(method, params)
+    }
+    fn has_ui(&self) -> bool {
+        false
+    }
+    fn describe(&self) -> String {
+        "headless presentation".into()
+    }
+}
+
+#[wasm_bindgen]
+pub struct DeckMcpHeadless {
+    backend: std::rc::Rc<std::cell::RefCell<deckcraft_mcp::Headless>>,
+    server: std::cell::RefCell<deckcraft_mcp::Server>,
+}
+impl Default for DeckMcpHeadless {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+#[wasm_bindgen]
+impl DeckMcpHeadless {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> Self {
+        let backend = std::rc::Rc::new(std::cell::RefCell::new(deckcraft_mcp::Headless::new()));
+        let server = std::cell::RefCell::new(deckcraft_mcp::Server::new(Box::new(SharedHeadless(
+            backend.clone(),
+        ))));
+        Self { backend, server }
+    }
+    pub fn open_bytes(&self, bytes: Vec<u8>) -> Result<(), JsValue> {
+        if bytes.len() > 32 * 1024 * 1024 {
+            return Err(error("Presentation exceeds 32 MiB."));
+        }
+        let doc = deckcraft_pptx::import(&bytes)
+            .map_err(|_| error("The presentation could not be opened."))?;
+        let mut session = Session::new();
+        session.add_document(DocState::new(doc, None, "Presentation.pptx".into()));
+        self.backend
+            .try_borrow_mut()
+            .map_err(|_| error("Presentation is busy"))?
+            .session = session;
+        Ok(())
+    }
+    pub fn save_bytes(&self) -> Result<Vec<u8>, JsValue> {
+        let backend = self
+            .backend
+            .try_borrow()
+            .map_err(|_| error("Presentation is busy"))?;
+        let doc = backend
+            .session
+            .active()
+            .ok_or_else(|| error("No presentation"))?;
+        deckcraft_pptx::export(&doc.doc)
+            .map_err(|_| error("The presentation could not be serialized."))
+    }
+    pub fn mark_saved(&self) -> Result<(), JsValue> {
+        let mut backend = self
+            .backend
+            .try_borrow_mut()
+            .map_err(|_| error("Presentation is busy"))?;
+        let doc = backend
+            .session
+            .active_mut()
+            .ok_or_else(|| error("No presentation"))?;
+        doc.saved_doc = doc.doc.clone();
+        Ok(())
+    }
+    pub fn message(&self, message: &str) -> Result<Option<String>, JsValue> {
+        Ok(self
+            .server
+            .try_borrow_mut()
+            .map_err(|_| error("MCP server is busy"))?
+            .handle_line(message))
+    }
+}
 #[derive(Clone)]
 struct Snapshot {
     native: DocState,

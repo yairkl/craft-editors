@@ -11,6 +11,7 @@ crate-type = ["cdylib", "rlib"]
 pdfcraft-render = { path = "../../upstream/checkouts/pdfcraft/crates/render" }
 wasm-bindgen = "=0.2.129"
 pdfcraft-engine = { path = "../../upstream/checkouts/pdfcraft/crates/engine" }
+pdfcraft-automation = { path = "../../upstream/checkouts/pdfcraft/crates/automation" }
 pdfcraft-ui-egui = { path = "../../upstream/checkouts/pdfcraft/crates/ui-egui" }
 egui = "=0.36.2"
 eframe = { version = "=0.36.2", default-features = false, features = ["glow", "default_fonts"] }

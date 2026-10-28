@@ -25,7 +25,9 @@
     "Other"
   ],
   "main": "./out/src/entrypoints/powerpoint.js",
+  "activationEvents": ["onStartupFinished"],
   "contributes": {
+    "mcpServerDefinitionProviders": [{ "id": "craft.powerpoint.mcp", "label": "Craft PowerPoint" }],
     "customEditors": [
       {
         "viewType": "craft.powerpoint.preview",

@@ -1,11 +1,14 @@
 import { strict as assert } from 'node:assert';
 import * as vscode from 'vscode';
 import * as path from 'node:path';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, rm, symlink, writeFile } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
+import { createInterface } from 'node:readline';
+import { once } from 'node:events';
 import type { EditingProvider } from '../../src/editing';
 import type { RenderResult } from '../../src/rendering';
 import { assertIsolation, fixture, root, selected } from '../environment';
-interface Api { editing: EditingProvider; onDidRender: vscode.Event<RenderResult> }
+interface Api { editing: EditingProvider; onDidRender: vscode.Event<RenderResult>; mcp?: { command: string; args: string[]; env: Record<string, string> } }
 interface State { readMode?: boolean; zoom: number; draft?: string; rotations?: number[] }
 export async function run(): Promise<void> {
   assertIsolation();
@@ -15,6 +18,9 @@ export async function run(): Promise<void> {
   for (const descriptor of selected.filter(d => ['pdf', 'svg'].includes(d.format))) {
     const extension = vscode.extensions.getExtension<Api>(descriptor.id); assert.ok(extension);
     const api = await extension.activate(); assert.ok(api.editing);
+    const engine = descriptor.format === 'pdf' ? 'pdf' : 'vector';
+    const runtime = require.resolve(path.join(extension.extensionPath, `media/engines/${engine}/node/viewer.js`));
+    assert.equal(require.cache[runtime], undefined, 'Agent WASM should not load before an agent connects');
     const original = await vscode.workspace.fs.readFile(fixture(`minimal.${descriptor.format}`));
     const uri = vscode.Uri.joinPath(directory, `roundtrip.${descriptor.format}`);
     await vscode.workspace.fs.writeFile(uri, original);
@@ -30,6 +36,104 @@ export async function run(): Promise<void> {
     };
     let doc = await open(uri);
     assert.equal(doc.dirty, false);
+    if (descriptor.format === 'pdf') {
+      assert.ok(api.mcp);
+      const client = agent(api.mcp);
+      const tool = (name: string, args: object) => client('tools/call', { name, arguments: args });
+      const listing = await client('tools/list', {});
+      assert.ok(listing.tools?.some(entry => entry.name === 'page_rotate'));
+      assert.ok(!listing.tools?.some(entry => entry.name === 'command_run'));
+      const rejectedBatch = await client.batch([{ jsonrpc: '2.0', id: 99, method: 'tools/call', params: { name: 'command_run', arguments: {} } }]);
+      assert.equal(rejectedBatch.error.code, -32600, 'Batches cannot bypass host routing or tool restrictions');
+      const opened = await tool('doc_open', { path: uri.fsPath });
+      assert.equal(opened.isError, false);
+      const id = (JSON.parse(opened.content?.[0]?.text ?? '{}') as { doc: number }).doc;
+      assert.ok(Number.isSafeInteger(id));
+      assert.equal((await tool('page_render', { doc: id, page: 1, dpi: 72 })).isError, false);
+      assert.equal((await tool('page_rotate', { doc: id, pages: [1], degrees: 90 })).isError, false);
+      assert.equal((await doc.request('test:inspect') as State).rotations?.[0], 90);
+      await waitFor(() => doc.dirty);
+      assert.equal((await tool('edit_undo', { doc: id })).isError, false);
+      assert.equal((await doc.request('test:inspect') as State).rotations?.[0], 0);
+      await doc.request('test:pdf-draft', { text: 'Agent safety draft' });
+      assert.equal((await tool('page_rotate', { doc: id, pages: [1], degrees: 90 })).isError, true, 'An active PDF draft must not be overwritten by an agent');
+      assert.equal((await tool('edit_undo', { doc: id })).isError, true, 'Agent history must not discard an active PDF draft');
+      assert.ok((await doc.request('test:inspect') as State).draft?.includes('Agent safety draft'));
+      await api.editing.revertCustomDocument(doc, cancellation.token);
+      client.close();
+      const closedUri = vscode.Uri.joinPath(directory, 'agent-closed.pdf');
+      await vscode.workspace.fs.writeFile(closedUri, original);
+      const closed = agent(api.mcp);
+      const closedTool = (name: string, args: object) => closed('tools/call', { name, arguments: args });
+      const closedOpen = await closedTool('doc_open', { path: closedUri.fsPath });
+      assert.equal(closedOpen.isError, false);
+      const closedId = (JSON.parse(closedOpen.content?.[0]?.text ?? '{}') as { doc: number }).doc;
+      assert.equal((await closedTool('page_rotate', { doc: closedId, pages: [1], degrees: 90 })).isError, false);
+      assert.deepEqual(await vscode.workspace.fs.readFile(closedUri), original);
+      const external = Buffer.from('external change');
+      await vscode.workspace.fs.writeFile(closedUri, external);
+      assert.equal((await closedTool('doc_save', { doc: closedId })).isError, true, 'Headless PDF save must detect external changes');
+      assert.deepEqual(await vscode.workspace.fs.readFile(closedUri), external);
+      await vscode.workspace.fs.writeFile(closedUri, original);
+      assert.equal((await closedTool('doc_save', { doc: closedId })).isError, false);
+      const savedInfo = await closedTool('doc_info', { doc: closedId });
+      assert.equal((JSON.parse(savedInfo.content?.[0]?.text ?? '{}') as { document: { dirty: boolean } }).document.dirty, false);
+      closed.close();
+      const closedDoc = await open(closedUri);
+      assert.equal((await closedDoc.request('test:inspect') as State).rotations?.[0], 90);
+      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+      await vscode.commands.executeCommand('vscode.openWith', uri, descriptor.preview);
+    }
+    if (descriptor.format === 'svg') {
+      assert.ok(api.mcp);
+      const client = agent(api.mcp);
+      const tool = (name: string, args: object) => client('tools/call', { name, arguments: args });
+      let agentPath = uri.fsPath;
+      if (process.platform !== 'win32') {
+        const alias = vscode.Uri.joinPath(directory, 'agent-live-alias.svg');
+        await rm(alias.fsPath, { force: true }); await symlink(uri.fsPath, alias.fsPath); agentPath = alias.fsPath;
+      }
+      assert.equal((await tool('open_file', { path: agentPath })).isError, false);
+      const initialText = await doc.request('test:text');
+      assert.equal((await tool('add_text', { x: 25, y: 260, text: 'live vector agent', size: 24 })).isError, false);
+      assert.ok(String(await doc.request('test:text')).includes('live vector agent'));
+      await waitFor(() => doc.dirty);
+      assert.equal((await tool('undo', {})).isError, false);
+      assert.equal(await doc.request('test:text'), initialText);
+      client.close();
+      const closedUri = vscode.Uri.joinPath(directory, 'agent-closed.svg');
+      await vscode.workspace.fs.writeFile(closedUri, original);
+      const closed = agent(api.mcp);
+      const closedTool = (name: string, args: object) => closed('tools/call', { name, arguments: args });
+      assert.equal((await closedTool('open_file', { path: closedUri.fsPath })).isError, false);
+      assert.equal((await closedTool('add_text', { x: 25, y: 260, text: 'closed vector agent', size: 24 })).isError, false);
+      assert.deepEqual(await vscode.workspace.fs.readFile(closedUri), original);
+      assert.equal((await closedTool('save_file', {})).isError, false);
+      const savedVector = await closedTool('inspect_document', {});
+      assert.equal((JSON.parse(savedVector.content?.[0]?.text ?? '{}') as { dirty: boolean }).dirty, false);
+      closed.close();
+      const closedDoc = await open(closedUri);
+      assert.ok(String(await closedDoc.request('test:text')).includes('closed vector agent'));
+      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+      await vscode.commands.executeCommand('vscode.openWith', uri, descriptor.preview);
+      const textUri = vscode.Uri.joinPath(directory, 'agent-text-dirty.svg');
+      await vscode.workspace.fs.writeFile(textUri, original);
+      const textDoc = await vscode.workspace.openTextDocument(textUri);
+      await vscode.window.showTextDocument(textDoc);
+      const edit = new vscode.WorkspaceEdit(); edit.insert(textUri, new vscode.Position(0, 0), '<!-- unsaved -->\n');
+      assert.ok(await vscode.workspace.applyEdit(edit)); assert.equal(textDoc.isDirty, true);
+      const guarded = agent(api.mcp);
+      let dirtyPath = textUri.fsPath;
+      if (process.platform !== 'win32') {
+        const alias = vscode.Uri.joinPath(directory, 'agent-text-alias.svg');
+        await rm(alias.fsPath, { force: true }); await symlink(textUri.fsPath, alias.fsPath); dirtyPath = alias.fsPath;
+      }
+      assert.equal((await guarded('tools/call', { name: 'open_file', arguments: { path: dirtyPath } })).isError, true, 'Agent must not ignore unsaved text-editor changes, including symlink aliases');
+      guarded.close();
+      await vscode.commands.executeCommand('workbench.action.files.revert');
+      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+      await vscode.commands.executeCommand('vscode.openWith', uri, descriptor.preview);
+    }
     if (descriptor.format === 'pdf') {
       await doc.request('test:command', { command: 'create.blank' });
       assert.equal(doc.dirty, false, 'Unsupported multi-document workflows cannot replace the host document');
@@ -86,7 +190,15 @@ export async function run(): Promise<void> {
       const nativeUri = vscode.Uri.joinPath(directory, 'native.vectorcraft');
       await vscode.workspace.fs.writeFile(nativeUri, new Uint8Array(nativeBytes));
       await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+      assert.ok(api.mcp);
+      const nativeAgent = agent(api.mcp);
+      const nativeTool = (name: string, args: object) => nativeAgent('tools/call', { name, arguments: args });
+      assert.equal((await nativeTool('open_file', { path: nativeUri.fsPath })).isError, false);
+      assert.equal((await nativeTool('add_text', { x: 20, y: 240, text: 'native vector agent', size: 24 })).isError, false);
+      assert.equal((await nativeTool('save_file', {})).isError, false);
+      nativeAgent.close();
       const native = await open(nativeUri);
+      assert.ok(String(await native.request('test:text')).includes('native vector agent'));
       await native.request('test:command', { command, params: { ...params, width: 99 } });
       assert.ok(await vscode.workspace.save(nativeUri));
       await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
@@ -125,4 +237,26 @@ function receipt(api: Api): Promise<RenderResult> {
 async function waitFor(predicate: () => boolean): Promise<void> {
   const deadline = Date.now() + 5000;
   while (!predicate()) { if (Date.now() > deadline) throw new Error('Graphics lifecycle timed out'); await new Promise(resolve => setTimeout(resolve, 25)); }
+}
+
+function agent(config: NonNullable<Api['mcp']>) {
+  const child = spawn(config.command, config.args, { env: { ...process.env, ...config.env }, stdio: ['pipe', 'pipe', 'pipe'] });
+  const lines = createInterface({ input: child.stdout });
+  type Reply = { isError?: boolean; content?: { text?: string }[]; tools?: { name: string }[] };
+  const pending = new Map<number, { resolve(value: Reply): void; reject(error: Error): void }>();
+  let sequence = 0;
+  lines.on('line', line => { const response = JSON.parse(line) as { id: number; result: Reply }; const waiter = pending.get(response.id); if (waiter) { pending.delete(response.id); waiter.resolve(response.result); } });
+  child.on('exit', () => { for (const waiter of pending.values()) waiter.reject(new Error('MCP proxy exited')); pending.clear(); });
+  const call = (method: string, params: object): Promise<Reply> => new Promise((resolve, reject) => {
+    const id = ++sequence; const timer = setTimeout(() => { pending.delete(id); reject(new Error('MCP request timed out')); }, 15000);
+    pending.set(id, { resolve: value => { clearTimeout(timer); resolve(value); }, reject: error => { clearTimeout(timer); reject(error); } });
+    child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n');
+  });
+  return Object.assign(call, {
+    close: () => child.stdin.end(),
+    batch: async (requests: object[]): Promise<{ error: { code: number } }> => {
+      const response = once(lines, 'line', { signal: AbortSignal.timeout(15000) }); child.stdin.write(JSON.stringify(requests) + '\n');
+      const [line] = await response; return JSON.parse(String(line));
+    },
+  });
 }

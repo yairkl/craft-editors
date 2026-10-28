@@ -64,8 +64,8 @@
       "patches": [
         {
           "path": "upstream/patches/pdfcraft-embedding.patch",
-          "sha256": "c70a0c756b32b3b46c257bd2b13432f64c431ca9229515169e80938ed9202c10",
-          "purpose": "Delegate file lifecycle and history to VS Code; omit standalone chrome and restricted branding.",
+          "sha256": "52a9838b3c17a65ec9be853d8efcd1435c8ea5510c564bfc65522624fe5b2717",
+          "purpose": "Delegate file lifecycle and history to the embedding host, provide host snapshots, and expose the automation session for embedded MCP requests.",
           "removalCondition": "Remove when upstream exposes equivalent embedding services."
         }
       ]
@@ -112,8 +112,8 @@
       "patches": [
         {
           "path": "upstream/patches/vectorcraft-embedding.patch",
-          "sha256": "799090be607cb12f6a96881b900c27a0646775ed60782980f6712b12b76b48d3",
-          "purpose": "Delegate file lifecycle and history to VS Code; omit standalone chrome and restricted branding.",
+          "sha256": "c4f9a5b71ff23e6aa3c1c7866d30a7c0e9dd3fd594ce2b8be7292034a3fed9f7",
+          "purpose": "Delegate file lifecycle and history to VS Code, omit standalone chrome and restricted branding, and allow the MCP crate to build for WebAssembly without native path writes.",
           "removalCondition": "Remove when upstream exposes equivalent embedding services."
         }
       ]

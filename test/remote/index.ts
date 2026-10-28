@@ -1,8 +1,10 @@
 import { strict as assert } from 'node:assert';
 import * as vscode from 'vscode';
+import { spawn } from 'node:child_process';
+import { createInterface } from 'node:readline';
 interface Frame { rendered: boolean; failure?: string; nonBackgroundPixels: number }
 interface Doc { dirty: boolean; request(operation: string, fields?: Record<string, unknown>): Promise<unknown> }
-interface Api { onDidRender: vscode.Event<Frame>; editing: { getDocument(uri: vscode.Uri): Doc | undefined; saveCustomDocumentAs(doc: Doc, uri: vscode.Uri, token: vscode.CancellationToken): Promise<void>; revertCustomDocument(doc: Doc, token: vscode.CancellationToken): Promise<void>; backupCustomDocument(doc: Doc, context: {destination:vscode.Uri}, token: vscode.CancellationToken): Promise<vscode.CustomDocumentBackup> } }
+interface Api { onDidRender: vscode.Event<Frame>; mcp?: { command: string; args: string[]; env: Record<string, string> }; editing: { getDocument(uri: vscode.Uri): Doc | undefined; saveCustomDocumentAs(doc: Doc, uri: vscode.Uri, token: vscode.CancellationToken): Promise<void>; revertCustomDocument(doc: Doc, token: vscode.CancellationToken): Promise<void>; backupCustomDocument(doc: Doc, context: {destination:vscode.Uri}, token: vscode.CancellationToken): Promise<vscode.CustomDocumentBackup> } }
 export async function run(): Promise<void> {
   assert.equal(vscode.env.remoteName, 'ssh-remote', 'Must run through actual Remote SSH');
   const workspace = vscode.workspace.workspaceFolders?.[0]; assert.ok(workspace);
@@ -25,6 +27,108 @@ export async function run(): Promise<void> {
       const doc = api.editing.getDocument(uri); assert.ok(doc); return doc;
     };
     let doc = await open();
+    if (format === 'xlsx') {
+      assert.ok(api.mcp);
+      const client = agent(api.mcp);
+      const tool = (name: string, args: object) => client('tools/call', { name, arguments: args });
+      assert.equal((await tool('open_workbook', { path: uri.fsPath })).isError, false);
+      assert.equal((await tool('set_cell', { cell: 'A7', input: 'SSH agent' })).isError, false);
+      assert.equal(await doc.request('test:cell', { sheet: 0, row: 6, col: 0 }), 'SSH agent');
+      assert.equal((await tool('undo', {})).isError, false);
+      assert.equal(await doc.request('test:cell', { sheet: 0, row: 6, col: 0 }), '');
+      client.close();
+      const closedUri = vscode.Uri.joinPath(workspace.uri, 'remote tests עברית/agent-closed.xlsx');
+      await vscode.workspace.fs.writeFile(closedUri, await vscode.workspace.fs.readFile(vscode.Uri.joinPath(workspace.uri, 'fixtures/minimal.xlsx')));
+      const closedClient = agent(api.mcp);
+      const closedTool = (name: string, args: object) => closedClient('tools/call', { name, arguments: args });
+      assert.equal((await closedTool('open_workbook', { path: closedUri.fsPath })).isError, false);
+      assert.equal((await closedTool('set_cell', { cell: 'A7', input: 'SSH closed' })).isError, false);
+      assert.equal((await closedTool('save_workbook', {})).isError, false);
+      closedClient.close();
+    }
+    if (format === 'docx') {
+      assert.ok(api.mcp);
+      const client = agent(api.mcp);
+      const tool = (name: string, args: object) => client('tools/call', { name, arguments: args });
+      const initial = await doc.request('test:text');
+      assert.equal((await tool('open_document', { path: uri.fsPath })).isError, false);
+      assert.equal((await tool('type_text', { text: 'SSH Word agent ' })).isError, false);
+      assert.ok(String(await doc.request('test:text')).includes('SSH Word agent'));
+      assert.equal((await tool('execute', { command: 'edit.undo' })).isError, false);
+      assert.equal(await doc.request('test:text'), initial);
+      client.close();
+      const closedUri = vscode.Uri.joinPath(workspace.uri, 'remote tests עברית/agent-closed.docx');
+      await vscode.workspace.fs.writeFile(closedUri, await vscode.workspace.fs.readFile(vscode.Uri.joinPath(workspace.uri, 'fixtures/minimal.docx')));
+      const closed = agent(api.mcp);
+      const closedTool = (name: string, args: object) => closed('tools/call', { name, arguments: args });
+      assert.equal((await closedTool('open_document', { path: closedUri.fsPath })).isError, false);
+      assert.equal((await closedTool('type_text', { text: 'SSH closed Word ' })).isError, false);
+      assert.equal((await closedTool('save_document', {})).isError, false);
+      closed.close();
+    }
+    if (format === 'pptx') {
+      assert.ok(api.mcp);
+      const client = agent(api.mcp);
+      const tool = (name: string, args: object) => client('tools/call', { name, arguments: args });
+      const initial = await doc.request('test:text');
+      assert.equal((await tool('open_presentation', { path: uri.fsPath })).isError, false);
+      assert.equal((await tool('add_text_box', { x: 20, y: 20, w: 200, h: 40, text: 'SSH slide agent' })).isError, false);
+      assert.ok(String(await doc.request('test:text')).includes('SSH slide agent'));
+      assert.equal((await tool('run_command', { command: 'edit.undo' })).isError, false);
+      assert.equal(await doc.request('test:text'), initial);
+      client.close();
+      const closedUri = vscode.Uri.joinPath(workspace.uri, 'remote tests עברית/agent-closed.pptx');
+      await vscode.workspace.fs.writeFile(closedUri, await vscode.workspace.fs.readFile(vscode.Uri.joinPath(workspace.uri, 'fixtures/minimal.pptx')));
+      const closed = agent(api.mcp);
+      const closedTool = (name: string, args: object) => closed('tools/call', { name, arguments: args });
+      assert.equal((await closedTool('open_presentation', { path: closedUri.fsPath })).isError, false);
+      assert.equal((await closedTool('add_text_box', { x: 20, y: 20, w: 200, h: 40, text: 'SSH closed slide' })).isError, false);
+      assert.equal((await closedTool('save_presentation', {})).isError, false);
+      closed.close();
+    }
+    if (format === 'svg') {
+      assert.ok(api.mcp);
+      const client = agent(api.mcp);
+      const tool = (name: string, args: object) => client('tools/call', { name, arguments: args });
+      const initial = await doc.request('test:text');
+      assert.equal((await tool('open_file', { path: uri.fsPath })).isError, false);
+      assert.equal((await tool('add_text', { x: 30, y: 280, text: 'SSH vector agent', size: 24 })).isError, false);
+      assert.ok(String(await doc.request('test:text')).includes('SSH vector agent'));
+      assert.equal((await tool('undo', {})).isError, false);
+      assert.equal(await doc.request('test:text'), initial);
+      client.close();
+      const closedUri = vscode.Uri.joinPath(workspace.uri, 'remote tests עברית/agent-closed.svg');
+      await vscode.workspace.fs.writeFile(closedUri, await vscode.workspace.fs.readFile(vscode.Uri.joinPath(workspace.uri, 'fixtures/minimal.svg')));
+      const closed = agent(api.mcp);
+      const closedTool = (name: string, args: object) => closed('tools/call', { name, arguments: args });
+      assert.equal((await closedTool('open_file', { path: closedUri.fsPath })).isError, false);
+      assert.equal((await closedTool('add_text', { x: 30, y: 280, text: 'SSH closed vector', size: 24 })).isError, false);
+      assert.equal((await closedTool('save_file', {})).isError, false);
+      closed.close();
+    }
+    if (format === 'pdf') {
+      assert.ok(api.mcp);
+      const client = agent(api.mcp);
+      const tool = (name: string, args: object) => client('tools/call', { name, arguments: args });
+      const opened = await tool('doc_open', { path: uri.fsPath });
+      assert.equal(opened.isError, false);
+      const id = (JSON.parse(opened.content?.[0]?.text ?? '{}') as { doc: number }).doc;
+      assert.equal((await tool('page_rotate', { doc: id, pages: [1], degrees: 90 })).isError, false);
+      assert.equal((await doc.request('test:inspect') as { rotations: number[] }).rotations[0], 90);
+      assert.equal((await tool('edit_undo', { doc: id })).isError, false);
+      assert.equal((await doc.request('test:inspect') as { rotations: number[] }).rotations[0], 0);
+      client.close();
+      const closedUri = vscode.Uri.joinPath(workspace.uri, 'remote tests עברית/agent-closed.pdf');
+      await vscode.workspace.fs.writeFile(closedUri, await vscode.workspace.fs.readFile(vscode.Uri.joinPath(workspace.uri, 'fixtures/minimal.pdf')));
+      const closed = agent(api.mcp);
+      const closedTool = (name: string, args: object) => closed('tools/call', { name, arguments: args });
+      const closedOpen = await closedTool('doc_open', { path: closedUri.fsPath });
+      assert.equal(closedOpen.isError, false);
+      const closedId = (JSON.parse(closedOpen.content?.[0]?.text ?? '{}') as { doc: number }).doc;
+      assert.equal((await closedTool('page_rotate', { doc: closedId, pages: [1], degrees: 90 })).isError, false);
+      assert.equal((await closedTool('doc_save', { doc: closedId })).isError, false);
+      closed.close();
+    }
     if (format === 'xlsx') await doc.request('test:edit', { row: 5, col: 0, text: 'SSH שלום' });
     else if (format === 'pdf') await doc.request('test:command', { command: 'page.rotate' });
     else if (format === 'svg') await doc.request('test:command', { command: 'text.create', params: { x: 40, y: 280, text: 'SSH שלום', size: 28 } });
@@ -60,4 +164,20 @@ export async function run(): Promise<void> {
     console.log(`REMOTE_SSH_PASS ${name}`);
   }
   await vscode.workspace.fs.writeFile(vscode.Uri.joinPath(workspace.uri, 'remote-results.json'), Buffer.from(JSON.stringify(results, null, 2)));
+}
+
+function agent(config: NonNullable<Api['mcp']>) {
+  const child = spawn(config.command, config.args, { env: { ...process.env, ...config.env }, stdio: ['pipe', 'pipe', 'pipe'] });
+  const lines = createInterface({ input: child.stdout });
+  type Reply = { isError?: boolean; content?: { text?: string }[] };
+  const pending = new Map<number, { resolve(value: Reply): void; reject(error: Error): void }>();
+  let id = 0;
+  lines.on('line', line => { const response = JSON.parse(line) as { id: number; result: Reply }; const waiter = pending.get(response.id); if (waiter) { pending.delete(response.id); waiter.resolve(response.result); } });
+  child.on('exit', () => { for (const waiter of pending.values()) waiter.reject(new Error('MCP proxy exited')); pending.clear(); });
+  const call = (method: string, params: object): Promise<Reply> => new Promise((resolve, reject) => {
+    const requestId = ++id; const timer = setTimeout(() => { pending.delete(requestId); reject(new Error('MCP request timed out')); }, 15000);
+    pending.set(requestId, { resolve: value => { clearTimeout(timer); resolve(value); }, reject: error => { clearTimeout(timer); reject(error); } });
+    child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: requestId, method, params }) + '\n');
+  });
+  return Object.assign(call, { close: () => child.stdin.end() });
 }
