@@ -34,8 +34,15 @@ export function collectNotices(selected) {
         mkdirSync(dirname(target), { recursive: true });
         copyFileSync(file, target);
       }
+      const notices = [...new Set(files.map(file => `${key}/${relative(source, file)}`))];
+      const isMplRegistry = pkg.license === 'MPL-2.0' && pkg.source === 'registry+https://github.com/rust-lang/crates.io-index';
+      if (isMplRegistry) {
+        mkdirSync(join(destination, 'licenses'), { recursive: true });
+        copyFileSync(resolve(root, 'licenses/MPL-2.0.txt'), join(destination, 'licenses/MPL-2.0.txt'));
+        notices.push('licenses/MPL-2.0.txt');
+      }
       inventory.push({ name: pkg.name, ...(pkg.name === 'self_cell' ? { licenseChoice: 'Apache-2.0' } : {}), version: pkg.version, license: pkg.license, source: pkg.source,
-        repository: pkg.repository, notices: [...new Set(files.map(file => `${key}/${relative(source, file)}`))].sort() });
+        repository: pkg.repository, ...(isMplRegistry ? { sourceArchive: `https://crates.io/api/v1/crates/${pkg.name}/${pkg.version}/download` } : {}), notices: notices.sort() });
     }
     // Workspace license/NOTICE and font assets often live above a crate directory.
     for (const sourceRoot of [...sourceRoots].sort()) {
