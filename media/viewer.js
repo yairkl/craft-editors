@@ -102,7 +102,9 @@ window.addEventListener('message', async ({ data }) => {
         }
         case 'serialize': {
           const snapshot = viewer.serialize(data.flush === true, data.format);
-          result = { token: snapshot.token, bytes: snapshot.bytes.buffer.slice(snapshot.bytes.byteOffset, snapshot.bytes.byteOffset + snapshot.bytes.byteLength) };
+          const view = snapshot.bytes;
+          const bytes = view.byteOffset === 0 && view.byteLength === view.buffer.byteLength ? view.buffer : view.buffer.slice(view.byteOffset, view.byteOffset + view.byteLength);
+          result = { token: snapshot.token, bytes };
           break;
         }
         case 'history': viewer.restore_history(data.token); result = data.token; break;

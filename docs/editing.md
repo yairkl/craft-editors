@@ -20,7 +20,9 @@ Each WASM adapter retains native model snapshots for each committed edit. Pendin
 
 Before overwriting the original, Save checks that its SHA-256 still matches the baseline. If another program changed it, Save asks the user to use Save As or Revert. This check is not an atomic compare-and-swap: generic filesystem providers cannot guarantee against a concurrent external write between checking and writing. External changes are checked at Save; automatic file watching/reload is not implemented.
 
-Backups store serialized committed document bytes and the original baseline digest in VS Code's backup location. Recovery restores unsaved content; session undo history is not persisted. Revert reloads current source bytes and resets the native model. Backup content is not encrypted by this integration.
+Backups store serialized committed document bytes and the original baseline digest in a compact binary format in VS Code's backup location. Recovery restores unsaved content; session undo history is not persisted. Older JSON/base64 backups are still readable, but older extension versions cannot read the new binary backups if the extension is downgraded before recovery. Revert reloads current source bytes and resets the native model. Backup content is not encrypted by this integration.
+
+The host reuses whole byte buffers when sending document data and copies partial views only to avoid exposing unrelated bytes. Rapid edits share one in-flight cache refresh, with another refresh if changes arrive during it. VS Code/webview messaging and WASM ownership still require transfers or copies; document history and crash-recovery state cannot be treated as zero-copy.
 
 Tracked per-program patches add a small service hook for file commands and undo/redo. The native app delegates those commands before its standalone filesystem behavior can run. Standalone title bars and File tabs are hidden because VS Code owns file lifecycle; other native editing controls are enabled. Native AutoSave requests also pass through the host.
 
