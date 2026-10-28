@@ -1,6 +1,6 @@
 # Cross-platform editor verification
 
-The platform smoke suite runs the same packaged WebAssembly engines on Linux, macOS and Windows. PRs affecting product code, fixtures or the platform suite run Linux, Apple Silicon macOS and Windows. Release runs add Intel macOS and the full editor suites on each platform. The release is published only after every matrix job succeeds.
+The platform smoke suite runs the same packaged WebAssembly engines on Linux, Apple Silicon macOS and Windows. PRs affecting product code, fixtures or the platform suite run the smoke tests on all three platforms. Release runs add the full editor suites on each platform. The release is published only after every matrix job succeeds.
 
 The smoke suite opens each independent editor with all five extensions installed, checks rendering and bundled Hebrew glyph coverage, edits a fixture, exercises real operating-system undo/redo, saves and reopens the file, switches light/dark themes without dirtying the document, and checks that keyboard events reach the webview's host listener. Spreadsheet checks also copy and paste with real keyboard input and the system clipboard, edit a closed workbook through the MCP proxy, and round-trip quoted Unicode CSV with a non-default delimiter. Test files are disposable copies of repository fixtures.
 
