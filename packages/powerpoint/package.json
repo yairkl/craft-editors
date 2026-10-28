@@ -1,5 +1,5 @@
 {
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "craft-vscode-dev",
   "license": "MIT",
   "preview": true,
@@ -25,9 +25,16 @@
     "Other"
   ],
   "main": "./out/src/entrypoints/powerpoint.js",
-  "activationEvents": ["onStartupFinished"],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "contributes": {
-    "mcpServerDefinitionProviders": [{ "id": "craft.powerpoint.mcp", "label": "Craft PowerPoint" }],
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "craft.powerpoint.mcp",
+        "label": "Craft PowerPoint"
+      }
+    ],
     "customEditors": [
       {
         "viewType": "craft.powerpoint.preview",

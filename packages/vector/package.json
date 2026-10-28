@@ -1,5 +1,5 @@
 {
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "craft-vscode-dev",
   "license": "MIT",
   "preview": true,
@@ -25,9 +25,16 @@
     "Other"
   ],
   "main": "./out/src/entrypoints/vector.js",
-  "activationEvents": ["onStartupFinished"],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "contributes": {
-    "mcpServerDefinitionProviders": [{ "id": "craft.vector.mcp", "label": "Craft Vector" }],
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "craft.vector.mcp",
+        "label": "Craft Vector"
+      }
+    ],
     "customEditors": [
       {
         "viewType": "craft.vector.preview",
