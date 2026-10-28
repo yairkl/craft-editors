@@ -1,0 +1,9 @@
+# Cross-platform editor verification
+
+The platform smoke suite runs the same packaged WebAssembly engines on Linux, macOS and Windows. PRs affecting product code, fixtures or the platform suite run Linux, Apple Silicon macOS and Windows. Release runs add Intel macOS and the full editor suites on each platform. The release is published only after every matrix job succeeds.
+
+The smoke suite opens each independent editor with all five extensions installed, checks rendering and bundled Hebrew glyph coverage, edits a fixture, exercises real operating-system undo/redo, saves and reopens the file, switches light/dark themes without dirtying the document, and checks that keyboard events reach the webview's host listener. Spreadsheet checks also copy and paste with real keyboard input and the system clipboard and edit a closed workbook through the MCP proxy. Test files are disposable copies of repository fixtures.
+
+Native key input uses `xdotool` on Linux, `osascript`/System Events on macOS, and Windows Forms SendKeys on Windows. A runner that cannot provide an interactive desktop or the necessary input permissions fails rather than silently substituting synthetic events. Linux installs `xdotool` and `xclip` for the suite. The cross-platform test exercises VS Code, not Cursor; Cursor and a macOS-to-Remote SSH session require separate verification. The fixture screenshots uploaded on failure expire after one day.
+
+The Linux build job packages one set of VSIX files, and matrix jobs extract their engines from those artifacts instead of rebuilding or uploading redundant installer copies. On releases, Linux additionally runs the Remote SSH container test. Tests run under isolated VS Code profiles; do not run native input tests against a session containing personal work.

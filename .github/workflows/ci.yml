@@ -13,6 +13,7 @@ jobs:
       build: ${{ steps.select.outputs.build }}
       wheel: ${{ steps.select.outputs.wheel }}
       remote_script: ${{ steps.select.outputs.remote_script }}
+      platform: ${{ steps.select.outputs.platform }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -129,8 +130,61 @@ jobs:
             dist/vsix/SHA256SUMS
           retention-days: 1
 
+  platform-smoke:
+    needs: [changes, rendering]
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.platform == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '["ubuntu-latest","macos-latest","macos-15-intel","windows-latest"]' || '["ubuntu-latest","macos-latest","windows-latest"]') }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: craft-vsix-${{ github.run_id }}
+          path: dist/vsix
+      - run: python scripts/unpack-test-renderers.py
+      - name: Install Linux keyboard test tools
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y xdotool xclip
+      - name: Platform smoke (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npm run test:platform
+      - name: Platform smoke (macOS and Windows)
+        if: runner.os != 'Linux'
+        run: npm run test:platform
+      - name: Full platform suites
+        if: github.event_name == 'workflow_dispatch' && runner.os != 'Linux'
+        shell: bash
+        run: |
+          set -e
+          npm run test:integration
+          npm run test:rendering
+          npm run test:editing
+          npm run test:office
+          npm run test:languages
+          npm run test:graphics
+          npm run test:theme
+          npm run test:installed
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: platform-screenshots-${{ matrix.os }}
+          path: artifacts/platform/*.png
+          if-no-files-found: ignore
+          retention-days: 1
+
   publish-release:
-    needs: rendering
+    needs: [rendering, platform-smoke]
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:

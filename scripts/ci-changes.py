@@ -5,7 +5,7 @@ import subprocess
 
 
 def classify(paths):
-    result = {'code': False, 'fixtures': False, 'build': False, 'wheel': False, 'remote_script': False}
+    result = {'code': False, 'fixtures': False, 'build': False, 'wheel': False, 'remote_script': False, 'platform': False}
     for path in paths:
         if path.startswith(('docs/', '.github/')) or path in {
             'README.md', 'CONTRIBUTING.md', 'LICENSE', '.gitattributes', '.gitignore',
@@ -14,9 +14,16 @@ def classify(paths):
             continue
         if path.startswith('integration-tests/fixtures/') or path == 'scripts/generate-fixtures.py':
             result['fixtures'] = True
+            result['build'] = True
+            result['platform'] = True
             continue
         if path == 'scripts/test-remote-ssh.cjs':
             result['remote_script'] = True
+            continue
+        if path.startswith('test/platform/') or path in {'scripts/test-extensions.cjs', 'scripts/unpack-test-renderers.py'}:
+            result['code'] = True
+            result['build'] = True
+            result['platform'] = True
             continue
         if path.startswith('test/') or path.startswith('integration-tests/') or path.startswith('scripts/test-'):
             result['code'] = True
@@ -24,6 +31,7 @@ def classify(paths):
         # Unknown paths are treated as product changes rather than silently skipping checks.
         result['code'] = True
         result['build'] = True
+        result['platform'] = True
         if path.startswith(('adapters/grid/', 'adapters/native/')) or path in {'adapters/Cargo.toml', 'adapters/Cargo.lock'}:
             result['wheel'] = True
         if path in {'package.json', 'package-lock.json'}:
