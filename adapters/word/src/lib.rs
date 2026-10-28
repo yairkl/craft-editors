@@ -165,7 +165,7 @@ struct Document {
     observed: std::cell::Cell<u64>,
 }
 impl Document {
-    fn open(bytes: &[u8], commands: Commands, _format: &str) -> Result<Self, JsValue> {
+    fn open(bytes: Vec<u8>, commands: Commands, _format: &str) -> Result<Self, JsValue> {
         static FALLBACK_FONT_COUNT: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
         let count = FALLBACK_FONT_COUNT.get_or_init(|| {
             FALLBACK_FONTS
@@ -176,7 +176,7 @@ impl Document {
         if *count == 0 {
             return Err(error("The bundled fallback fonts could not be loaded."));
         }
-        let doc = wordcraft_engine::io::open_bytes("Document.docx", bytes)
+        let doc = wordcraft_engine::io::open_bytes("Document.docx", &bytes)
             .map_err(|_| error("The Word document could not be opened."))?;
         let saved = doc.clone();
         let services = Services {
@@ -218,8 +218,9 @@ impl Document {
         self.saved = snapshot.doc.clone();
         self.app.session.dirty = self.app.session.doc != self.saved;
     }
-    fn serialize(snapshot: &Snapshot) -> Result<Vec<u8>, JsValue> {
+    fn serialize(snapshot: &Snapshot) -> Result<std::borrow::Cow<'_, [u8]>, JsValue> {
         wordcraft_engine::io::save_bytes("Document.docx", &snapshot.doc)
+            .map(std::borrow::Cow::Owned)
             .map_err(|_| error("The Word document could not be serialized."))
     }
     fn flush(&mut self, _preserve_draft: bool) -> Result<(), JsValue> {

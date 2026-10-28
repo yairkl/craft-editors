@@ -216,7 +216,7 @@ struct Document {
     native_format: bool,
 }
 impl Document {
-    fn open(bytes: &[u8], commands: Commands, _format: &str) -> Result<Self, JsValue> {
+    fn open(bytes: Vec<u8>, commands: Commands, _format: &str) -> Result<Self, JsValue> {
         static FONT: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
         FONT.get_or_init(|| {
             FALLBACK_FONTS
@@ -226,10 +226,10 @@ impl Document {
         });
         let native = _format == "vectorcraft";
         let doc = if native {
-            vectorcraft_format::load(bytes)
+            vectorcraft_format::load(&bytes)
                 .map_err(|_| error("The VectorCraft file could not be opened."))?
         } else {
-            let svg = std::str::from_utf8(bytes).map_err(|_| error("Invalid SVG text."))?;
+            let svg = std::str::from_utf8(&bytes).map_err(|_| error("Invalid SVG text."))?;
             if let Some(editing) = vectorcraft_svg::editing(svg).filter(|editing| editing.intact) {
                 let native = vectorcraft_format::base64_decode(&editing.data)
                     .ok_or_else(|| error("The SVG editing data is invalid."))?;
@@ -280,8 +280,8 @@ impl Document {
             doc.mark_saved_as(&snapshot.native.doc);
         }
     }
-    fn serialize(snapshot: &Snapshot) -> Result<Vec<u8>, JsValue> {
-        Ok(if snapshot.native_format {
+    fn serialize(snapshot: &Snapshot) -> Result<std::borrow::Cow<'_, [u8]>, JsValue> {
+        Ok(std::borrow::Cow::Owned(if snapshot.native_format {
             vectorcraft_format::save_file(&snapshot.native.doc)
         } else {
             let native = vectorcraft_format::save_file(&snapshot.native.doc);
@@ -290,7 +290,7 @@ impl Document {
                 ..Default::default()
             };
             vectorcraft_svg::export_full(&snapshot.native.doc, &options, Some(&native)).take_bytes()
-        })
+        }))
     }
     fn flush(&mut self, _preserve_draft: bool) -> Result<(), JsValue> {
         Ok(())

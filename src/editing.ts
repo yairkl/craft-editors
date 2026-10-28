@@ -4,6 +4,9 @@ import { readProbeDocument } from './document';
 import { type DocumentFormat } from '../protocol/probe';
 import { renderHtml, type RenderResult } from './rendering';
 import { fileLimit, fileLimitError } from './file-limits';
+import { decodeBackup, encodeBackup } from './backup';
+import { exactArrayBuffer } from './byte-buffer';
+import { CoalescedTask } from './coalesced-task';
 import { WebviewRpc } from './rpc';
 
 const digest = (bytes: Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
@@ -29,6 +32,11 @@ export class EditableDocument implements vscode.CustomDocument {
   disposed = false;
   private tail: Promise<unknown> = Promise.resolve();
   private readonly disposables: vscode.Disposable[] = [];
+  readonly cacheRefresh = new CoalescedTask(async () => {
+    if (this.disposed || !this.rpc) return;
+    const cached = snapshot(await this.request('serialize', { flush: false }), this.limit);
+    if (!this.disposed && cached.token === this.token) this.cache = cached.bytes;
+  });
   constructor(readonly uri: vscode.Uri, public cache: Uint8Array, public diskBytes: Uint8Array, public diskDigest: string, readonly recovered: boolean, readonly format: DocumentFormat) {
     if (recovered) this.savedToken = -1;
   }
@@ -66,9 +74,8 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
     let cache = disk.bytes;
     let baseline = digest(disk.bytes);
     if (context.backupId) {
-      const backup = JSON.parse(Buffer.from(await vscode.workspace.fs.readFile(vscode.Uri.parse(context.backupId))).toString('utf8')) as Record<string, unknown>;
-      if (backup.version !== 1 || typeof backup.bytes !== 'string' || typeof backup.diskDigest !== 'string' || !/^[a-f0-9]{64}$/.test(backup.diskDigest)) throw new Error('This document backup is incompatible.');
-      cache = bytes(Buffer.from(backup.bytes, 'base64'), fileLimit(uri));
+      const backup = decodeBackup(await vscode.workspace.fs.readFile(vscode.Uri.parse(context.backupId)));
+      cache = bytes(backup.bytes, fileLimit(uri));
       baseline = backup.diskDigest;
     }
     cancelled(token);
@@ -107,8 +114,8 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
       if (m.type === 'render:ready' && !ready) {
         ready = true;
         void panel.webview.postMessage({ type: 'render:open', version: 1, sessionId, format: doc.format, editable: true,
-          bytes: Uint8Array.from(doc.cache).buffer,
-          ...(doc.dirty || doc.format === 'csv' ? { originalBytes: Uint8Array.from(doc.diskBytes).buffer } : {}),
+          bytes: exactArrayBuffer(doc.cache),
+          ...(doc.dirty || doc.format === 'csv' ? { originalBytes: exactArrayBuffer(doc.diskBytes) } : {}),
           recovered: doc.dirty, capture });
       } else if (m.type === 'editor:changed' && ready && integer(m.before) && integer(m.after) && m.before !== m.after) {
         const before = m.before, after = m.after;
@@ -117,10 +124,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
           undo: () => this.history(doc, before), redo: () => this.history(doc, after) });
         // Retain the latest committed model for webview reconstruction; only the
         // WASM engine edits the model. This is not a second editable model.
-        void doc.request('serialize', { flush: false }).then(value => {
-          const cached = snapshot(value, doc.limit);
-          if (!doc.disposed && cached.token === doc.token) doc.cache = cached.bytes;
-        }).catch(() => {});
+        doc.cacheRefresh.request();
       } else if (m.type === 'editor:command' && typeof m.command === 'string') {
         if (capture && m.command === 'edit.undo') this.testUndoRequests++;
         if (capture && m.command === 'edit.redo') this.testRedoRequests++;
@@ -197,7 +201,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
       if (doc.disposed) return;
       let revision: unknown = 0;
       if (doc.rpc) {
-        try { revision = await doc.request('restore', { bytes: Uint8Array.from(data.bytes).buffer }); }
+        try { revision = await doc.request('restore', { bytes: exactArrayBuffer(data.bytes) }); }
         catch (error) { if (doc.rpc && !doc.disposed) throw error; }
       }
       // VS Code can finish Revert after closing a Save As source panel. The
@@ -210,7 +214,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
   }
   async backupCustomDocument(doc: EditableDocument, context: vscode.CustomDocumentBackupContext, token: vscode.CancellationToken): Promise<vscode.CustomDocumentBackup> {
     const data = await this.serialize(doc, doc.format === 'csv' ? 'xlsx' : doc.format); cancelled(token);
-    const body = Buffer.from(JSON.stringify({ version: 1, diskDigest: doc.diskDigest, bytes: Buffer.from(data.bytes).toString('base64') }));
+    const body = encodeBackup(data.bytes, doc.diskDigest);
     await vscode.workspace.fs.writeFile(context.destination, body);
     if (data.token === doc.token) doc.cache = data.bytes;
     return { id: context.destination.toString(), delete: () => { void vscode.workspace.fs.delete(context.destination).then(() => {}, () => {}); } };

@@ -1,5 +1,6 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import * as vscode from 'vscode';
+import { exactArrayBuffer } from './byte-buffer';
 import { ProbeSession } from '../protocol/probe';
 import { ProbeDocument, readProbeDocument } from './document';
 import type { DocumentFormat } from '../protocol/probe';
@@ -53,7 +54,7 @@ class ProbeProvider implements vscode.CustomReadonlyEditorProvider<ProbeDocument
         // Copy only the document's bytes, never an oversized backing Buffer.
         void panel.webview.postMessage({
           type: 'open', version: 1, sessionId, format: document.format,
-          bytes: Uint8Array.from(document.bytes).buffer,
+          bytes: exactArrayBuffer(document.bytes),
         }).then(delivered => { if (!delivered) finish(false); }, () => finish(false));
       } else if (action === 'verified') finish(true);
       else if (action === 'mismatch') finish(false);

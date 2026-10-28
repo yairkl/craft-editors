@@ -165,7 +165,7 @@ impl NativeViewer {
             return Err(error("Document exceeds the 1 GiB adapter limit."));
         }
         let commands = Commands::default();
-        let document = Document::open(&bytes, commands.clone(), &format)?;
+        let document = Document::open(bytes, commands.clone(), &format)?;
         let snapshots = BTreeMap::from([(0, document.snapshot())]);
         let state = Rc::new(RefCell::new(State {
             document,
@@ -252,7 +252,7 @@ impl NativeViewer {
         js_sys::Reflect::set(
             &result,
             &"bytes".into(),
-            &js_sys::Uint8Array::from(bytes.as_slice()),
+            &js_sys::Uint8Array::from(bytes.as_ref()),
         )?;
         js_sys::Reflect::set(&result, &"token".into(), &state.token.into())?;
         Ok(result.into())
@@ -276,7 +276,7 @@ impl NativeViewer {
             .state
             .try_borrow_mut()
             .map_err(|_| error("Editor is busy."))?;
-        let original = Document::open(&bytes, Commands::default(), &state.format)?;
+        let original = Document::open(bytes, Commands::default(), &state.format)?;
         state.document.mark_saved(&original.snapshot());
         Ok(())
     }
@@ -300,7 +300,7 @@ impl NativeViewer {
             .state
             .try_borrow_mut()
             .map_err(|_| error("Editor is busy."))?;
-        let mut document = Document::open(&bytes, state.commands.clone(), &state.format)?;
+        let mut document = Document::open(bytes, state.commands.clone(), &state.format)?;
         document.set_theme(&state.context, state.dark);
         let token = state
             .next_token

@@ -1,5 +1,6 @@
 import { execFileSync, spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
+import { decodeBackup } from '../../src/backup';
 import { strict as assert } from 'node:assert';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
@@ -381,8 +382,14 @@ export async function run(): Promise<void> {
     await edit(remoteDoc, '50');
     const backupUri = vscode.Uri.joinPath(directory, 'recovery.backup');
     const backup = await api.editing.backupCustomDocument(remoteDoc, { destination: backupUri }, cancellation.token);
+    const snapshot = decodeBackup(await vscode.workspace.fs.readFile(backupUri));
+    const legacyUri = vscode.Uri.joinPath(directory, 'legacy-recovery.backup');
+    await vscode.workspace.fs.writeFile(legacyUri, Buffer.from(JSON.stringify({ version: 1, diskDigest: snapshot.diskDigest, bytes: Buffer.from(snapshot.bytes).toString('base64') })));
     const recoveredUri = vscode.Uri.joinPath(directory, 'recovered.xlsx');
     await vscode.workspace.fs.writeFile(recoveredUri, memory);
+    const legacy = await api.editing.openCustomDocument(recoveredUri, { backupId: legacyUri.toString(), untitledDocumentData: undefined }, cancellation.token);
+    assert.deepEqual(legacy.cache, snapshot.bytes, 'Backups from earlier versions remain recoverable');
+    legacy.dispose();
     const recovered = await api.editing.openCustomDocument(recoveredUri, { backupId: backup.id, untitledDocumentData: undefined }, cancellation.token);
     const panel = api.editing.createRecoveryTestPanel();
     const rendered = renderedPromise(api);

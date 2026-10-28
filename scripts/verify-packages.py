@@ -26,6 +26,9 @@ for name in [*PROGRAMS, 'suite']:
             prefix = f'extension/media/engines/{engine}/'
             assert prefix + 'viewer_bg.wasm' in files and prefix + 'viewer.js' in files
             assert 'extension/out/src/file-limits.js' in files
+            assert 'extension/out/src/backup.js' in files
+            assert 'extension/out/src/byte-buffer.js' in files
+            assert 'extension/out/src/coalesced-task.js' in files
             if name == 'spreadsheets':
                 assert prefix + 'node/viewer.js' in files and prefix + 'node/viewer_bg.wasm' in files
                 assert 'extension/out/src/mcp.js' in files
