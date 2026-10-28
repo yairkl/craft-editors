@@ -20,7 +20,7 @@ An optional **Craft Suite** pack groups the five extensions. Legacy `.doc` and `
 
 ## Install
 
-1. Download the desired VSIX files from the [latest beta release](https://github.com/yairkl/craft-vscode/releases/tag/v0.1.3-beta.1). Desktop VS Code 1.102 or newer, or a compatible Cursor build, is required.
+1. Download the desired VSIX files from the [latest beta release](https://github.com/yairkl/craft-vscode/releases). Desktop VS Code 1.102 or newer, or a compatible Cursor build, is required.
 2. Open the Extensions view, select **… → Install from VSIX…**, and choose each downloaded file. Reload when prompted. No Rust, Node.js or standalone Craft app is needed.
 3. Open a supported file. To use Craft Vector for an SVG or `.vectorcraft` file, choose **Reopen Editor With… → Craft Vector**. For Remote SSH, install the desired extension on the SSH host and reload the remote window.
 
