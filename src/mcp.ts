@@ -1,3 +1,4 @@
+import { fileLimit, fileLimitError } from './file-limits';
 import { createHash } from 'node:crypto';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
@@ -5,7 +6,7 @@ import { EditableDocument, EditingProvider } from './editing';
 import { registerAgentServer } from './mcp-transport';
 import { findLive, hasDirtyText, readAgentFile, sameResource, writeNewCopy } from './mcp-files';
 
-interface Headless { message(input: string): string | undefined; csv_features(): string; mark_saved(input: Uint8Array): void; free(): void }
+interface Headless { message(input: string): string | undefined; open_bytes(input: Uint8Array, name: string): void; save_bytes(name: string): Uint8Array; csv_features(): string; mark_saved(): void; free(): void }
 interface Message { jsonrpc?: string; id?: string | number; method?: string; params?: { name?: string; arguments?: Record<string, unknown> } }
 const hash = (data: Uint8Array): string => createHash('sha256').update(data).digest('hex');
 const result = (id: unknown, text: string, error = false): string => JSON.stringify({ jsonrpc: '2.0', id, result: { content: [{ type: 'text', text }], isError: error } });
@@ -28,12 +29,6 @@ class WorkbookSession {
     if (!uri || !/\.(xlsx|csv)$/i.test(uri.path)) throw new Error('Choose an XLSX or CSV workbook. Relative paths require an open workspace.');
     return uri;
   }
-  private execute(command: string, params: object): { content?: { text: string }[]; isError?: boolean } {
-    const reply = parseReply(this.backend.message(JSON.stringify({ jsonrpc: '2.0', id: 0, method: 'tools/call', params: { name: 'execute_command', arguments: { command, params } } })));
-    if (reply.error) throw new Error(reply.error.message ?? 'GridCraft operation failed.');
-    if (!reply.result || reply.result.isError) throw new Error(reply.result?.content?.[0]?.text ?? 'GridCraft operation failed.');
-    return reply.result;
-  }
   private async live(): Promise<EditableDocument | undefined> { return this.uri ? findLive(this.provider, this.uri) : undefined; }
   private async checkMode(): Promise<EditableDocument | undefined> {
     const live = await this.live();
@@ -52,7 +47,7 @@ class WorkbookSession {
     if (live) { this.uri = live.uri; this.mode = 'live'; this.changed = false; return result(request.id, 'Opened the live workbook, including unsaved edits.'); }
     const data = await readAgentFile(uri);
     if (await findLive(this.provider, uri) || await hasDirtyText(uri)) throw new Error('The workbook was opened or modified during loading; retry the request.');
-    this.execute('file.open', { name: path.basename(uri.path), base64: Buffer.from(data).toString('base64') });
+    this.backend.open_bytes(data, path.basename(uri.path));
     this.uri = uri; this.mode = 'headless'; this.baseline = hash(data); this.changed = false;
     return result(request.id, 'Opened the workbook in a headless session.');
   }
@@ -76,19 +71,16 @@ class WorkbookSession {
       const features = JSON.parse(this.backend.csv_features()) as string[];
       if (features.length) throw new Error(`CSV cannot preserve ${features.join(', ')}. Save as XLSX instead.`);
     }
-    const data = this.execute('file.saveBytes', { format: target.path.toLowerCase().endsWith('.csv') ? 'csv' : 'xlsx' });
-    const encoded = JSON.parse(data.content?.[0]?.text ?? '{}') as { base64?: unknown };
-    if (typeof encoded.base64 !== 'string') throw new Error('Could not serialize the workbook.');
+    const output = this.backend.save_bytes(path.basename(target.path));
     if (sameTarget) {
       const disk = await vscode.workspace.fs.readFile(target);
       if (hash(disk) !== this.baseline) throw new Error('The workbook changed on disk. Save to a different file.');
     }
     if (await findLive(this.provider, target) || ((await this.live()) && !recoveringCopy) || await hasDirtyText(target)) throw new Error('The workbook is open or modified in an editor. Save or close it before writing from a headless session.');
-    const output = Buffer.from(encoded.base64, 'base64');
-    if (output.byteLength > 32 * 1024 * 1024) throw new Error('The serialized workbook exceeds 32 MiB.');
+    if (output.byteLength > fileLimit(target)) throw fileLimitError(fileLimit(target));
     if (sameTarget) await vscode.workspace.fs.writeFile(target, output);
     else await writeNewCopy(target, output);
-    if (sameTarget) { this.baseline = hash(output); this.backend.mark_saved(output); this.changed = false; }
+    if (sameTarget) { this.baseline = hash(output); this.backend.mark_saved(); this.changed = false; }
     return result(request.id, 'Saved the workbook.');
   }
   async handle(line: string): Promise<string | undefined> {

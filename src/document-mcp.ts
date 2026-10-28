@@ -1,3 +1,4 @@
+import { fileLimit, fileLimitError } from './file-limits';
 import { createHash } from 'node:crypto';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
@@ -100,7 +101,7 @@ class DocumentSession {
     }
     if (this.mode !== 'headless') throw new Error('Open a document before saving.');
     const output = this.backend.save_bytes(path.extname(target.path).slice(1).toLowerCase());
-    if (output.byteLength > 32 * 1024 * 1024) throw new Error('The serialized document exceeds 32 MiB.');
+    if (output.byteLength > fileLimit(target)) throw fileLimitError(fileLimit(target));
     if (sameTarget && hash(await vscode.workspace.fs.readFile(target)) !== this.baseline) throw new Error('The document changed on disk. Save to a different file.');
     if (await findLive(this.provider, target) || ((await this.live()) && !recoveringCopy) || await hasDirtyText(target)) throw new Error('The document is open or modified in an editor. Save or close it before writing from a headless session.');
     if (sameTarget) await vscode.workspace.fs.writeFile(target, output);

@@ -25,7 +25,7 @@ export function stageExtensions({ development = false, allowMissingRenderers = f
     const manifest = JSON.parse(readFileSync(resolve(destination, 'package.json'), 'utf8'));
     const { engine } = extensions[name];
     if (engine) {
-      for (const file of ['host', 'document', 'rendering', 'editing', 'rpc']) copy(`out/src/${file}.js`);
+      for (const file of ['host', 'document', 'rendering', 'editing', 'rpc', 'file-limits']) copy(`out/src/${file}.js`);
       if (name === 'spreadsheets' || name === 'word' || name === 'powerpoint' || name === 'vector' || name === 'pdf') {
         for (const file of ['mcp-files', 'mcp-transport', 'mcp-proxy', name === 'spreadsheets' ? 'mcp' : 'document-mcp']) copy(`out/src/${file}.js`);
       }
