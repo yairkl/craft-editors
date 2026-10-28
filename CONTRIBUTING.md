@@ -25,6 +25,8 @@ The repository root is build tooling; extension manifests live under `packages/`
 
 For changes to rendering, build the adapters with `npm run renderers:build`, then run `npm run test:rendering` and visually inspect `artifacts/rendering/*.png`. Rust wrappers must pass `cargo +1.95.0 fmt --manifest-path adapters/grid/Cargo.toml -p craft-grid-viewer -p craft-pdf-viewer -p craft-word-viewer -p craft-deck-viewer -p craft-vector-viewer --check` and `cargo +1.95.0 clippy --manifest-path adapters/Cargo.toml --locked --target wasm32-unknown-unknown --no-deps -- -D warnings`. The rendering CI job builds the pinned engines and exercises real WebGL/CPU output in VS Code. Run `npm run test:editing` for spreadsheet lifecycle changes; it covers native input, persistence, history, recovery and failed writes.
 
+Rendering tests keep their synthetic zoom shortcuts inside the canvas so they do not activate workbench shortcuts or steal focus. Platform tests separately verify that keyboard events reach the host and exercise real keyboard input.
+
 Contributions are provided under the repository's MIT license. Third-party material must retain its applicable licensing and attribution.
 
 For shared host changes, run both `npm run test:editing` and `npm run test:office`, then package/archive/install checks. The Office suite tests native WordCraft/DeckCraft input through the real WASM engines, including save/reopen, history and recovery. `CRAFT_TEST_ONLY=word` or `powerpoint` can narrow local debugging; CI runs the full matrix.

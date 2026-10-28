@@ -50,15 +50,24 @@ export async function verifyPreview(viewer, format, canvas, units) {
       check(afterScroll[1] !== beforeScroll[1], 'Ordinary native wheel scrolling must still move the worksheet');
       check(viewer.zoom_percent() === initialZoom, 'Ordinary scrolling must not zoom');
       await wheel(-3, 1, false);
-      // Restore the native shortcut policy: Ctrl+Alt+plus/minus uses ten points.
-      for (const type of ['keydown', 'keyup']) canvas.dispatchEvent(new KeyboardEvent(type, { key: '=', code: 'Equal', ctrlKey: true, altKey: true, bubbles: true }));
-      await new Promise(resolve => setTimeout(resolve, 300));
-      check(viewer.zoom_percent() === initialZoom + 10, 'Native keyboard zoom must retain its original ten-point step');
-      for (const type of ['keydown', 'keyup']) canvas.dispatchEvent(new KeyboardEvent(type, { key: '-', code: 'Minus', ctrlKey: true, altKey: true, bubbles: true }));
-      await new Promise(resolve => setTimeout(resolve, 300));
-      check(viewer.zoom_percent() === initialZoom, 'Native keyboard zoom out must reverse');
-      canvas.dispatchEvent(new KeyboardEvent('keyup', { key: 'Control', code: 'ControlLeft', bubbles: true }));
-      canvas.dispatchEvent(new KeyboardEvent('keyup', { key: 'Alt', code: 'AltLeft', bubbles: true }));
+      // Test the native zoom keys without sending synthetic shortcuts to the
+      // host, where they can change workbench focus during this renderer test.
+      const stopSynthetic = event => { if (!event.isTrusted) event.stopPropagation(); };
+      canvas.addEventListener('keydown', stopSynthetic);
+      canvas.addEventListener('keyup', stopSynthetic);
+      try {
+        for (const type of ['keydown', 'keyup']) canvas.dispatchEvent(new KeyboardEvent(type, { key: '=', code: 'Equal', ctrlKey: true, altKey: true, bubbles: true }));
+        await new Promise(resolve => setTimeout(resolve, 300));
+        check(viewer.zoom_percent() === initialZoom + 10, 'Native keyboard zoom must retain its original ten-point step');
+        for (const type of ['keydown', 'keyup']) canvas.dispatchEvent(new KeyboardEvent(type, { key: '-', code: 'Minus', ctrlKey: true, altKey: true, bubbles: true }));
+        await new Promise(resolve => setTimeout(resolve, 300));
+        check(viewer.zoom_percent() === initialZoom, 'Native keyboard zoom out must reverse');
+        canvas.dispatchEvent(new KeyboardEvent('keyup', { key: 'Control', code: 'ControlLeft', bubbles: true }));
+        canvas.dispatchEvent(new KeyboardEvent('keyup', { key: 'Alt', code: 'AltLeft', bubbles: true }));
+      } finally {
+        canvas.removeEventListener('keydown', stopSynthetic);
+        canvas.removeEventListener('keyup', stopSynthetic);
+      }
       await frame();
     }
     check(['Craft smoke fixture', 'Quarterly overview'].includes(label), 'Expected fixture text was not parsed');
