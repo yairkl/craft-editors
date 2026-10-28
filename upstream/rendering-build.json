@@ -52,7 +52,7 @@
     },
     "pdf/viewer_bg.wasm": {
       "bytes": 48725866,
-      "sha256": "c8a38694e2d568eaaf0aa9b4b8a2d5b0070fbe5cffc1c4c3804ab9ce7a92908d"
+      "sha256": "845ab9a9c324f47ba75f1f70022dc1dad14ac4d9287852796e54c34e42321189"
     },
     "pdf/node/viewer.js": {
       "bytes": 164110,
@@ -60,7 +60,7 @@
     },
     "pdf/node/viewer_bg.wasm": {
       "bytes": 48725866,
-      "sha256": "c8a38694e2d568eaaf0aa9b4b8a2d5b0070fbe5cffc1c4c3804ab9ce7a92908d"
+      "sha256": "845ab9a9c324f47ba75f1f70022dc1dad14ac4d9287852796e54c34e42321189"
     },
     "word/viewer.js": {
       "bytes": 159767,
@@ -68,7 +68,7 @@
     },
     "word/viewer_bg.wasm": {
       "bytes": 44605646,
-      "sha256": "a89c4df04912f4c24f50fc706be46caaa1c0f8e7e7c9d3b3932265ac9c3bab10"
+      "sha256": "50beafe9bab856da0aa51214d458771635c844d75b213afd45ece012e211d711"
     },
     "word/node/viewer.js": {
       "bytes": 156265,
@@ -76,7 +76,7 @@
     },
     "word/node/viewer_bg.wasm": {
       "bytes": 44605646,
-      "sha256": "a89c4df04912f4c24f50fc706be46caaa1c0f8e7e7c9d3b3932265ac9c3bab10"
+      "sha256": "50beafe9bab856da0aa51214d458771635c844d75b213afd45ece012e211d711"
     },
     "deck/viewer.js": {
       "bytes": 88002,
@@ -84,7 +84,7 @@
     },
     "deck/viewer_bg.wasm": {
       "bytes": 27478043,
-      "sha256": "946beea9fbbc65779671989dfe23bac05ff872bd25bc89a2d73aeeff9c7c0508"
+      "sha256": "79196fe0be9b7b42b0e02fb090ad3f9364d578775d621c99b69fc38618fa4f20"
     },
     "deck/node/viewer.js": {
       "bytes": 84517,
@@ -92,7 +92,7 @@
     },
     "deck/node/viewer_bg.wasm": {
       "bytes": 27478043,
-      "sha256": "946beea9fbbc65779671989dfe23bac05ff872bd25bc89a2d73aeeff9c7c0508"
+      "sha256": "79196fe0be9b7b42b0e02fb090ad3f9364d578775d621c99b69fc38618fa4f20"
     },
     "deck/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
@@ -108,7 +108,7 @@
     },
     "vector/viewer_bg.wasm": {
       "bytes": 67839033,
-      "sha256": "51e1157d5ff6baac2975cd60d6ce16e2402782964fbe0b6c31023ac1d2c528a9"
+      "sha256": "93b120c56a2d1f2d3ac38c5cdb68dba29f915c6ede09a4b414b143b59db6f502"
     },
     "vector/node/viewer.js": {
       "bytes": 85152,
@@ -116,7 +116,7 @@
     },
     "vector/node/viewer_bg.wasm": {
       "bytes": 67839033,
-      "sha256": "51e1157d5ff6baac2975cd60d6ce16e2402782964fbe0b6c31023ac1d2c528a9"
+      "sha256": "93b120c56a2d1f2d3ac38c5cdb68dba29f915c6ede09a4b414b143b59db6f502"
     },
     "vector/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,

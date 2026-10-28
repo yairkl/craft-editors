@@ -188,7 +188,9 @@ impl NativeViewer {
                 canvas,
                 eframe::WebOptions {
                     // Let the containing editor resolve its own keybindings.
-                    should_stop_propagation: Box::new(|event| !matches!(event, egui::Event::Key { .. })),
+                    should_stop_propagation: Box::new(|event| {
+                        !matches!(event, egui::Event::Key { .. })
+                    }),
                     ..Default::default()
                 },
                 Box::new(move |cc| {
