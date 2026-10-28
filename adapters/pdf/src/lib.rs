@@ -110,14 +110,14 @@ impl PdfMcpHeadless {
         self.id.set(Some(id));
         Ok(number)
     }
-    pub fn save_bytes(&self, _format: &str) -> Result<Vec<u8>, JsValue> {
+    pub fn save_bytes(&self, _format: &str) -> Result<js_sys::Uint8Array, JsValue> {
         let server = self.server.try_borrow().map_err(|_| error("PDF is busy"))?;
         let id = self.id.get().ok_or_else(|| error("No PDF document"))?;
         server
             .automation()
             .session()
             .save_bytes(id)
-            .map(|bytes| bytes.as_ref().clone())
+            .map(|bytes| js_sys::Uint8Array::from(bytes.as_slice()))
             .map_err(|_| error("The PDF could not be serialized."))
     }
     pub fn mark_saved(&self, bytes: Vec<u8>) -> Result<(), JsValue> {
@@ -150,7 +150,7 @@ struct Document {
     id: DocId,
 }
 impl Document {
-    fn open(bytes: &[u8], commands: Commands, _format: &str) -> Result<Self, JsValue> {
+    fn open(bytes: Vec<u8>, commands: Commands, _format: &str) -> Result<Self, JsValue> {
         static PDF_FALLBACKS: &[pdfcraft_fonts::CraftFont] = &[pdfcraft_fonts::CraftFont {
             family: "Noto Sans Hebrew",
             style: "Regular",
@@ -170,10 +170,9 @@ impl Document {
             };
             host_command(&commands, mapped)
         }));
-        app.open_bytes("Document.pdf", None, bytes.to_vec())
-            .map_err(|_| {
-                error("The PDF could not be opened. Password-protected files are not supported.")
-            })?;
+        app.open_bytes("Document.pdf", None, bytes).map_err(|_| {
+            error("The PDF could not be opened. Password-protected files are not supported.")
+        })?;
         let (_, id) = app
             .active_ids()
             .ok_or_else(|| error("The PDF could not be opened."))?;
@@ -205,8 +204,8 @@ impl Document {
     }
     // Native tabs/close prompts are omitted; the host owns the saved revision.
     fn mark_saved(&mut self, _snapshot: &Snapshot) {}
-    fn serialize(snapshot: &Snapshot) -> Result<Vec<u8>, JsValue> {
-        Ok(snapshot.native.bytes.as_ref().clone())
+    fn serialize(snapshot: &Snapshot) -> Result<std::borrow::Cow<'_, [u8]>, JsValue> {
+        Ok(std::borrow::Cow::Borrowed(snapshot.native.bytes.as_slice()))
     }
     fn flush(&mut self, preserve_draft: bool) -> Result<(), JsValue> {
         if preserve_draft && self.app.host_pending() {

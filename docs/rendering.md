@@ -76,3 +76,11 @@ CRAFT_TEST_LARGE=1 CRAFT_TEST_ONLY=pdf xvfb-run -a npm run test:graphics
 ```
 
 The 256 MiB default and 1024 MiB ceiling are not performance guarantees. Files are read in full, Office archives can expand substantially, and large or complex documents, remote hosts and multiple open editors can consume far more memory. Benchmark realistic files across apps and platforms before increasing the limit broadly.
+
+### Buffer and backup measurements
+
+The host passes whole buffers to the webview without first duplicating them, and creates an exact-sized copy only for a partial or pooled view. The webview similarly reuses a complete serialized buffer. VS Code messaging and the JavaScript/WASM boundary still transfer or copy data, and native document models and undo snapshots require their own storage. Cache serialization is coalesced when edits arrive during an in-flight refresh.
+
+In one local Node.js 22 synthetic check, encoding 64 MiB as the previous JSON/base64 backup produced 89,478,592 bytes, took 291 ms, and reported a process RSS of 439 MiB. The binary backup produced 67,108,937 bytes, took 19 ms, and reported 183 MiB. These are single-process measurements on the Linux machine above, not peak memory or latency for the full editor. Old JSON backups remain readable; older extension versions cannot read the new binary format after a downgrade.
+
+On the same host, one end-to-end run of the padded 33 MiB PDF graphics suite reported 638,520 KiB maximum resident set and 33.30 seconds before these changes, versus 637,780 KiB and 31.33 seconds afterward. These single runs include test setup and other graphics checks; the small difference is not evidence of a reliable end-to-end improvement. Realistic complex documents and aggregate multi-process memory need separate profiling.

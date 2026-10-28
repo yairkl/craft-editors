@@ -200,7 +200,7 @@ struct Document {
     app: SlideApp,
 }
 impl Document {
-    fn open(bytes: &[u8], commands: Commands, _format: &str) -> Result<Self, JsValue> {
+    fn open(bytes: Vec<u8>, commands: Commands, _format: &str) -> Result<Self, JsValue> {
         static FONT: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
         FONT.get_or_init(|| {
             FALLBACK_FONTS
@@ -208,7 +208,7 @@ impl Document {
                 .map(|(_, bytes)| deckcraft_fonts::FontDb::global().add_font(bytes.to_vec()))
                 .sum()
         });
-        let doc = deckcraft_pptx::import(bytes)
+        let doc = deckcraft_pptx::import(&bytes)
             .map_err(|_| error("The presentation could not be opened."))?;
         let mut session = Session::new();
         session.add_document(DocState::new(doc, None, "Presentation.pptx".into()));
@@ -250,8 +250,9 @@ impl Document {
             doc.saved_doc = snapshot.native.doc.clone();
         }
     }
-    fn serialize(snapshot: &Snapshot) -> Result<Vec<u8>, JsValue> {
+    fn serialize(snapshot: &Snapshot) -> Result<std::borrow::Cow<'_, [u8]>, JsValue> {
         deckcraft_pptx::export(&snapshot.native.doc)
+            .map(std::borrow::Cow::Owned)
             .map_err(|_| error("The presentation could not be serialized."))
     }
     fn flush(&mut self, _preserve_draft: bool) -> Result<(), JsValue> {
