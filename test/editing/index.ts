@@ -36,9 +36,13 @@ export async function run(): Promise<void> {
   const original = await vscode.workspace.fs.readFile(fixture('minimal.xlsx'));
   if (process.env.CRAFT_TEST_LARGE === '1') {
     const largeUri = vscode.Uri.joinPath(directory, 'large.xlsx');
-    await vscode.workspace.fs.writeFile(largeUri, original);
-    execFileSync(process.platform === 'win32' ? 'python' : 'python3', ['-c',
-      'import sys, zipfile\nwith zipfile.ZipFile(sys.argv[1], "a", compression=zipfile.ZIP_STORED) as z: z.writestr("craft-large-test-padding", bytes(33 * 1024 * 1024))', largeUri.fsPath]);
+    if (process.env.CRAFT_REAL_XLSX) {
+      await vscode.workspace.fs.copy(vscode.Uri.file(process.env.CRAFT_REAL_XLSX), largeUri, { overwrite: true });
+    } else {
+      await vscode.workspace.fs.writeFile(largeUri, original);
+      execFileSync(process.platform === 'win32' ? 'python' : 'python3', ['-c',
+        'import sys, zipfile\nwith zipfile.ZipFile(sys.argv[1], "a", compression=zipfile.ZIP_STORED) as z: z.writestr("craft-large-test-padding", bytes(33 * 1024 * 1024))', largeUri.fsPath]);
+    }
     const size = (await vscode.workspace.fs.stat(largeUri)).size;
     assert.ok(size > 32 * 1024 * 1024);
     const started = Date.now();
@@ -50,14 +54,24 @@ export async function run(): Promise<void> {
     try { await vscode.workspace.fs.delete(agentCopy); } catch (error) { if ((error as { code?: string }).code !== 'FileNotFound') throw error; }
     assert.equal((await largeClient.call('tools/call', { name: 'save_workbook', arguments: { path: agentCopy.fsPath } })).result?.isError, false, 'Agent can save a large workbook');
     assert.ok((await vscode.workspace.fs.stat(agentCopy)).size > 0);
-    await vscode.workspace.fs.delete(agentCopy);
     largeClient.close();
+    const agentSaved = await open(api, agentCopy);
+    assert.equal(await agentSaved.request('test:cell', { sheet: 0, row: 5, col: 0 }), 'large agent');
+    await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+    await vscode.workspace.fs.delete(agentCopy);
     const large = await open(api, largeUri);
+    if (process.env.CRAFT_REAL_XLSX) assert.equal(await large.request('test:cell', { sheet: 0, row: 1, col: 3 }), '4', 'A formula in the content-filled workbook recalculates');
+    const lastRow = process.env.CRAFT_REAL_XLSX ? await large.request('test:cell', { sheet: 0, row: 30000, col: 0 }) : undefined;
+    if (process.env.CRAFT_REAL_XLSX) assert.equal(String(lastRow).length, 800, 'The final data row is present before editing');
     assert.equal(await edit(large, '21'), '21');
     assert.ok(await vscode.workspace.save(largeUri));
     await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
     const reopened = await open(api, largeUri);
     assert.equal(await cell(reopened), '21');
+    if (process.env.CRAFT_REAL_XLSX) {
+      assert.equal(await reopened.request('test:cell', { sheet: 0, row: 1, col: 3 }), '4');
+      assert.equal(await reopened.request('test:cell', { sheet: 0, row: 30000, col: 0 }), lastRow, 'The final data row survives saving');
+    }
     await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
     await vscode.workspace.fs.delete(largeUri);
     console.log(`Large XLSX (${size} bytes) opened, edited, saved and reopened in ${Date.now() - started} ms.`);
@@ -528,7 +542,7 @@ function createAgent(config: EditorApi['mcp']) {
     call(method: string, params: object): Promise<Response> {
       const id = ++sequence;
       return new Promise((resolve, reject) => {
-        const timer = setTimeout(() => { waiting.delete(id); reject(new Error(`MCP ${method} timed out`)); }, 15000);
+        const timer = setTimeout(() => { waiting.delete(id); reject(new Error(`MCP ${method} timed out`)); }, globalThis.process.env.CRAFT_REAL_XLSX ? 120000 : 15000);
         waiting.set(id, { resolve: value => { clearTimeout(timer); resolve(value); }, reject: error => { clearTimeout(timer); reject(error); } });
         process.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n');
       });

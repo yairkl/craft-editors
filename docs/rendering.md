@@ -75,7 +75,7 @@ CRAFT_TEST_LARGE=1 CRAFT_TEST_ONLY=spreadsheets xvfb-run -a npm run test:editing
 CRAFT_TEST_LARGE=1 CRAFT_TEST_ONLY=pdf xvfb-run -a npm run test:graphics
 ```
 
-The 256 MiB default and 1024 MiB ceiling are not performance guarantees. Files are read in full, Office archives can expand substantially, and large or complex documents, remote hosts and multiple open editors can consume far more memory. Benchmark realistic files across apps and platforms before increasing the limit broadly.
+The 256 MiB default and 1024 MiB ceiling are not performance guarantees. Files are read in full, Office archives can expand substantially, and large or complex documents, remote hosts and multiple open editors can consume far more memory. See [content-filled large-file verification](verification/large-files.md); benchmark additional realistic files across apps and platforms before increasing the limit broadly.
 
 ### Buffer and backup measurements
 

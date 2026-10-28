@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert';
 import * as vscode from 'vscode';
 import * as path from 'node:path';
 import { mkdir, rm, symlink, writeFile } from 'node:fs/promises';
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
 import { once } from 'node:events';
 import type { EditingProvider } from '../../src/editing';
@@ -36,11 +36,17 @@ export async function run(): Promise<void> {
       const doc = api.editing.getDocument(target); assert.ok(doc); return doc;
     };
     if (descriptor.format === 'pdf' && process.env.CRAFT_TEST_LARGE === '1') {
-      const marker = Buffer.from(original).lastIndexOf('startxref');
-      assert.ok(marker > 0, 'PDF fixture must have a cross-reference trailer');
-      const padding = Buffer.alloc(33 * 1024 * 1024, 32); padding[0] = 37; padding[padding.length - 1] = 10;
       const largeUri = vscode.Uri.joinPath(directory, 'large.pdf');
-      const big = Buffer.concat([original.subarray(0, marker), padding, original.subarray(marker)]);
+      let big: Uint8Array;
+      if (process.env.CRAFT_REAL_PDF) {
+        big = await vscode.workspace.fs.readFile(vscode.Uri.file(process.env.CRAFT_REAL_PDF));
+      } else {
+        const marker = Buffer.from(original).lastIndexOf('startxref');
+        assert.ok(marker > 0, 'PDF fixture must have a cross-reference trailer');
+        const padding = Buffer.alloc(33 * 1024 * 1024, 32); padding[0] = 37; padding[padding.length - 1] = 10;
+        big = Buffer.concat([original.subarray(0, marker), padding, original.subarray(marker)]);
+      }
+      assert.ok(big.byteLength > 32 * 1024 * 1024);
       await vscode.workspace.fs.writeFile(largeUri, big);
       const started = Date.now();
       assert.ok(api.mcp);
@@ -53,6 +59,10 @@ export async function run(): Promise<void> {
       await large.request('test:command', { command: 'page.rotate' });
       await waitFor(() => large.dirty);
       assert.ok(await vscode.workspace.save(largeUri), 'A large PDF can be saved');
+      if (process.env.CRAFT_REAL_PDF) {
+        const images = execFileSync('pdfimages', ['-list', largeUri.fsPath], { encoding: 'utf8' });
+        assert.match(images, /\b3600\s+3300\s+rgb\b/, 'The embedded image remains present after saving');
+      }
       await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
       const reopened = await open(largeUri);
       assert.equal((await reopened.request('test:inspect') as State).rotations?.[0], 90);
