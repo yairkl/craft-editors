@@ -15,3 +15,5 @@ The native interface follows VS Code’s light/dark theme on opening and while t
 Slideshow, Presenter View and recording launches are unavailable in the embedded editor: its webview cannot supply separate fullscreen audience and presenter displays. Use View > Reading View for an in-editor preview, or save the PPTX and present it with a standalone presentation application. Editing, animations preview, notes and normal saving remain available.
 
 The command ribbon starts collapsed to give the document more space. Its tab row stays visible; click a ribbon tab to show the tools when needed.
+
+When a headless agent saves to a different path, the destination must not already exist. Choose a new filename to avoid replacing another document.

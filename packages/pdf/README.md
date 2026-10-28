@@ -15,3 +15,5 @@ The beta verifies page rotation and persistence, native keyboard history, viewpo
 Desktop VS Code 1.102+, files up to 32 MiB. Linux is tested; Windows/macOS and actual SSH/WSL need beta testing. All processing stays local to the VS Code session. Licenses and notices are included under `notices/`.
 
 PDFs open in the native Read workspace with tool panels closed. Choose an editing tool when needed; normal VS Code saving remains available. This controls the PDF workspace, independently of VS Code temporary preview-tab preferences.
+
+When a headless agent saves to a different path, the destination must not already exist. Choose a new filename to avoid replacing another document.

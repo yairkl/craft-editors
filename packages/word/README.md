@@ -15,3 +15,5 @@ The native interface follows VS Code’s light/dark theme on opening and while t
 Hebrew letters and niqqud are available through a bundled, hash-verified Noto Sans Hebrew fallback (SIL OFL 1.1). Use the native paragraph direction controls for right-to-left paragraphs. This fixes the integration’s missing Hebrew font; it is not a claim that every bidirectional editing case is validated. Undo/Redo preserves document focus so typing can continue without another click.
 
 The command ribbon starts collapsed to give the document more space. Its tab row stays visible; double-click a ribbon tab, or use Ctrl+F1, to show the tools when needed.
+
+When a headless agent saves to a different path, the destination must not already exist. Choose a new filename to avoid replacing another document.
