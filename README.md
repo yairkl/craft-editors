@@ -16,7 +16,7 @@ Install only the editors you need; each includes its own engine and works withou
 | Craft PDF | `.pdf` | Read PDFs and use supported editing tools. |
 | Craft Vector | `.svg`, `.vectorcraft` | View and edit vector drawings. |
 
-An optional **Craft Suite** pack groups the five extensions. Legacy `.doc` and `.ppt`, password-protected documents and files larger than 32 MiB are not supported by this preview.
+An optional **Craft Suite** pack groups the five extensions. Legacy `.doc` and `.ppt` and password-protected documents are not supported by this preview. The editor limits files to 256 MiB by default; each app has a setting such as `craft.spreadsheets.maxFileSizeMiB` or `craft.pdf.maxFileSizeMiB` (up to 1024 MiB). Large or complex documents can consume substantially more memory than their file size. The currently published beta 4 still has a 32 MiB limit.
 
 ## Install
 

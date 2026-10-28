@@ -37,6 +37,7 @@ export async function run(): Promise<void> {
   };
   const registration = vscode.workspace.registerFileSystemProvider('craft-test', fsProvider);
   const cancellation = new vscode.CancellationTokenSource();
+  const settings = vscode.workspace.getConfiguration(`craft.${{ xlsx: 'spreadsheets', pdf: 'pdf', docx: 'word', pptx: 'powerpoint', svg: 'vector' }[first.format]}`);
   try {
     const doc = await readProbeDocument(memoryUri, cancellation.token);
     assert.equal(doc.uri.toString(), memoryUri.toString());
@@ -44,6 +45,10 @@ export async function run(): Promise<void> {
     await verifyWebview(apis.get(first.format)!, memoryUri, first.format);
     await assert.rejects(readProbeDocument(memoryUri, cancellation.token, first.format === 'xlsx' ? 'pdf' : 'xlsx'), /supports only/);
     reportedSize = 33 * 1024 * 1024;
+    current = new Uint8Array(reportedSize);
+    assert.equal((await readProbeDocument(memoryUri, cancellation.token)).bytes.length, reportedSize, 'The default permits files larger than 32 MiB');
+    assert.equal((await readAgentFile(memoryUri)).length, reportedSize);
+    await settings.update('maxFileSizeMiB', 32, vscode.ConfigurationTarget.Global);
     await assert.rejects(readProbeDocument(memoryUri, cancellation.token), /32 MiB/);
     const readsBeforeLarge = reads;
     await assert.rejects(readAgentFile(memoryUri), /32 MiB/);
@@ -56,6 +61,7 @@ export async function run(): Promise<void> {
     await assert.rejects(readProbeDocument(memoryUri, cancellation.token), vscode.CancellationError);
     assert.equal(writes, 0);
   } finally {
+    await settings.update('maxFileSizeMiB', undefined, vscode.ConfigurationTarget.Global);
     cancellation.dispose(); registration.dispose(); changes.dispose();
   }
 

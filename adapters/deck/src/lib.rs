@@ -147,8 +147,8 @@ impl DeckMcpHeadless {
         Self { backend, server }
     }
     pub fn open_bytes(&self, bytes: Vec<u8>) -> Result<(), JsValue> {
-        if bytes.len() > 32 * 1024 * 1024 {
-            return Err(error("Presentation exceeds 32 MiB."));
+        if bytes.len() > 1024 * 1024 * 1024 {
+            return Err(error("Presentation exceeds the 1 GiB adapter limit."));
         }
         let doc = deckcraft_pptx::import(&bytes)
             .map_err(|_| error("The presentation could not be opened."))?;

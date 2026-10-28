@@ -91,8 +91,8 @@ impl PdfMcpHeadless {
         }
     }
     pub fn open_bytes(&self, bytes: Vec<u8>, _format: &str) -> Result<u32, JsValue> {
-        if bytes.len() > 32 * 1024 * 1024 {
-            return Err(error("PDF exceeds 32 MiB."));
+        if bytes.len() > 1024 * 1024 * 1024 {
+            return Err(error("PDF exceeds the 1 GiB adapter limit."));
         }
         let mut automation = agent_automation();
         let id = automation

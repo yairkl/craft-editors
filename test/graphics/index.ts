@@ -35,6 +35,31 @@ export async function run(): Promise<void> {
       }
       const doc = api.editing.getDocument(target); assert.ok(doc); return doc;
     };
+    if (descriptor.format === 'pdf' && process.env.CRAFT_TEST_LARGE === '1') {
+      const marker = Buffer.from(original).lastIndexOf('startxref');
+      assert.ok(marker > 0, 'PDF fixture must have a cross-reference trailer');
+      const padding = Buffer.alloc(33 * 1024 * 1024, 32); padding[0] = 37; padding[padding.length - 1] = 10;
+      const largeUri = vscode.Uri.joinPath(directory, 'large.pdf');
+      const big = Buffer.concat([original.subarray(0, marker), padding, original.subarray(marker)]);
+      await vscode.workspace.fs.writeFile(largeUri, big);
+      const started = Date.now();
+      assert.ok(api.mcp);
+      const largeAgent = agent(api.mcp);
+      const opened = await largeAgent('tools/call', { name: 'doc_open', arguments: { path: largeUri.fsPath } });
+      assert.equal(opened.isError, false, 'The agent can open a large closed PDF');
+      largeAgent.close();
+      const large = await open(largeUri);
+      assert.equal((await large.request('test:inspect') as State).rotations?.[0], 0);
+      await large.request('test:command', { command: 'page.rotate' });
+      await waitFor(() => large.dirty);
+      assert.ok(await vscode.workspace.save(largeUri), 'A large PDF can be saved');
+      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+      const reopened = await open(largeUri);
+      assert.equal((await reopened.request('test:inspect') as State).rotations?.[0], 90);
+      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+      console.log(`Large PDF (${big.byteLength} bytes) opened, edited, saved and reopened in ${Date.now() - started} ms.`);
+      await vscode.workspace.fs.delete(largeUri);
+    }
     let doc = await open(uri);
     assert.equal(doc.dirty, false);
     if (descriptor.format === 'pdf') {

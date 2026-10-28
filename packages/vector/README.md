@@ -13,3 +13,5 @@ Uses the native VectorCraft UI, with VS Code Save, Save As (same format), Undo/R
 Saved SVGs include integrity-checked native editing metadata, so shaped text can remain editable when reopened here even when the portable SVG drawing uses outlines. External SVG changes invalidate that metadata and use normal SVG import.
 
 When a headless agent saves to a different path, the destination must not already exist. Choose a new filename to avoid replacing another document.
+
+Files up to 256 MiB are supported by default. Set `craft.vector.maxFileSizeMiB` (up to 1024 MiB) to change the limit. Large or complex documents can use substantially more memory.

@@ -1,23 +1,25 @@
 import { createHash, randomUUID } from 'node:crypto';
 import * as vscode from 'vscode';
 import { readProbeDocument } from './document';
-import { MAX_DOCUMENT_BYTES, type DocumentFormat } from '../protocol/probe';
+import { type DocumentFormat } from '../protocol/probe';
 import { renderHtml, type RenderResult } from './rendering';
+import { fileLimit, fileLimitError } from './file-limits';
 import { WebviewRpc } from './rpc';
 
 const digest = (bytes: Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
 const cancelled = (token: vscode.CancellationToken): void => { if (token.isCancellationRequested) throw new vscode.CancellationError(); };
-function bytes(value: unknown): Uint8Array {
+function bytes(value: unknown, limit: number): Uint8Array {
   const result = value instanceof Uint8Array ? value : value instanceof ArrayBuffer ? new Uint8Array(value) : undefined;
-  if (!result || result.byteLength > MAX_DOCUMENT_BYTES) throw new Error('Invalid or oversized document data.');
+  if (!result) throw new Error('Invalid document data.');
+  if (result.byteLength > limit) throw fileLimitError(limit);
   return result;
 }
 function integer(value: unknown): value is number { return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 && value <= 0xffff_ffff; }
-function snapshot(value: unknown): { bytes: Uint8Array; token: number } {
+function snapshot(value: unknown, limit: number): { bytes: Uint8Array; token: number } {
   if (typeof value !== 'object' || value === null) throw new Error('Invalid document response.');
   const result = value as Record<string, unknown>;
   if (!integer(result.token)) throw new Error('Invalid document revision.');
-  return { bytes: bytes(result.bytes), token: result.token };
+  return { bytes: bytes(result.bytes, limit), token: result.token };
 }
 
 export class EditableDocument implements vscode.CustomDocument {
@@ -30,6 +32,7 @@ export class EditableDocument implements vscode.CustomDocument {
   constructor(readonly uri: vscode.Uri, public cache: Uint8Array, public diskBytes: Uint8Array, public diskDigest: string, readonly recovered: boolean, readonly format: DocumentFormat) {
     if (recovered) this.savedToken = -1;
   }
+  get limit(): number { return fileLimit(this.uri); }
   get dirty(): boolean { return this.token !== this.savedToken; }
   request(operation: string, fields: Record<string, unknown> = {}): Promise<unknown> {
     if (!this.rpc) return Promise.reject(new Error('Open the document view before performing this operation.'));
@@ -65,7 +68,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
     if (context.backupId) {
       const backup = JSON.parse(Buffer.from(await vscode.workspace.fs.readFile(vscode.Uri.parse(context.backupId))).toString('utf8')) as Record<string, unknown>;
       if (backup.version !== 1 || typeof backup.bytes !== 'string' || typeof backup.diskDigest !== 'string' || !/^[a-f0-9]{64}$/.test(backup.diskDigest)) throw new Error('This document backup is incompatible.');
-      cache = bytes(Buffer.from(backup.bytes, 'base64'));
+      cache = bytes(Buffer.from(backup.bytes, 'base64'), fileLimit(uri));
       baseline = backup.diskDigest;
     }
     cancelled(token);
@@ -104,7 +107,8 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
       if (m.type === 'render:ready' && !ready) {
         ready = true;
         void panel.webview.postMessage({ type: 'render:open', version: 1, sessionId, format: doc.format, editable: true,
-          bytes: Uint8Array.from(doc.cache).buffer, originalBytes: Uint8Array.from(doc.diskBytes).buffer,
+          bytes: Uint8Array.from(doc.cache).buffer,
+          ...(doc.dirty || doc.format === 'csv' ? { originalBytes: Uint8Array.from(doc.diskBytes).buffer } : {}),
           recovered: doc.dirty, capture });
       } else if (m.type === 'editor:changed' && ready && integer(m.before) && integer(m.after) && m.before !== m.after) {
         const before = m.before, after = m.after;
@@ -114,7 +118,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
         // Retain the latest committed model for webview reconstruction; only the
         // WASM engine edits the model. This is not a second editable model.
         void doc.request('serialize', { flush: false }).then(value => {
-          const cached = snapshot(value);
+          const cached = snapshot(value, doc.limit);
           if (!doc.disposed && cached.token === doc.token) doc.cache = cached.bytes;
         }).catch(() => {});
       } else if (m.type === 'editor:command' && typeof m.command === 'string') {
@@ -145,7 +149,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
 
   private async history(doc: EditableDocument, target: number): Promise<void> {
     await doc.request('history', { token: target }); doc.token = target;
-    const cached = snapshot(await doc.request('serialize', { flush: false }));
+    const cached = snapshot(await doc.request('serialize', { flush: false }), doc.limit);
     if (cached.token === doc.token) doc.cache = cached.bytes;
   }
   async saveCustomDocument(doc: EditableDocument, token: vscode.CancellationToken): Promise<void> {
@@ -157,7 +161,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
     return this.write(doc, target, token);
   }
   private async serialize(doc: EditableDocument, format: DocumentFormat = doc.format): Promise<{ bytes: Uint8Array; token: number }> {
-    try { return snapshot(await doc.request('serialize', { flush: true, format })); }
+    try { return snapshot(await doc.request('serialize', { flush: true, format }), doc.limit); }
     catch (error) {
       // Cancellation defers autosave without a validation dialog or a false saved acknowledgment.
       if (error instanceof Error && ['DRAFT_PENDING', 'CSV_FEATURES'].includes(error.message)) throw new vscode.CancellationError();
@@ -179,7 +183,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
         doc.diskBytes = data.bytes; doc.diskDigest = digest(data.bytes);
       }
       if (doc.token === data.token) {
-        const cache = doc.format === 'csv' ? snapshot(await doc.request('serialize', { flush: false })) : data;
+        const cache = doc.format === 'csv' ? snapshot(await doc.request('serialize', { flush: false }), doc.limit) : data;
         if (cache.token === doc.token) doc.cache = cache.bytes;
       }
       // Only the snapshot actually written is acknowledged. Later edits stay dirty.
@@ -245,7 +249,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
         const target = await vscode.window.showSaveDialog({ filters: { [this.descriptor.label]: [this.descriptor.format] }, saveLabel: 'Create document' });
         if (!target) return;
         if (!target.path.toLowerCase().endsWith(`.${this.descriptor.format}`)) throw new Error(`New documents must use the ${this.descriptor.format.toUpperCase()} format.`);
-        await vscode.workspace.fs.writeFile(target, bytes(await doc.request('new')));
+        await vscode.workspace.fs.writeFile(target, bytes(await doc.request('new'), fileLimit(target)));
         await vscode.commands.executeCommand('vscode.openWith', target, this.descriptor.viewType); break;
       }
       case 'edit.undo': panel.reveal(panel.viewColumn, true); await vscode.commands.executeCommand('undo'); break;
