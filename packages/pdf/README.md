@@ -2,7 +2,7 @@
 
 ## PDF tools for agents
 
-Craft PDF provides a selected set of PdfCraft MCP tools to GitHub Copilot and Cursor. Enable the Craft PDF server and ask the agent to open a PDF by path; `doc_open` returns the document id used by subsequent tools. Open PDFs use the live editor model and VS Code undo/save; closed PDFs use a headless session and are written only when the agent calls `doc_save`. Headless saves detect external changes and refuse to overwrite an open editor. Unsaved headless changes can be saved to a separate path if the PDF is opened in the editor.
+Craft PDF includes a bridge for selected PdfCraft MCP tools, intended for GitHub Copilot and Cursor. Discovery by those clients has not yet been verified. Enable the Craft PDF server and ask the agent to open a PDF by path; `doc_open` returns the document id used by subsequent tools. Open PDFs use the live editor model and VS Code undo/save; closed PDFs use a headless session and are written only when the agent calls `doc_save`. Headless saves detect external changes and refuse to overwrite an open editor. Unsaved headless changes can be saved to a separate path if the PDF is opened in the editor.
 
 The exposed tools cover in-memory inspection, page rendering, text, page operations, comments, links, form inspection, and undo/redo. Tools that perform direct file I/O, export, arbitrary command passthrough or multi-document operations are not exposed. Finish an active PDF text or form draft before using agent tools. Password-protected PDFs and PDF-specific save options are not supported by this integration. Use VS Code Save As for a copy of an open PDF. The bridge is tested in a Linux Remote SSH extension host; actual Copilot and Cursor discovery needs end-to-end validation.
 

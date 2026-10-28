@@ -24,7 +24,7 @@ The command ribbon starts collapsed to give the document more space. Its tab row
 
 ## Spreadsheet tools for agents
 
-The extension provides GridCraft's MCP tools to GitHub Copilot in VS Code and to Cursor when its extension MCP API is available. Enable the Craft Spreadsheets server in the editor's MCP settings; VS Code may offer a refresh action to discover extension-provided servers. Ask the agent to open a workbook by its path before using spreadsheet tools. The server runs locally in the extension host and uses a private loopback connection; agent clients may ask for tool-use approval.
+The extension includes a GridCraft MCP bridge intended for GitHub Copilot in VS Code and Cursor; discovery by those clients has not yet been verified. Enable the Craft Spreadsheets server in the editor's MCP settings; VS Code may offer a refresh action to discover extension-provided servers. Ask the agent to open a workbook by its path before using spreadsheet tools. The server runs locally in the extension host and uses a private loopback connection; agent clients may ask for tool-use approval.
 
 If the workbook is open in Craft Spreadsheets, tools use its live model, including unsaved changes. Edits become normal VS Code document edits and can be undone or saved in the editor. Finish an active cell or text-box draft before using agent tools. If the workbook is closed, the server uses an in-memory session; changes reach the file only when the agent calls `save_workbook`. A headless save refuses to overwrite a file that has changed externally or is open in the editor. If a headless session has unsaved changes when the file is opened in the editor, save those headless changes to a different path to preserve them.
 

@@ -2,7 +2,7 @@
 
 ## Presentation tools for agents
 
-Craft PowerPoint provides the pinned DeckCraft MCP tools to GitHub Copilot and Cursor. Enable the Craft PowerPoint MCP server and ask the agent to open a PPTX file by path. Open presentations use the live editor model and VS Code undo/save; closed files use a headless session and are written only when the agent calls `save_presentation`. Headless saves detect external changes and cannot overwrite an open editor. If a presentation becomes open while the agent has unsaved headless changes, save those changes to a different path.
+Craft PowerPoint includes a bridge for the pinned DeckCraft MCP tools, intended for GitHub Copilot and Cursor. Discovery by those clients has not yet been verified. Enable the Craft PowerPoint MCP server and ask the agent to open a PPTX file by path. Open presentations use the live editor model and VS Code undo/save; closed files use a headless session and are written only when the agent calls `save_presentation`. Headless saves detect external changes and cannot overwrite an open editor. If a presentation becomes open while the agent has unsaved headless changes, save those changes to a different path.
 
 Finish an active slide interaction or text composition before using agent tools. Desktop-only UI tools and presentation mode are unavailable in the embedded editor. Use VS Code Save As for a copy of an open presentation. The bridge is tested in a Linux Remote SSH extension host; actual Copilot and Cursor discovery needs end-to-end validation.
 
