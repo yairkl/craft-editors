@@ -1,6 +1,7 @@
 import { realpath } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import * as vscode from 'vscode';
+import { MAX_DOCUMENT_BYTES } from '../protocol/probe';
 import { EditableDocument, EditingProvider } from './editing';
 
 /** Compare existing local/remote-host files by real path, including symlink aliases. */
@@ -23,6 +24,16 @@ export async function findLive(provider: EditingProvider, uri: vscode.Uri): Prom
 export async function hasDirtyText(uri: vscode.Uri): Promise<boolean> {
   for (const doc of vscode.workspace.textDocuments) if (doc.isDirty && await sameResource(uri, doc.uri)) return true;
   return false;
+}
+
+/** Reject known-oversized files before loading them, then check for growth. */
+export async function readAgentFile(uri: vscode.Uri): Promise<Uint8Array> {
+  const stat = await vscode.workspace.fs.stat(uri);
+  if ((stat.type & vscode.FileType.Directory) !== 0) throw new Error('Choose a document file.');
+  if (stat.size > MAX_DOCUMENT_BYTES) throw new Error('Document exceeds 32 MiB.');
+  const bytes = await vscode.workspace.fs.readFile(uri);
+  if (bytes.byteLength > MAX_DOCUMENT_BYTES) throw new Error('Document exceeds 32 MiB.');
+  return bytes;
 }
 
 /** Publish a new copy without overwriting an existing destination. */

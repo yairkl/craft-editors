@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import * as vscode from 'vscode';
 import type { ProbeResult } from '../../src/host';
 import { readProbeDocument } from '../../src/document';
-import { writeNewCopy } from '../../src/mcp-files';
+import { readAgentFile, writeNewCopy } from '../../src/mcp-files';
 import { assertIsolation, fixture, forFormat, selected } from '../environment';
 
 interface ProbeApi { onDidProbe: vscode.Event<ProbeResult> }
@@ -26,11 +26,12 @@ export async function run(): Promise<void> {
   const changes = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
   let current = new Uint8Array([37, 80, 68, 70]);
   let reportedSize = current.byteLength;
+  let reads = 0;
   const fsProvider: vscode.FileSystemProvider = {
     onDidChangeFile: changes.event,
     watch: () => new vscode.Disposable(() => {}),
     stat: () => ({ type: vscode.FileType.File, ctime: 0, mtime: 0, size: reportedSize }),
-    readDirectory: () => [], readFile: () => current,
+    readDirectory: () => [], readFile: () => { reads++; return current; },
     createDirectory: () => { writes++; }, writeFile: () => { writes++; },
     delete: () => { writes++; }, rename: () => { writes++; },
   };
@@ -44,9 +45,13 @@ export async function run(): Promise<void> {
     await assert.rejects(readProbeDocument(memoryUri, cancellation.token, first.format === 'xlsx' ? 'pdf' : 'xlsx'), /supports only/);
     reportedSize = 33 * 1024 * 1024;
     await assert.rejects(readProbeDocument(memoryUri, cancellation.token), /32 MiB/);
+    const readsBeforeLarge = reads;
+    await assert.rejects(readAgentFile(memoryUri), /32 MiB/);
+    assert.equal(reads, readsBeforeLarge, 'Agent must reject a known-oversized file before reading it');
     reportedSize = 1;
     current = new Uint8Array(33 * 1024 * 1024);
     await assert.rejects(readProbeDocument(memoryUri, cancellation.token), /32 MiB/);
+    await assert.rejects(readAgentFile(memoryUri), /32 MiB/, 'Agent must reject a file that grows after stat');
     cancellation.cancel();
     await assert.rejects(readProbeDocument(memoryUri, cancellation.token), vscode.CancellationError);
     assert.equal(writes, 0);
