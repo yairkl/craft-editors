@@ -62,7 +62,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
   rendering:
     needs: [changes, check]
-    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.build == 'true' || contains(github.event.pull_request.labels.*.name, 'test:windows-installed')
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.build == 'true' || contains(github.event.pull_request.labels.*.name, 'test:windows-installed') || contains(github.event.pull_request.labels.*.name, 'test:macos-editing')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -218,6 +218,27 @@ jobs:
           name: craft-vsix-${{ github.run_id }}
           path: dist/vsix
       - run: npm run test:installed
+
+  macos-editing:
+    needs: [rendering]
+    if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'test:macos-editing')
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: craft-vsix-${{ github.run_id }}
+          path: dist/vsix
+      - run: python scripts/unpack-test-renderers.py
+      - run: npm run test:editing
 
   publish-release:
     needs: [rendering, platform-smoke]
