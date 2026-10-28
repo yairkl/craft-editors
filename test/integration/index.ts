@@ -56,12 +56,13 @@ export async function run(): Promise<void> {
 
   // A remote provider must honor no-overwrite rename and clean up the staged copy.
   const files = new Map<string, Uint8Array>([['/existing.xlsx', Uint8Array.of(1)]]);
+  let failWrite = false;
   const copyChanges = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
   const copies = vscode.workspace.registerFileSystemProvider('craft-copy-test', {
     onDidChangeFile: copyChanges.event, watch: () => new vscode.Disposable(() => {}),
     stat: uri => { const value = files.get(uri.path); if (!value) throw vscode.FileSystemError.FileNotFound(uri); return { type: vscode.FileType.File, ctime: 0, mtime: 0, size: value.length }; },
     readDirectory: () => [], readFile: uri => { const value = files.get(uri.path); if (!value) throw vscode.FileSystemError.FileNotFound(uri); return value; },
-    createDirectory: () => {}, writeFile: (uri, data) => { files.set(uri.path, Uint8Array.from(data)); },
+    createDirectory: () => {}, writeFile: (uri, data) => { files.set(uri.path, Uint8Array.from(data)); if (failWrite) throw vscode.FileSystemError.NoPermissions(uri); },
     delete: uri => { if (!files.delete(uri.path)) throw vscode.FileSystemError.FileNotFound(uri); },
     rename: (from, to, options) => { const value = files.get(from.path); if (!value) throw vscode.FileSystemError.FileNotFound(from); if (files.has(to.path) && !options.overwrite) throw vscode.FileSystemError.FileExists(to); files.set(to.path, value); files.delete(from.path); },
   });
@@ -70,6 +71,8 @@ export async function run(): Promise<void> {
     assert.deepEqual(files.get('/existing.xlsx'), Uint8Array.of(1));
     await writeNewCopy(vscode.Uri.parse('craft-copy-test:/new.xlsx'), Uint8Array.of(3));
     assert.deepEqual(files.get('/new.xlsx'), Uint8Array.of(3));
+    failWrite = true;
+    await assert.rejects(writeNewCopy(vscode.Uri.parse('craft-copy-test:/failed.xlsx'), Uint8Array.of(4)));
     assert.equal(files.size, 2, 'Temporary copies must be removed on success and failure');
   } finally { copies.dispose(); copyChanges.dispose(); }
 
