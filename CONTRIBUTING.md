@@ -6,7 +6,7 @@ The project has native XLSX/DOCX/PPTX/PDF/SVG/VectorCraft editing and a transpor
 
 VS Code integration, packaging, adapters, and integration tests belong here. Document parsing, calculation, layout, rendering, and serialization belong in the upstream application repositories. Do not copy those engines into TypeScript.
 
-Propose embedding changes upstream when practical. Record temporary patches with their upstream commit, purpose, and removal condition. Pin dependencies to immutable revisions; do not build releases against floating branches.
+Propose embedding changes upstream when practical. Record temporary patches with their upstream commit, purpose, and removal condition; see the [upstream patch review map](docs/upstream-patch-review.md). Pin dependencies to immutable revisions; do not build releases against floating branches.
 
 ## Implementation expectations
 
