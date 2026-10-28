@@ -8,20 +8,23 @@ export function verifySource(root, app, { apply = false } = {}) {
   const git = args => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
   if (git(['rev-parse', 'HEAD']) !== app.revision) throw new Error(`${app.id}: wrong source revision.`);
   const patches = app.patches ?? [];
-  if (patches.length > 1) throw new Error('Patch stacking requires explicit verification support.');
-  const patch = patches[0];
-  if (!patch) {
+  if (!patches.length) {
     if (git(['status', '--porcelain'])) throw new Error(`${app.id}: source must be clean.`);
     return;
   }
-  const file = resolve(root, patch.path);
-  if (!file.startsWith(resolve(root, 'upstream/patches') + '/')) throw new Error('Invalid patch path.');
-  const bytes = readFileSync(file);
-  if (createHash('sha256').update(bytes).digest('hex') !== patch.sha256) throw new Error(`${app.id}: patch hash differs from manifest.`);
+  const parts = patches.map(patch => {
+    const file = resolve(root, patch.path);
+    if (!file.startsWith(resolve(root, 'upstream/patches') + '/')) throw new Error('Invalid patch path.');
+    const bytes = readFileSync(file);
+    if (createHash('sha256').update(bytes).digest('hex') !== patch.sha256) throw new Error(`${app.id}: patch hash differs from manifest.`);
+    return bytes;
+  });
+  const bytes = Buffer.concat(parts);
   if (!git(['status', '--porcelain'])) {
     if (!apply) return;
-    git(['apply', '--check', file]);
-    git(['apply', file]);
+    for (const args of [['apply', '--check', '-'], ['apply', '-']]) {
+      execFileSync('git', args, { cwd, input: bytes, stdio: ['pipe', 'pipe', 'pipe'] });
+    }
   }
   if (git(['diff', '--cached', '--name-only']) || git(['ls-files', '--others', '--exclude-standard']) ||
       git(['diff', '--binary', '--full-index']) !== bytes.toString('utf8').trim()) {

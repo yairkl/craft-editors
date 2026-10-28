@@ -1,0 +1,48 @@
+diff --git a/crates/engine/src/lib.rs b/crates/engine/src/lib.rs
+index f11671bf85c2fe8c3bdc3f3d01be50b4d1c77494..a29c07e746859e360da846d2a346096a36b5f021 100644
+--- a/crates/engine/src/lib.rs
++++ b/crates/engine/src/lib.rs
+@@ -395,6 +395,12 @@ impl Editor {
+     }
+ }
+ 
++/// Exact in-memory state for an embedding host's revision history.
++#[derive(Clone)]
++pub struct HostSnapshot {
++    editor: Option<Editor>,
++    pub bytes: Arc<Vec<u8>>,
++}
+ pub struct Document {
+     pub id: DocId,
+     pub name: String,
+@@ -4155,6 +4161,30 @@ impl Session {
+         Ok(())
+     }
+ 
++    pub fn host_snapshot(&self, id: DocId) -> HostSnapshot {
++        let Some(doc) = self.get(id) else {
++            return HostSnapshot { editor: None, bytes: Arc::new(Vec::new()) };
++        };
++        HostSnapshot { editor: doc.editor.clone(), bytes: doc.bytes.clone() }
++    }
++    pub fn host_matches(&self, id: DocId, snapshot: &HostSnapshot) -> bool {
++        self.get(id).is_some_and(|doc| Arc::ptr_eq(&doc.bytes, &snapshot.bytes) || doc.bytes == snapshot.bytes)
++    }
++    pub fn host_restore(&mut self, id: DocId, snapshot: &HostSnapshot) -> Result<(), EditError> {
++        let doc = self.doc_mut(id)?;
++        let previous = doc.editor.clone();
++        doc.editor = snapshot.editor.clone();
++        Self::adopt_keys(doc);
++        if let Err(error) = Self::refresh(doc) {
++            doc.editor = previous;
++            Self::adopt_keys(doc);
++            if Self::refresh(doc).is_err() { Self::show_released(doc); }
++            return Err(error);
++        }
++        Self::sync_dirty(doc);
++        doc.generation = doc.generation.saturating_add(1);
++        Ok(())
++    }
+     pub fn undo(&mut self, id: DocId) -> Result<Label, EditError> {
+         let doc = self.doc_mut(id)?;
+         let editor = doc.editor.as_mut().ok_or(EditError::NothingToUndo)?;

@@ -17,7 +17,7 @@
   "scripts": {
     "compile": "tsc -p . && node scripts/stage-extensions.mjs --development --allow-missing-renderers",
     "check": "tsc -p . --noEmit",
-    "test": "npm run compile && node --test out/test/unit/*.test.js scripts/test-font-assets.mjs",
+    "test": "npm run compile && node --test out/test/unit/*.test.js scripts/test-font-assets.mjs scripts/test-upstream-patches.mjs",
     "test:integration": "npm run compile && node scripts/test-extensions.cjs integration",
     "fixtures": "python3 scripts/generate-fixtures.py",
     "fixtures:check": "python3 scripts/generate-fixtures.py --check",

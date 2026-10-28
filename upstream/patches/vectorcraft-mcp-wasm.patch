@@ -1,0 +1,28 @@
+diff --git a/crates/mcp/src/headless.rs b/crates/mcp/src/headless.rs
+index 34c0509c16ca71ecfc176d9e67911753f89f4cad..7a9719ae1de0f43aa905aae76abb0341f85f851a 100644
+--- a/crates/mcp/src/headless.rs
++++ b/crates/mcp/src/headless.rs
+@@ -271,12 +271,17 @@ impl Headless {
+         let mut out = json!({"width": img.width, "height": img.height});
+         match s(p, "path") {
+             Some(path) => {
+-                file_access::check_write(path)?;
+-                vectorcraft_format::write_atomic(std::path::Path::new(path), &png).map_err(|e| format!("write {path}: {e}"))?;
+-                out["path"] = json!(path);
+-                // `data: true` asks for the image as well as the file.
+-                if p.get("data").and_then(Value::as_bool) == Some(true) {
+-                    out["pngBase64"] = json!(vectorcraft_format::base64_encode(&png));
++                #[cfg(target_arch = "wasm32")]
++                return Err(format!("writing a rendered image to {path} is unavailable in WebAssembly; request image data instead"));
++                #[cfg(not(target_arch = "wasm32"))]
++                {
++                    file_access::check_write(path)?;
++                    vectorcraft_format::write_atomic(std::path::Path::new(path), &png).map_err(|e| format!("write {path}: {e}"))?;
++                    out["path"] = json!(path);
++                    // `data: true` asks for the image as well as the file.
++                    if p.get("data").and_then(Value::as_bool) == Some(true) {
++                        out["pngBase64"] = json!(vectorcraft_format::base64_encode(&png));
++                    }
+                 }
+             }
+             None => out["pngBase64"] = json!(vectorcraft_format::base64_encode(&png)),
