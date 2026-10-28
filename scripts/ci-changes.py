@@ -5,7 +5,7 @@ import subprocess
 
 
 def classify(paths):
-    result = {'code': False, 'fixtures': False, 'build': False, 'wheel': False, 'remote_script': False, 'platform': False}
+    result = {'code': False, 'fixtures': False, 'build': False, 'wheel': False, 'remote_script': False, 'platform': False, 'extended': False}
     for path in paths:
         if path.startswith(('docs/', '.github/')) or path in {
             'README.md', 'CONTRIBUTING.md', 'LICENSE', '.gitattributes', '.gitignore',
@@ -20,10 +20,11 @@ def classify(paths):
         if path == 'scripts/test-remote-ssh.cjs':
             result['remote_script'] = True
             continue
-        if path.startswith('test/platform/') or path in {'scripts/test-extensions.cjs', 'scripts/unpack-test-renderers.py'}:
+        if path.startswith(('test/platform/', 'test/support/', 'test/office/', 'test/graphics/')) or path in {'scripts/test-extensions.cjs', 'scripts/unpack-test-renderers.py', 'media/rendering-checks.js', 'media/editing-checks.js'}:
             result['code'] = True
             result['build'] = True
             result['platform'] = True
+            result['extended'] = True
             continue
         if path.startswith('test/') or path.startswith('integration-tests/') or path.startswith('scripts/test-'):
             result['code'] = True

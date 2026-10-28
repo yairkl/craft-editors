@@ -14,6 +14,7 @@ jobs:
       wheel: ${{ steps.select.outputs.wheel }}
       remote_script: ${{ steps.select.outputs.remote_script }}
       platform: ${{ steps.select.outputs.platform }}
+      extended: ${{ steps.select.outputs.extended }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -91,6 +92,9 @@ jobs:
       - run: rustc +1.95.0 --edition 2024 --test adapters/grid/src/wheel.rs -o "$RUNNER_TEMP/wheel-tests" && "$RUNNER_TEMP/wheel-tests"
         if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.wheel == 'true'
       - run: npm run renderers:build
+      - name: Install Linux keyboard test tools
+        if: github.event_name == 'workflow_dispatch'
+        run: sudo apt-get update && sudo apt-get install -y xdotool xclip
       - run: xvfb-run -a npm run test:rendering
         if: github.event_name == 'workflow_dispatch'
       - run: xvfb-run -a npm run test:editing
@@ -162,6 +166,20 @@ jobs:
       - name: Platform smoke (macOS and Windows)
         if: runner.os != 'Linux'
         run: npm run test:platform
+      - name: Renderer and history regression suites (Linux)
+        if: github.event_name == 'pull_request' && needs.changes.outputs.extended == 'true' && runner.os == 'Linux'
+        run: |
+          xvfb-run -a npm run test:rendering
+          xvfb-run -a npm run test:office
+          xvfb-run -a npm run test:graphics
+      - name: Renderer and history regression suites (macOS and Windows)
+        if: github.event_name == 'pull_request' && needs.changes.outputs.extended == 'true' && runner.os != 'Linux'
+        shell: bash
+        run: |
+          set -e
+          npm run test:rendering
+          npm run test:office
+          npm run test:graphics
       - name: Full platform suites
         if: github.event_name == 'workflow_dispatch' && runner.os != 'Linux'
         shell: bash

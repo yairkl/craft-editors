@@ -60,12 +60,6 @@ export async function pasteText(canvas, text) {
   await frame(); await frame();
 }
 
-export async function historyKey(canvas, redo) {
-  canvas.focus(); await frame();
-  for (const type of ['keydown', 'keyup']) canvas.dispatchEvent(new KeyboardEvent(type, { key: 'z', code: 'KeyZ', ctrlKey: true, shiftKey: redo, bubbles: true }));
-  await frame(); await frame();
-}
-
 export async function continueDraft(text) {
   const input = document.activeElement;
   if (!(input instanceof HTMLInputElement)) throw new Error('The native text agent lost focus');

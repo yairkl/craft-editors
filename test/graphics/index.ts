@@ -8,6 +8,7 @@ import { once } from 'node:events';
 import type { EditingProvider } from '../../src/editing';
 import type { RenderResult } from '../../src/rendering';
 import { assertIsolation, fixture, root, selected } from '../environment';
+import { press } from '../support/native-keyboard';
 interface Api { editing: EditingProvider; onDidRender: vscode.Event<RenderResult>; mcp?: { command: string; args: string[]; env: Record<string, string> } }
 interface State { readMode?: boolean; zoom: number; draft?: string; rotations?: number[] }
 export async function run(): Promise<void> {
@@ -175,10 +176,10 @@ export async function run(): Promise<void> {
     const edited = await doc.request('test:inspect') as State;
     if (descriptor.format === 'pdf') assert.equal(edited.rotations?.[0], 90);
     else assert.notEqual(after, before);
-    await doc.request('test:history', { redo: false }); await waitFor(() => !doc.dirty);
+    assert.equal(await doc.request('test:focus-canvas'), true); press('z'); await waitFor(() => !doc.dirty);
     if (descriptor.format === 'pdf') assert.equal((await doc.request('test:inspect') as State).rotations?.[0], 0);
     else assert.equal(await doc.request('test:text'), before);
-    await doc.request('test:history', { redo: true }); await waitFor(() => doc.dirty);
+    assert.equal(await doc.request('test:focus-canvas'), true); press('redo'); await waitFor(() => doc.dirty);
     const backup = await api.editing.backupCustomDocument(doc, { destination: vscode.Uri.joinPath(directory, `${descriptor.format}.backup`) }, cancellation.token);
     assert.ok(await vscode.workspace.save(uri)); assert.equal(doc.dirty, false);
     await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
