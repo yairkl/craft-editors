@@ -202,10 +202,11 @@ window.addEventListener('message', async ({ data }) => {
           if (!capture) throw new Error('Test operation unavailable.');
           result = viewer.is_dark(); break;
         }
-        case 'test:history': {
+        case 'test:focus-canvas': {
           if (!capture) throw new Error('Test operation unavailable.');
-          const checks = await import('./editing-checks.js');
-          await checks.historyKey(canvas, data.redo === true); result = true; break;
+          canvas.focus();
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          result = document.hasFocus() && (document.activeElement === canvas || document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement); break;
         }
         case 'test:paste': {
           if (!capture) throw new Error('Test operation unavailable.');

@@ -31,6 +31,8 @@ Contributions are provided under the repository's MIT license. Third-party mater
 
 For shared host changes, run both `npm run test:editing` and `npm run test:office`, then package/archive/install checks. The Office suite tests native WordCraft/DeckCraft input through the real WASM engines, including save/reopen, history and recovery. `CRAFT_TEST_ONLY=word` or `powerpoint` can narrow local debugging; CI runs the full matrix.
 
+The Office and graphics suites use native keyboard input for undo/redo: install `xdotool` on Linux and run them in a disposable graphical session (`xvfb-run -a` on headless Linux). On macOS they use System Events and require input automation permission; on Windows they use SendKeys. The platform smoke suite additionally needs `xclip` on Linux.
+
 For appearance changes, run `npm run test:theme` against the native engines. It exercises actual workbench theme changes, high-contrast brightness mapping, Revert, unchanged file data and active cell entry.
 
 Run `npm run test:graphics` for PDF/vector lifecycle changes and inspect its screenshots. The common `adapters/native/runtime.rs` is included source: check it separately with `rustfmt +1.95.0 --edition 2024 --check adapters/native/runtime.rs adapters/native/fonts.rs`. Avoid `cargo fmt --all`: it also formats patched upstream path dependencies.

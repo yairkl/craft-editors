@@ -18,6 +18,13 @@ export async function verifyPreview(viewer, format, canvas, units) {
       await clickCanvas(canvas, 350, 300);
       const initialZoom = viewer.zoom_percent();
       const initialToken = viewer.serialize(false).token;
+      const waitZoom = async (expected, label) => {
+        const deadline = Date.now() + 5000;
+        while (viewer.zoom_percent() !== expected && Date.now() < deadline) {
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        check(viewer.zoom_percent() === expected, `${label}: expected ${expected}, got ${viewer.zoom_percent()}`);
+      };
       canvas.dispatchEvent(new KeyboardEvent('keydown', { key: 'Control', code: 'ControlLeft', ctrlKey: true, bubbles: true }));
       await frame();
       const wheel = async (deltaY, deltaMode = 1, ctrlKey = true, x = 350, y = 300) => {
@@ -28,19 +35,19 @@ export async function verifyPreview(viewer, format, canvas, units) {
         await new Promise(resolve => setTimeout(resolve, 600));
       };
       await wheel(-1);
-      check(viewer.zoom_percent() === initialZoom + 5, `Wheel zoom jumped to ${viewer.zoom_percent()} from ${initialZoom}`);
+      await waitZoom(initialZoom + 5, 'Fine wheel zoom');
       await wheel(1);
-      check(viewer.zoom_percent() === initialZoom, 'Wheel zoom out did not reverse the fine step');
+      await waitZoom(initialZoom, 'Fine wheel zoom out');
       await wheel(-0.25); await wheel(-0.25);
       check(viewer.zoom_percent() === initialZoom, 'Partial wheel events must accumulate before stepping');
       await wheel(-0.25);
-      check(viewer.zoom_percent() === initialZoom + 5, 'Fractional line input must make one fine step');
+      await waitZoom(initialZoom + 5, 'Fractional line input');
       await wheel(-0.25); await wheel(1);
-      check(viewer.zoom_percent() === initialZoom, 'Fractional wheel steps must reverse');
+      await waitZoom(initialZoom, 'Fractional wheel zoom out');
       await wheel(-8, 0); // egui's web default: eight logical points per line.
-      check(viewer.zoom_percent() === initialZoom + 5, 'Pixel-mode Ctrl+wheel must use the same fine step');
+      await waitZoom(initialZoom + 5, 'Pixel-mode Ctrl+wheel');
       await wheel(8, 0);
-      check(viewer.zoom_percent() === initialZoom, 'Pixel-mode zoom must reverse');
+      await waitZoom(initialZoom, 'Pixel-mode zoom out');
       check(viewer.serialize(false).token === initialToken, 'Adapter zoom must not create a document edit');
       canvas.dispatchEvent(new KeyboardEvent('keyup', { key: 'Control', code: 'ControlLeft', bubbles: true }));
       await frame();
@@ -56,12 +63,13 @@ export async function verifyPreview(viewer, format, canvas, units) {
       canvas.addEventListener('keydown', stopSynthetic);
       canvas.addEventListener('keyup', stopSynthetic);
       try {
-        for (const type of ['keydown', 'keyup']) canvas.dispatchEvent(new KeyboardEvent(type, { key: '=', code: 'Equal', ctrlKey: true, altKey: true, bubbles: true }));
-        await new Promise(resolve => setTimeout(resolve, 300));
-        check(viewer.zoom_percent() === initialZoom + 10, 'Native keyboard zoom must retain its original ten-point step');
-        for (const type of ['keydown', 'keyup']) canvas.dispatchEvent(new KeyboardEvent(type, { key: '-', code: 'Minus', ctrlKey: true, altKey: true, bubbles: true }));
-        await new Promise(resolve => setTimeout(resolve, 300));
-        check(viewer.zoom_percent() === initialZoom, 'Native keyboard zoom out must reverse');
+        canvas.dispatchEvent(new KeyboardEvent('keydown', { key: '=', code: 'Equal', ctrlKey: true, altKey: true, bubbles: true }));
+        await waitZoom(initialZoom + 10, 'Native keyboard zoom');
+        canvas.dispatchEvent(new KeyboardEvent('keyup', { key: '=', code: 'Equal', ctrlKey: true, altKey: true, bubbles: true }));
+        await frame();
+        canvas.dispatchEvent(new KeyboardEvent('keydown', { key: '-', code: 'Minus', ctrlKey: true, altKey: true, bubbles: true }));
+        await waitZoom(initialZoom, 'Native keyboard zoom out');
+        canvas.dispatchEvent(new KeyboardEvent('keyup', { key: '-', code: 'Minus', ctrlKey: true, altKey: true, bubbles: true }));
         canvas.dispatchEvent(new KeyboardEvent('keyup', { key: 'Control', code: 'ControlLeft', bubbles: true }));
         canvas.dispatchEvent(new KeyboardEvent('keyup', { key: 'Alt', code: 'AltLeft', bubbles: true }));
       } finally {

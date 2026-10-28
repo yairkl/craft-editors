@@ -1,4 +1,4 @@
-import { execFileSync, spawn } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { strict as assert } from 'node:assert';
 import { writeFile } from 'node:fs/promises';
 import { createInterface } from 'node:readline';
@@ -7,6 +7,7 @@ import * as vscode from 'vscode';
 import type { EditableDocument, EditingProvider } from '../../src/editing';
 import type { RenderResult } from '../../src/rendering';
 import { assertIsolation, fixture, root, selected } from '../environment';
+import { press } from '../support/native-keyboard';
 
 interface Api { editing: EditingProvider; onDidRender: vscode.Event<RenderResult>; mcp?: { command: string; args: string[]; env: Record<string, string> } }
 
@@ -32,17 +33,6 @@ function agent(config: NonNullable<Api['mcp']>) {
   };
 }
 
-function press(key: 'c' | 'v' | 'z' | 'redo'): void {
-  if (process.platform === 'linux') {
-    execFileSync('xdotool', ['key', '--clearmodifiers', key === 'redo' ? 'ctrl+shift+z' : `ctrl+${key}`], { timeout: 10000 });
-  } else if (process.platform === 'darwin') {
-    const chord = key === 'redo' ? 'keystroke "z" using {command down, shift down}' : `keystroke "${key}" using command down`;
-    execFileSync('osascript', ['-e', `tell application "System Events" to ${chord}`], { timeout: 10000 });
-  } else if (process.platform === 'win32') {
-    const chord = key === 'redo' ? '^y' : `^${key}`;
-    execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-STA', '-Command', `Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('${chord}')`], { timeout: 10000, windowsHide: true });
-  } else throw new Error(`Native keyboard testing is unsupported on ${process.platform}`);
-}
 
 async function waitFor(predicate: () => Promise<boolean>, label: string): Promise<void> {
   const deadline = Date.now() + 8000;

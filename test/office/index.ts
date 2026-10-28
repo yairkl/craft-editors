@@ -7,6 +7,7 @@ import * as vscode from 'vscode';
 import type { EditingProvider, EditableDocument } from '../../src/editing';
 import type { RenderResult } from '../../src/rendering';
 import { assertIsolation, fixture, root, selected } from '../environment';
+import { press } from '../support/native-keyboard';
 interface Api { editing: EditingProvider; onDidRender: vscode.Event<RenderResult>; mcp?: { command: string; args: string[]; env: Record<string, string> } }
 export async function run(): Promise<void> {
   assertIsolation();
@@ -99,11 +100,11 @@ export async function run(): Promise<void> {
     assert.ok(String(after).includes('Native edit verified'), `${descriptor.format}: native paste must edit document text`);
     assert.equal(doc.dirty, true);
     assert.deepEqual(await vscode.workspace.fs.readFile(uri), original);
-    await doc.request('test:history', { redo: false });
+    assert.equal(await doc.request('test:focus-canvas'), true); press('z');
     await waitText(doc, before);
     assert.equal(doc.dirty, false, 'Native Undo must use VS Code history and return to the clean revision');
     assert.equal(await doc.request('test:text'), before);
-    await doc.request('test:history', { redo: true });
+    assert.equal(await doc.request('test:focus-canvas'), true); press('redo');
     await waitText(doc, after);
     assert.equal(await doc.request('test:text'), after);
     if (descriptor.format === 'docx') {
@@ -156,7 +157,7 @@ export async function run(): Promise<void> {
       let focusDoc = await open(api, focusUri);
       const initialText = await focusDoc.request('test:text');
       await focusDoc.request('test:paste', { text: 'Undo focus ' });
-      await focusDoc.request('test:history', { redo: false });
+      assert.equal(await focusDoc.request('test:focus-canvas'), true); press('z');
       await waitText(focusDoc, initialText);
       assert.ok(String(await focusDoc.request('test:type-focused', { text: 'בדיקה' })).includes('בדיקה'), 'Typing after Undo needs no click');
       assert.ok(await vscode.workspace.save(focusUri));
