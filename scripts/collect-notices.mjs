@@ -52,7 +52,9 @@ export function collectNotices(selected) {
     if (name !== 'suite') {
       const fonts = JSON.parse(readFileSync(resolve(root, 'upstream/font-assets.json'), 'utf8'));
       mkdirSync(join(destination, 'fonts'), { recursive: true });
-      copyFileSync(resolve(root, 'upstream/font-assets/NotoSansHebrew-OFL.txt'), join(destination, 'fonts/NotoSansHebrew-OFL.txt'));
+      for (const font of fonts.fonts) for (const asset of font.files.filter(file => file.role === 'license')) {
+        copyFileSync(resolve(root, 'upstream/font-assets', asset.path), join(destination, 'fonts', asset.path));
+      }
       writeFileSync(join(destination, 'fonts/attribution.json'), JSON.stringify(fonts, null, 2) + '\n');
     }
     // Original source paths are not included in the distributable inventory.
