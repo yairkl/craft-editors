@@ -27,22 +27,29 @@ export async function verifyPreview(viewer, format, canvas, units) {
       };
       canvas.dispatchEvent(new KeyboardEvent('keydown', { key: 'Control', code: 'ControlLeft', ctrlKey: true, bubbles: true }));
       await frame();
-      const wheel = async (deltaY, deltaMode = 1, ctrlKey = true, x = 350, y = 300) => {
+      const dispatchWheel = (deltaY, deltaMode = 1, ctrlKey = true, x = 350, y = 300) => {
         const bounds = canvas.getBoundingClientRect();
         canvas.dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true,
           clientX: bounds.left + x, clientY: bounds.top + y,
           ctrlKey, deltaMode, deltaY }));
+      };
+      const wheel = async (deltaY, deltaMode = 1, ctrlKey = true, x = 350, y = 300) => {
+        dispatchWheel(deltaY, deltaMode, ctrlKey, x, y);
         await new Promise(resolve => setTimeout(resolve, 600));
       };
       await wheel(-1);
       await waitZoom(initialZoom + 5, 'Fine wheel zoom');
       await wheel(1);
       await waitZoom(initialZoom, 'Fine wheel zoom out');
-      await wheel(-0.25); await wheel(-0.25);
+      dispatchWheel(-0.25); dispatchWheel(-0.25);
+      await frame();
       check(viewer.zoom_percent() === initialZoom, 'Partial wheel events must accumulate before stepping');
-      await wheel(-0.25);
+      // Let the partial gesture expire, then send one gesture as a burst. The
+      // adapter intentionally resets its accumulator after 750 ms of inactivity.
+      await new Promise(resolve => setTimeout(resolve, 850));
+      dispatchWheel(-0.25); dispatchWheel(-0.25); dispatchWheel(-0.25);
       await waitZoom(initialZoom + 5, 'Fractional line input');
-      await wheel(-0.25); await wheel(1);
+      await wheel(1);
       await waitZoom(initialZoom, 'Fractional wheel zoom out');
       await wheel(-8, 0); // egui's web default: eight logical points per line.
       await waitZoom(initialZoom + 5, 'Pixel-mode Ctrl+wheel');
