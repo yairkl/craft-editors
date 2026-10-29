@@ -17,7 +17,7 @@ Propose embedding changes upstream when practical. Record temporary patches with
 - Include applicable license and asset notices when adding dependencies or artifacts.
 - Document supported formats and fidelity limits without claiming unsupported compatibility.
 
-Run `npm ci`, `npm run check`, `npm test`, and `npm run fixtures:check` before committing. Changes to the provider, webview, or transport also require `npm run test:integration` (on headless Linux, prefix with `xvfb-run -a`). CI runs these checks against VS Code 1.102.0. The integration suite exercises local and non-file URI transport, cancellation, file-size limits, and unchanged source bytes. Dedicated rendering and editing suites exercise the native engines.
+Run `npm ci`, `npm run check`, `npm test`, and `npm run fixtures:check` before committing. Changes to the provider, webview, or transport also require `npm run test:integration` (on headless Linux, prefix with `xvfb-run -a`). Pull requests run checks selected for the changed files; the manually dispatched release workflow runs the full suite against VS Code 1.102.0. The integration suite exercises local and non-file URI transport, cancellation, file-size limits, and unchanged source bytes. Dedicated rendering and editing suites exercise the native engines.
 
 Keep generated output, downloaded test hosts, upstream checkouts and application artifacts out of git. Regenerate original smoke files with `npm run fixtures`. Fetch source pins with `npm run upstream:fetch`; do not replace immutable pins with branch names. Update the manifest and research notes together when upstream inputs change.
 
