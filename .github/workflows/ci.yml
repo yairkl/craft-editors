@@ -21,6 +21,8 @@ jobs:
         with:
           fetch-depth: 0
       - run: python3 scripts/test-ci-changes.py
+      - run: python3 scripts/test-upstream-release-candidate.py
+      - run: python3 scripts/test-publish-upstream-candidate.py
       - id: select
         if: github.event_name == 'pull_request'
         env:

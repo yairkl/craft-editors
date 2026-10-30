@@ -15,6 +15,13 @@ class SelectionTests(unittest.TestCase):
         self.assertEqual(module.classify(['README.md', '.github/workflows/ci.yml']),
                          dict(code=False, fixtures=False, build=False, wheel=False, remote_script=False, platform=False, extended=False))
 
+    def test_upstream_automation_uses_its_own_focused_tests(self):
+        files = ['upstream/README.md', 'scripts/upstream-release-candidate.py',
+                 'scripts/publish-upstream-candidate.py', 'scripts/test-upstream-release-candidate.py',
+                 'scripts/test-publish-upstream-candidate.py']
+        self.assertEqual(module.classify(files),
+                         dict(code=False, fixtures=False, build=False, wheel=False, remote_script=False, platform=False, extended=False))
+
     def test_fixtures_trigger_verification_and_platform_smoke(self):
         self.assertEqual(module.classify(['integration-tests/fixtures/example.xlsx']),
                          dict(code=False, fixtures=True, build=True, wheel=False, remote_script=False, platform=True, extended=False))

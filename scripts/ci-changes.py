@@ -10,6 +10,9 @@ def classify(paths):
         if path.startswith(('docs/', '.github/')) or path in {
             'README.md', 'CONTRIBUTING.md', 'LICENSE', '.gitattributes', '.gitignore',
             'scripts/ci-changes.py', 'scripts/test-ci-changes.py',
+            'upstream/README.md', 'scripts/upstream-release-candidate.py',
+            'scripts/publish-upstream-candidate.py', 'scripts/test-upstream-release-candidate.py',
+            'scripts/test-publish-upstream-candidate.py',
         }:
             continue
         if path.startswith('integration-tests/fixtures/') or path == 'scripts/generate-fixtures.py':
