@@ -63,6 +63,7 @@ struct State {
     format: String,
     app: SheetApp,
     context: egui::Context,
+    capture: Arc<std::sync::Mutex<Option<Arc<egui::ColorImage>>>>,
     on_frame: Option<js_sys::Function>,
     on_event: js_sys::Function,
     token: u32,
@@ -390,7 +391,7 @@ impl State {
         }
         if let Some(previous) = self.snapshots.get(&self.token) {
             let mut comparison = (*previous.wb).clone();
-            comparison.active_sheet = doc.wb.active_sheet;
+            comparison.active_sheet = doc.wb.active_sheet.clone();
             if comparison == *doc.wb && previous.same_draft(&self.app) {
                 self.snapshots
                     .insert(self.token, Snapshot::capture(doc, &self.app));
@@ -461,7 +462,7 @@ impl State {
             .app
             .session
             .active()
-            .map(|doc| (doc.selection.clone(), doc.wb.active_sheet));
+            .map(|doc| (doc.selection.clone(), doc.wb.active_sheet.clone()));
         // Serialize exactly what was typed; autosave must not accept an autocomplete suggestion.
         if preserve_draft && let Some(ed) = self.app.editor.as_mut() {
             ed.completion = None;
@@ -506,22 +507,25 @@ struct GridShell(Rc<RefCell<State>>);
 impl eframe::App for GridShell {
     fn raw_input_hook(&mut self, ctx: &egui::Context, raw: &mut egui::RawInput) {
         if let Ok(mut state) = self.0.try_borrow_mut() {
-            for event in &raw.events {
-                if let egui::Event::Screenshot { image, .. } = event
-                    && let Some(callback) = state.on_frame.take()
-                {
-                    let pixels: Vec<u8> = image
-                        .pixels
-                        .iter()
-                        .flat_map(|color| color.to_array())
-                        .collect();
-                    let _ = callback.call3(
-                        &JsValue::NULL,
-                        &(image.size[0] as f64).into(),
-                        &(image.size[1] as f64).into(),
-                        &js_sys::Uint8Array::from(pixels.as_slice()),
-                    );
-                }
+            let captured = state
+                .capture
+                .lock()
+                .ok()
+                .and_then(|mut capture| capture.take());
+            if let Some(image) = captured
+                && let Some(callback) = state.on_frame.take()
+            {
+                let pixels: Vec<u8> = image
+                    .pixels
+                    .iter()
+                    .flat_map(|color| color.to_array())
+                    .collect();
+                let _ = callback.call3(
+                    &JsValue::NULL,
+                    &(image.size[0] as f64).into(),
+                    &(image.size[1] as f64).into(),
+                    &js_sys::Uint8Array::from(pixels.as_slice()),
+                );
             }
             // Intercept only physical Ctrl/Cmd+wheel over the worksheet. Ordinary
             // scrolling, pinch Zoom events, native buttons and shortcuts stay native.
@@ -565,7 +569,7 @@ impl eframe::App for GridShell {
                         };
                         state.observe();
                         if let Some(doc) = state.app.session.active() {
-                            let place = (doc.uid, doc.wb.active_sheet);
+                            let place = (doc.uid, doc.wb.active_sheet.get());
                             let zoom = doc.wb.active().map_or(100, |sheet| sheet.zoom);
                             let next = state.wheel.turn(place, now, notches, zoom);
                             if next != zoom {
@@ -590,7 +594,7 @@ impl eframe::App for GridShell {
                 }
                 true
             });
-            state.app.raw_input_hook(raw);
+            state.app.raw_input_hook(ctx, raw);
         }
         // Files are opened by VS Code, never into a second internal workbook.
         raw.dropped_files.clear();
@@ -624,8 +628,15 @@ impl eframe::App for GridShell {
                 emit(&state.on_event, "command", &[("command", command.into())]);
             }
             if state.on_frame.is_some() && state.app.grid.geo.is_some() {
+                let capture = state.capture.clone();
                 ui.ctx()
-                    .send_viewport_cmd(egui::ViewportCommand::Screenshot(Default::default()));
+                    .send_viewport_cmd(egui::ViewportCommand::Screenshot(
+                        egui::ScreenshotCallback::new(move |image| {
+                            if let Ok(mut target) = capture.lock() {
+                                *target = Some(image);
+                            }
+                        }),
+                    ));
                 ui.ctx().request_repaint();
             }
         }
@@ -674,6 +685,7 @@ impl GridViewer {
             app,
             commands,
             context: egui::Context::default(),
+            capture: Arc::default(),
             on_frame: Some(on_frame),
             on_event,
             token: 0,
@@ -980,7 +992,7 @@ impl GridViewer {
             .app
             .session
             .active()
-            .map_or(0, |doc| doc.wb.active_sheet))
+            .map_or(0, |doc| doc.wb.active_sheet.get()))
     }
     pub fn select_sheet(&self, index: usize) -> Result<(), JsValue> {
         let mut state = self
