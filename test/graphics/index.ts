@@ -142,6 +142,14 @@ export async function run(): Promise<void> {
       const closed = agent(api.mcp);
       const closedTool = (name: string, args: object) => closed('tools/call', { name, arguments: args });
       assert.equal((await closedTool('open_file', { path: closedUri.fsPath })).isError, false);
+      const preview = await closedTool('screenshot', {});
+      const image = preview.content?.find(item => item.type === 'image');
+      assert.equal(image?.mimeType, 'image/png', 'The headless VectorCraft MCP returns an inline PNG');
+      assert.deepEqual(Buffer.from(image?.data ?? '', 'base64').subarray(0, 8), Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+      const imagePath = vscode.Uri.joinPath(directory, 'agent-render.png');
+      await rm(imagePath.fsPath, { force: true });
+      assert.equal((await closedTool('screenshot', { path: imagePath.fsPath })).isError, true, 'The WebAssembly renderer cannot write to an agent-supplied path');
+      await assert.rejects(async () => vscode.workspace.fs.stat(imagePath), 'A rejected image path must not create a file');
       assert.equal((await closedTool('add_text', { x: 25, y: 260, text: 'closed vector agent', size: 24 })).isError, false);
       assert.deepEqual(await vscode.workspace.fs.readFile(closedUri), original);
       assert.equal((await closedTool('save_file', {})).isError, false);
@@ -279,7 +287,7 @@ async function waitFor(predicate: () => boolean): Promise<void> {
 function agent(config: NonNullable<Api['mcp']>) {
   const child = spawn(config.command, config.args, { env: { ...process.env, ...config.env }, stdio: ['pipe', 'pipe', 'pipe'] });
   const lines = createInterface({ input: child.stdout });
-  type Reply = { isError?: boolean; content?: { text?: string }[]; tools?: { name: string }[] };
+  type Reply = { isError?: boolean; content?: { type?: string; text?: string; mimeType?: string; data?: string }[]; tools?: { name: string }[] };
   const pending = new Map<number, { resolve(value: Reply): void; reject(error: Error): void }>();
   let sequence = 0;
   lines.on('line', line => { const response = JSON.parse(line) as { id: number; result: Reply }; const waiter = pending.get(response.id); if (waiter) { pending.delete(response.id); waiter.resolve(response.result); } });
