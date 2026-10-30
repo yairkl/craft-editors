@@ -1,0 +1,151 @@
+name: Check upstream releases
+on:
+  schedule:
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: upstream-updates-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [gridcraft, wordcraft, deckcraft, pdfcraft, vectorcraft]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Find a newer stable release
+        id: candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APP: ${{ matrix.app }}
+        run: python3 scripts/upstream-release-candidate.py "$APP"
+      - uses: actions/setup-node@v4
+        if: steps.candidate.outputs.candidate == 'true'
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Prepare pinned sources and patches
+        if: steps.candidate.outputs.candidate == 'true'
+        run: |
+          npm ci
+          if ! npm run upstream:fetch; then
+            echo '::error title=Upstream update needs attention::A pinned source or downstream patch could not be prepared. Review the source and rebase or remove the affected patch before retrying.'
+            exit 1
+          fi
+          python3 scripts/upstream-release-candidate.py --verify-source '${{ matrix.app }}'
+      - uses: actions/cache/restore@v4
+        if: steps.candidate.outputs.candidate == 'true'
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin/wasm-bindgen*
+            ~/.cargo/.crates*
+            adapters/target
+          key: upstream-${{ runner.os }}-rust-1.95.0-${{ hashFiles('adapters/Cargo.lock', 'upstream/manifest.json') }}
+          restore-keys: |
+            rendering-${{ runner.os }}-rust-1.95.0-
+      - name: Install build tools and update the Rust lockfile
+        if: steps.candidate.outputs.candidate == 'true'
+        run: |
+          rustup toolchain install 1.95.0 --profile minimal --target wasm32-unknown-unknown
+          cargo +1.95.0 install wasm-bindgen-cli --version 0.2.129 --locked
+          cargo +1.95.0 metadata --manifest-path adapters/Cargo.toml --format-version 1 > /dev/null
+      - name: Build and validate installers
+        if: steps.candidate.outputs.candidate == 'true'
+        run: |
+          npm run check
+          npm test
+          npm run fixtures:check
+          npm run renderers:build
+          npm run package
+          npm run packages:check
+      - name: Verify editor lifecycle
+        if: steps.candidate.outputs.candidate == 'true'
+        env:
+          CRAFT_TEST_ONLY: ${{ steps.candidate.outputs.editor }}
+          APP: ${{ matrix.app }}
+        run: |
+          sudo apt-get update && sudo apt-get install -y xdotool xclip
+          xvfb-run -a npm run test:integration
+          case "$APP" in
+            gridcraft) suite=editing ;;
+            wordcraft|deckcraft) suite=office ;;
+            pdfcraft|vectorcraft) suite=graphics ;;
+            *) exit 1 ;;
+          esac
+          xvfb-run -a npm run "test:$suite"
+          xvfb-run -a npm run test:languages
+          xvfb-run -a npm run test:theme
+          xvfb-run -a npm run test:platform
+          xvfb-run -a npm run test:installed
+      - name: Prepare a reviewable patch
+        if: steps.candidate.outputs.candidate == 'true'
+        env:
+          EDITOR: ${{ steps.candidate.outputs.editor }}
+        run: |
+          cp media/engines/build.json upstream/rendering-build.json
+          python3 - <<'PY'
+          import os, subprocess
+          changed = set(subprocess.check_output(['git', 'diff', '--name-only', '-z']).decode().strip('\0').split('\0'))
+          allowed = {'upstream/manifest.json', 'upstream/rendering-build.json', 'adapters/Cargo.lock', 'package-lock.json', f"packages/{os.environ['EDITOR']}/package.json"}
+          required = allowed - {'adapters/Cargo.lock'}
+          staged = subprocess.check_output(['git', 'diff', '--cached', '--name-only'])
+          untracked = subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard'])
+          if not required <= changed <= allowed or staged or untracked:
+              raise SystemExit('Unexpected tracked, staged or untracked changes during validation')
+          PY
+          git diff --check
+          git diff --binary -- upstream/manifest.json upstream/rendering-build.json adapters/Cargo.lock package-lock.json "packages/$EDITOR/package.json" > "$RUNNER_TEMP/update.patch"
+          test -s "$RUNNER_TEMP/update.patch"
+      - uses: actions/upload-artifact@v4
+        if: steps.candidate.outputs.candidate == 'true'
+        with:
+          name: upstream-candidate-${{ matrix.app }}
+          path: ${{ runner.temp }}/update.patch
+          retention-days: 1
+
+  propose:
+    if: ${{ always() && !cancelled() }}
+    needs: validate
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [gridcraft, wordcraft, deckcraft, pdfcraft, vectorcraft]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Download a passing candidate
+        id: candidate
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: upstream-candidate-${{ matrix.app }}
+          path: ${{ runner.temp }}/candidate
+      - name: Create a pull request
+        if: steps.candidate.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APP: ${{ matrix.app }}
+          BASE_SHA: ${{ github.sha }}
+          BASE_BRANCH: ${{ github.event.repository.default_branch }}
+          PATCH_FILE: ${{ runner.temp }}/candidate/update.patch
+        run: |
+          python3 scripts/publish-upstream-candidate.py
