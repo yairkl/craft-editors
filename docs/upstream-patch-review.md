@@ -34,4 +34,22 @@ The [manifest](../upstream/manifest.json) is the source of truth for each reposi
 
 Patches are applied in manifest order; a later patch must be checked against all earlier patches for the same app. In particular, shared-file changes and adapter calls may require a staged API change before UI changes can be reviewed independently. The suites above exercise the integration as a whole; add focused upstream-native tests for each extracted change before submitting it.
 
-To update a pin, inspect upstream changes and licenses, rebase each patch in manifest order without unrelated edits, update its hash and rationale, run the renderer builds and relevant editor/packaging suites, and review the generated notices. Do not change a source pin merely to make a patch apply.
+## Candidate upstream changes
+
+These are review units, not ready-to-submit patches. Check current upstream code and ask maintainers about the intended API before choosing a first contribution.
+
+1. **VectorCraft: WebAssembly MCP image output.** Isolate the `crates/mcp/src/headless.rs` change so a request for image data works in WebAssembly and a request to write a path reports an unsupported operation. Verify native path writes and optional inline data still work; add upstream tests for both targets. This does not depend on the branding or UI patches.
+2. **WordCraft: document snapshots.** Isolate snapshot and restoration in `crates/engine`, without embedded chrome or VS Code callbacks. Test round trips, history and the lifetime/ownership contract in upstream engine tests. The host UI changes can follow after the snapshot API is agreed.
+3. **GridCraft: host-owned file and history operations.** Propose an optional callback boundary in `crates/ui-egui`, with existing standalone behavior as the default. Test the no-host path, host dispatch, failure, and saved-state acknowledgment only after persistence succeeds. Keep adapter wheel behavior and VS Code commands downstream.
+4. **PdfCraft: host font registration.** Propose a script-independent registration interface separately from script-specific font selection. Test absent host fonts, fallback ordering, and the selected scripts without changing standalone defaults. The present patch alone only connects Hebrew selection and is not a general language-support implementation.
+
+For all four, inspect the upstream revision at the time of the proposal, keep one behavioral concern per change, and run upstream-native tests as well as the integration checks above. Maintainer agreement, review and acceptance are not assumed.
+
+## Updating a pin
+
+1. Inspect the upstream changes, license and relevant current APIs; decide whether each downstream change is still needed.
+2. Check out the new immutable revision in a disposable checkout. Apply and rebase patches in manifest order, separating unrelated changes and preserving standalone defaults. Review the resulting diff, including changes to shared files.
+3. Update the revision and affected patch SHA-256 hashes, purposes and removal conditions in the manifest. Run `npm run upstream:fetch` to verify the declared sources and ordered patch set.
+4. Rebuild with `npm run renderers:build`, run the affected suites in the table, and run package and installed-VSIX checks when shipped artifacts change. Review generated notices and rerun focused upstream-native tests. Record any remaining limitations.
+
+Do not change a source pin merely to make a patch apply; do not submit the downstream UI bundles wholesale.
