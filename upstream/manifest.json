@@ -37,7 +37,7 @@
           "path": "upstream/patches/gridcraft-host-commands.patch",
           "sha256": "32e5b3fc0eb01d76f023f18df71e771518c8bc9b11d7fc71b231b93546660c6b",
           "purpose": "Delegate native file lifecycle and committed undo/redo to an embedding host without acknowledging writes early.",
-          "removalCondition": "Remove when the pinned upstream Services interface supplies the equivalent host-command hook."
+          "removalCondition": "Remove when upstream supplies host-owned file and committed-history callbacks with persistence acknowledgment and the adapter uses them."
         }
       ]
     },
@@ -66,31 +66,31 @@
           "path": "upstream/patches/pdfcraft-automation.patch",
           "sha256": "f5ad3c25f083cf24ea176149acfe084d51297eaef11a2974589c669ec2a0635e",
           "purpose": "Expose the embedded automation session.",
-          "removalCondition": "Remove when upstream exposes equivalent embedding services."
+          "removalCondition": "Remove when upstream exposes the automation session required by the embedded MCP bridge and the adapter uses it."
         },
         {
           "path": "upstream/patches/pdfcraft-snapshots.patch",
           "sha256": "2b37df753a9ac80b96781bf6b6f29a55ea25ba4080370abe16beffc28e259117",
           "purpose": "Expose host-owned document snapshots.",
-          "removalCondition": "Remove when upstream exposes equivalent embedding services."
+          "removalCondition": "Remove when upstream exposes snapshots and restoration sufficient for host history and drafts and the adapter uses them."
         },
         {
           "path": "upstream/patches/pdfcraft-fonts.patch",
           "sha256": "e533d16cec47d137c3fdfc7186bbb83bdc83489d218a7499c150f1ed13839f71",
           "purpose": "Register host-provided font data for the Hebrew font selection path.",
-          "removalCondition": "Remove when upstream exposes equivalent embedding services."
+          "removalCondition": "Remove when upstream provides a suitable host-font registration and selection mechanism or the fallback is no longer needed."
         },
         {
           "path": "upstream/patches/pdfcraft-rendering.patch",
           "sha256": "64f76d00dd68d713631a8570a088a1f7bdb72499b41e5e9702af80167ce23a99",
           "purpose": "Support embedded rendering behavior.",
-          "removalCondition": "Remove when upstream exposes equivalent embedding services."
+          "removalCondition": "Remove when the pinned PdfCraft and rendering dependency versions compile together without this compatibility adjustment."
         },
         {
           "path": "upstream/patches/pdfcraft-ui-host.patch",
           "sha256": "ab02d2d66506b2dbf9d9f197d76039a5da9c12612faf5217d8274181132b8462",
           "purpose": "Provide embedded lifecycle, drafts and UI hooks.",
-          "removalCondition": "Remove when upstream exposes equivalent embedding services."
+          "removalCondition": "Remove when upstream supplies the required lifecycle, draft and optional UI capabilities and the adapter uses them."
         }
       ]
     },
@@ -106,13 +106,13 @@
           "path": "upstream/patches/wordcraft-snapshots.patch",
           "sha256": "58fd26cf389c9dbf8b7c596a9fb77dd03ba152d284f6f4bf20d815b263bd4643",
           "purpose": "Expose reusable host document snapshots.",
-          "removalCondition": "Remove when upstream exposes equivalent embedding services and host snapshots."
+          "removalCondition": "Remove when upstream exposes snapshots and restoration sufficient for host history and recovery and the adapter uses them."
         },
         {
           "path": "upstream/patches/wordcraft-ui-host.patch",
           "sha256": "cdc4a7fa80d8bfdfd1e7f6f2e14cef5d16414c9de738be342a53524d0ccdeaaf",
           "purpose": "Provide embedded lifecycle and UI hooks.",
-          "removalCondition": "Remove when upstream exposes equivalent embedding services and host snapshots."
+          "removalCondition": "Remove when upstream supplies the required lifecycle, history, flush and optional UI hooks and the adapter uses them."
         }
       ]
     },
@@ -128,13 +128,13 @@
           "path": "upstream/patches/deckcraft-host.patch",
           "sha256": "de4c7a1f9446a6efdd0e15e0735f3ae6fea16c6d86edc915971291250c3ba9e3",
           "purpose": "Provide embedded lifecycle and presentation behavior.",
-          "removalCondition": "Remove when upstream exposes equivalent embedding services and host snapshots."
+          "removalCondition": "Remove when upstream supplies the required lifecycle, history and presentation-host capabilities and the adapter uses them."
         },
         {
           "path": "upstream/patches/deckcraft-ui.patch",
           "sha256": "bafea29335b0bdf29b377484b606e306fd1d23d84bf413688956c6f0ff1ca926",
           "purpose": "Adjust native chrome for embedding.",
-          "removalCondition": "Remove when upstream exposes equivalent embedding services and host snapshots."
+          "removalCondition": "Remove when upstream supports the required optional ribbon and status chrome or the embedding no longer requires those changes."
         }
       ]
     },
@@ -150,19 +150,19 @@
           "path": "upstream/patches/vectorcraft-mcp-wasm.patch",
           "sha256": "067ad2792e038e8bfc8f01055b4e141575bf52d2578f695597de4c79bcc0636d",
           "purpose": "Allow headless MCP to build for WebAssembly.",
-          "removalCondition": "Remove when upstream exposes equivalent embedding services."
+          "removalCondition": "Remove when upstream supports the embedded WebAssembly MCP rendering path without filesystem writes or the adapter no longer needs it."
         },
         {
           "path": "upstream/patches/vectorcraft-branding.patch",
           "sha256": "e8ae8647015c43d69db3c1b637f918132173205c0b20286c42e6f84f8aa107c6",
           "purpose": "Remove restricted branding from modified builds.",
-          "removalCondition": "Remove when upstream exposes equivalent embedding services."
+          "removalCondition": "Remove when modified builds can omit restricted branding without this patch or applicable branding terms permit its use."
         },
         {
           "path": "upstream/patches/vectorcraft-ui-host.patch",
           "sha256": "784d65179826e18c97cfe329caa160af43d6d25f7c2938d203d552521c8fcc7e",
           "purpose": "Provide embedded lifecycle and UI hooks.",
-          "removalCondition": "Remove when upstream exposes equivalent embedding services."
+          "removalCondition": "Remove when upstream supplies the required lifecycle, history and optional UI capabilities and the adapter uses them."
         }
       ]
     }
@@ -185,8 +185,8 @@
     "scope": "Independent installation/testing beta; restricted logo inclusions removed; per-renderer source/font notices retained; package hashes verified."
   },
   "blockers": [
-    "Complex document fidelity and larger-file memory/startup validation pending.",
-    "Windows/macOS, WSL and wider SSH network/authentication validation pending; Linux-container Remote SSH lifecycle tests pass.",
+    "Complex document fidelity and broader large-file memory/startup validation pending; content-filled workbook and PDF tests pass on Linux.",
+    "Broader Windows/macOS coverage, WSL and wider SSH network/authentication validation pending; cross-platform CI and Linux-container Remote SSH lifecycle tests cover selected scenarios.",
     "Uncommitted PDF text/form and incomplete spreadsheet drafts cannot be crash-recovered until serializable.",
     "Advanced printing, signing, external pickers, combine/export and synchronized views are outside validated integration."
   ]

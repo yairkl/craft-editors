@@ -1,0 +1,9 @@
+# Documentation verification
+
+On 2026-10-30, a disposable Linux checkout of the documentation branch was used to check the contributor setup. With Node.js 22 and Python available, `npm ci`, `npm run check`, `npm test`, `npm run fixtures`, `npm run fixtures:check`, and `npm run upstream:fetch` passed. The fetch checked out all five declared upstream revisions and applied the declared patch sets. The documented adapter and shared-runtime Rust formatting checks, adapter Clippy check, and a full `npm run renderers:build` passed using an existing Rust 1.95.0 toolchain, wasm-bindgen 0.2.129 and cached dependencies.
+
+A local check of all 35 tracked Markdown files found all 73 relative file targets and heading anchors. This does not validate external URLs, generated links, or GitHub's rendering of every Markdown construct. The isolated VectorCraft patch-review commands were also run successfully against the pinned revision.
+
+Packaging, archive validation, checksum generation and verification, and the integration, rendering, editing, Office, graphics, theme, language, Linux platform, installed-VSIX and Docker Remote SSH suites passed with VS Code 1.102.0. The new VectorCraft graphics regression test was copied into the disposable checkout before that suite ran. One combined shell invocation returned a nonzero exit after all test profiles reported success; the installed-VSIX command was rerun independently and returned zero.
+
+This is not a clean-machine release on every platform. The checkout reused installed toolchains, cached dependencies and an existing VS Code executable; macOS and Windows commands, update installations, store publication and destructive release commands were not rerun. Earlier cross-platform and large-file results are recorded separately in [platform CI](platform-ci.md), [Remote SSH](remote-ssh.md), and [large files](large-files.md). Those reports do not establish that every documented command works in every environment.
