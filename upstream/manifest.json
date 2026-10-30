@@ -185,8 +185,8 @@
     "scope": "Independent installation/testing beta; restricted logo inclusions removed; per-renderer source/font notices retained; package hashes verified."
   },
   "blockers": [
-    "Complex document fidelity and larger-file memory/startup validation pending.",
-    "Windows/macOS, WSL and wider SSH network/authentication validation pending; Linux-container Remote SSH lifecycle tests pass.",
+    "Complex document fidelity and broader large-file memory/startup validation pending; content-filled workbook and PDF tests pass on Linux.",
+    "Broader Windows/macOS coverage, WSL and wider SSH network/authentication validation pending; cross-platform CI and Linux-container Remote SSH lifecycle tests cover selected scenarios.",
     "Uncommitted PDF text/form and incomplete spreadsheet drafts cannot be crash-recovered until serializable.",
     "Advanced printing, signing, external pickers, combine/export and synchronized views are outside validated integration."
   ]
