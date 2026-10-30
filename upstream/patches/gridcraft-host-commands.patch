@@ -1,27 +1,18 @@
-diff --git a/crates/ui-egui/src/lib.rs b/crates/ui-egui/src/lib.rs
-index 9bea918dc3550b94b47ba45a13f3e4dbb3aa4815..1a940dd9ced8256c18aefd00e419c272aa570583 100644
---- a/crates/ui-egui/src/lib.rs
-+++ b/crates/ui-egui/src/lib.rs
-@@ -178,6 +178,8 @@ pub struct Notice {
- /// Host services the platform shell provides (file pickers, opening URLs).
- #[derive(Default)]
- pub struct Services {
-+    /// Embedding host owns file actions and committed-document undo/redo.
-+    pub host_command: Option<Box<dyn Fn(&str) -> bool>>,
-     /// Desktop: discover configured printers on a worker.
-     pub printers: Option<printing::Discover>,
-     /// Desktop: submit the PDF with the chosen settings on a worker.
-@@ -396,6 +398,9 @@ impl SheetApp {
+diff --git a/crates/ui-egui/src/app/commands.rs b/crates/ui-egui/src/app/commands.rs
+index 969b6faac64a7739895a87b6c51e6c5ef5de7a79..ae72bec7bc1531825dbe0628ff6b315383748511 100644
+--- a/crates/ui-egui/src/app/commands.rs
++++ b/crates/ui-egui/src/app/commands.rs
+@@ -17,6 +17,9 @@ impl SheetApp {
      }
  
-     fn run_command(&mut self, id: &str, params: Json) -> Result<Json, String> {
+     pub(super) fn run_command(&mut self, id: &str, params: Json) -> Result<Json, String> {
 +        if self.services.host_command.as_ref().is_some_and(|host| host(id)) {
 +            return Ok(Json::Null);
 +        }
-         if matches!(id, "file.save" | "file.saveAs" | "file.saveBytes") {
-             self.store_view_state();
-         }
-@@ -770,6 +775,10 @@ impl SheetApp {
+         let switches_window = id.starts_with("window.")
+             || matches!(id, "view.newWindow" | "view.hideWindow" | "view.unhideWindow")
+             || (id == "view.switchWindows" && ["window", "doc"].iter().any(|k| params.get(*k).is_some_and(|d| !d.is_null())));
+@@ -280,6 +283,10 @@ impl SheetApp {
      }
  
      pub fn open_dialog(&mut self, name: &str, params: Json) {
@@ -32,12 +23,29 @@ index 9bea918dc3550b94b47ba45a13f3e4dbb3aa4815..1a940dd9ced8256c18aefd00e419c272
          if let Err(e) = self.commit_text_box_edit() {
              self.message = Some(("Text Box".into(), clean_error(&e)));
              return;
-@@ -1351,7 +1360,7 @@ impl SheetApp {
-         {
+diff --git a/crates/ui-egui/src/app/files.rs b/crates/ui-egui/src/app/files.rs
+index 0cbde92a8f089b3daee387454d9d35d5036cdd00..8c537b37d14944c438f8c36e277c5d22e420e7d3 100644
+--- a/crates/ui-egui/src/app/files.rs
++++ b/crates/ui-egui/src/app/files.rs
+@@ -112,7 +112,7 @@ impl SheetApp {
+         if autosave_due {
              self.grid.last_autosave = now;
              self.store_view_state();
 -            let _ = self.session.run("file.save", json!({}));
 +            let _ = self.run("file.save", json!({}));
-         }
-         // Window title.
-         if let Some(d) = self.session.active() {
+         } else if self.ui.autosave && dirty_xlsx {
+             // Keep checking even when no input arrives while the window is hidden.
+             ctx.request_repaint_after(std::time::Duration::from_secs(2));
+diff --git a/crates/ui-egui/src/services.rs b/crates/ui-egui/src/services.rs
+index 748e23ab3d87c8ab1f1c577177d8a1586ab34b95..3c782fd38f959f067235e08dc527a8ba6dbd2504 100644
+--- a/crates/ui-egui/src/services.rs
++++ b/crates/ui-egui/src/services.rs
+@@ -9,6 +9,8 @@ type PrintPdf = Box<dyn Fn(&[u8])>;
+ /// Host services the platform shell provides (file pickers, opening URLs).
+ #[derive(Default)]
+ pub struct Services {
++    /// Embedding host owns file actions and committed-document undo/redo.
++    pub host_command: Option<Box<dyn Fn(&str) -> bool>>,
+     /// Desktop: discover configured printers on a worker.
+     pub printers: Option<printing::Discover>,
+     /// Desktop: submit the PDF with the chosen settings on a worker.

@@ -15,9 +15,9 @@
     {
       "id": "gridcraft",
       "repository": "https://github.com/storytold/gridcraft",
-      "revision": "17b9f6ff0125209fe707efc919690632ff49cb0b",
-      "version": "0.11.1",
-      "minimumRust": "1.90",
+      "revision": "43284377d2466037628e57d8ad0c891778fdb45c",
+      "version": "0.13.0",
+      "minimumRust": "1.95",
       "license": "MIT OR Apache-2.0",
       "webDirectory": "apps/gridcraft-web",
       "outputDirectory": "dist/web",
@@ -35,7 +35,7 @@
       "patches": [
         {
           "path": "upstream/patches/gridcraft-host-commands.patch",
-          "sha256": "32e5b3fc0eb01d76f023f18df71e771518c8bc9b11d7fc71b231b93546660c6b",
+          "sha256": "bdf6499d16ee2e214568a6584d133818656fa3fd466d95e88221375e9e9c41da",
           "purpose": "Delegate native file lifecycle and committed undo/redo to an embedding host without acknowledging writes early.",
           "removalCondition": "Remove when upstream supplies host-owned file and committed-history callbacks with persistence acknowledgment and the adapter uses them."
         }

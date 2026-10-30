@@ -1246,11 +1246,16 @@ version = "0.1.0"
 source = "git+https://github.com/storytold/craft-libs?rev=a0916808f7d78bed8c7b90cdf937176015454a7f#a0916808f7d78bed8c7b90cdf937176015454a7f"
 
 [[package]]
+name = "craft-fonts-build"
+version = "0.1.0"
+source = "git+https://github.com/storytold/craft-libs?rev=92d392cff132eaf53e13afff77f38b5c11b73aa0#92d392cff132eaf53e13afff77f38b5c11b73aa0"
+
+[[package]]
 name = "craft-grid-viewer"
 version = "0.1.0"
 dependencies = [
- "eframe 0.36.2",
- "egui 0.36.2",
+ "eframe 0.37.0",
+ "egui 0.37.0",
  "gridcraft-engine",
  "gridcraft-mcp",
  "gridcraft-ui-egui",
@@ -1267,6 +1272,29 @@ dependencies = [
 name = "craft-i18n"
 version = "0.1.0"
 source = "git+https://github.com/storytold/craft-libs?rev=17744430be327d0257496a6a31c8d38fe20a6756#17744430be327d0257496a6a31c8d38fe20a6756"
+dependencies = [
+ "fixed_decimal",
+ "icu_decimal",
+ "icu_locale_core",
+ "icu_locale_fallback",
+ "icu_normalizer",
+ "icu_plurals",
+ "icu_properties",
+ "icu_provider",
+ "icu_provider_adapters",
+ "icu_provider_blob",
+ "log",
+ "objc2-foundation 0.3.2",
+ "sys-locale",
+ "unicode-bidi",
+ "windows-registry",
+ "writeable",
+]
+
+[[package]]
+name = "craft-i18n"
+version = "0.1.0"
+source = "git+https://github.com/storytold/craft-libs?rev=92d392cff132eaf53e13afff77f38b5c11b73aa0#92d392cff132eaf53e13afff77f38b5c11b73aa0"
 dependencies = [
  "fixed_decimal",
  "icu_decimal",
@@ -1386,6 +1414,26 @@ dependencies = [
 [[package]]
 name = "craft-ui"
 version = "0.1.0"
+source = "git+https://github.com/storytold/craft-libs?rev=92d392cff132eaf53e13afff77f38b5c11b73aa0#92d392cff132eaf53e13afff77f38b5c11b73aa0"
+dependencies = [
+ "craft-fonts-build",
+ "craft-i18n 0.1.0 (git+https://github.com/storytold/craft-libs?rev=92d392cff132eaf53e13afff77f38b5c11b73aa0)",
+ "egui 0.37.0",
+ "epaint 0.37.0",
+ "js-sys",
+ "log",
+ "objc2 0.6.5",
+ "objc2-app-kit 0.3.2",
+ "objc2-foundation 0.3.2",
+ "skrifa 0.44.0",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
+
+[[package]]
+name = "craft-ui"
+version = "0.1.0"
 source = "git+https://github.com/storytold/craft-libs?rev=a0916808f7d78bed8c7b90cdf937176015454a7f#a0916808f7d78bed8c7b90cdf937176015454a7f"
 dependencies = [
  "egui 0.37.0",
@@ -1402,6 +1450,31 @@ version = "0.1.0"
 source = "git+https://github.com/storytold/craft-libs?rev=d27646a5f7c8b4fc85d9dd3213b8c88b58e0088d#d27646a5f7c8b4fc85d9dd3213b8c88b58e0088d"
 dependencies = [
  "egui 0.36.2",
+]
+
+[[package]]
+name = "craft-update"
+version = "0.1.0"
+source = "git+https://github.com/storytold/craft-libs?rev=92d392cff132eaf53e13afff77f38b5c11b73aa0#92d392cff132eaf53e13afff77f38b5c11b73aa0"
+dependencies = [
+ "chrono",
+ "dunce",
+ "egui 0.37.0",
+ "flate2",
+ "getrandom 0.3.4",
+ "log",
+ "plist",
+ "semver",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tar",
+ "tempfile",
+ "ureq",
+ "verifysign",
+ "winreg",
+ "winsafe",
+ "zip 9.1.3",
 ]
 
 [[package]]
@@ -1422,6 +1495,17 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
+]
+
+[[package]]
+name = "craft-window"
+version = "0.1.0"
+source = "git+https://github.com/storytold/craft-libs?rev=92d392cff132eaf53e13afff77f38b5c11b73aa0#92d392cff132eaf53e13afff77f38b5c11b73aa0"
+dependencies = [
+ "egui 0.37.0",
+ "objc2 0.6.5",
+ "objc2-app-kit 0.3.2",
+ "wayland-client",
 ]
 
 [[package]]
@@ -1689,7 +1773,7 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 2.0.21",
- "zip",
+ "zip 3.0.0",
 ]
 
 [[package]]
@@ -1815,7 +1899,7 @@ dependencies = [
  "log",
  "quick-xml 0.41.0",
  "thiserror 2.0.21",
- "zip",
+ "zip 3.0.0",
 ]
 
 [[package]]
@@ -3147,7 +3231,7 @@ dependencies = [
 
 [[package]]
 name = "gridcraft-calc"
-version = "0.11.1"
+version = "0.13.0"
 dependencies = [
  "gridcraft-core",
  "gridcraft-formula",
@@ -3159,7 +3243,7 @@ dependencies = [
 
 [[package]]
 name = "gridcraft-chart"
-version = "0.11.1"
+version = "0.13.0"
 dependencies = [
  "gridcraft-calc",
  "gridcraft-core",
@@ -3170,7 +3254,7 @@ dependencies = [
 
 [[package]]
 name = "gridcraft-core"
-version = "0.11.1"
+version = "0.13.0"
 dependencies = [
  "chrono",
  "js-sys",
@@ -3180,7 +3264,7 @@ dependencies = [
 
 [[package]]
 name = "gridcraft-engine"
-version = "0.11.1"
+version = "0.13.0"
 dependencies = [
  "gridcraft-calc",
  "gridcraft-chart",
@@ -3196,11 +3280,12 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 2.0.21",
+ "web-time",
 ]
 
 [[package]]
 name = "gridcraft-formula"
-version = "0.11.1"
+version = "0.13.0"
 dependencies = [
  "gridcraft-core",
  "serde",
@@ -3209,7 +3294,7 @@ dependencies = [
 
 [[package]]
 name = "gridcraft-functions"
-version = "0.11.1"
+version = "0.13.0"
 dependencies = [
  "gridcraft-core",
  "regex",
@@ -3217,7 +3302,7 @@ dependencies = [
 
 [[package]]
 name = "gridcraft-mcp"
-version = "0.11.1"
+version = "0.13.0"
 dependencies = [
  "gridcraft-engine",
  "log",
@@ -3226,7 +3311,7 @@ dependencies = [
 
 [[package]]
 name = "gridcraft-model"
-version = "0.11.1"
+version = "0.13.0"
 dependencies = [
  "gridcraft-core",
  "gridcraft-formula",
@@ -3237,21 +3322,23 @@ dependencies = [
 
 [[package]]
 name = "gridcraft-numfmt"
-version = "0.11.1"
+version = "0.13.0"
 dependencies = [
  "gridcraft-core",
 ]
 
 [[package]]
 name = "gridcraft-pdf"
-version = "0.11.1"
+version = "0.13.0"
 
 [[package]]
 name = "gridcraft-ui-egui"
-version = "0.11.1"
+version = "0.13.0"
 dependencies = [
- "craft-ui 0.1.0 (git+https://github.com/storytold/craft-libs?rev=d27646a5f7c8b4fc85d9dd3213b8c88b58e0088d)",
- "egui 0.36.2",
+ "craft-ui 0.1.0 (git+https://github.com/storytold/craft-libs?rev=92d392cff132eaf53e13afff77f38b5c11b73aa0)",
+ "craft-update",
+ "craft-window",
+ "egui 0.37.0",
  "gridcraft-chart",
  "gridcraft-engine",
  "image",
@@ -3262,12 +3349,13 @@ dependencies = [
  "sys-locale",
  "toml",
  "web-sys",
+ "web-time",
  "zbus",
 ]
 
 [[package]]
 name = "gridcraft-xlsx"
-version = "0.11.1"
+version = "0.13.0"
 dependencies = [
  "aes 0.9.3",
  "gridcraft-core",
@@ -3277,7 +3365,7 @@ dependencies = [
  "sha1 0.11.0",
  "sha2 0.11.1",
  "thiserror 2.0.21",
- "zip",
+ "zip 3.0.0",
 ]
 
 [[package]]
@@ -4469,6 +4557,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ee6cda3051665f1fb8d9e08fc35c96d5a244fb1be711a03b71118828afc9a873"
 dependencies = [
  "jni-sys 0.3.1",
+]
+
+[[package]]
+name = "nix"
+version = "0.31.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cf20d2fde8ff38632c426f1165ed7436270b44f199fc55284c38276f9db47c3d"
+dependencies = [
+ "bitflags 2.13.2",
+ "cfg-if",
+ "cfg_aliases",
+ "libc",
 ]
 
 [[package]]
@@ -6525,7 +6625,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "48e13bd8c0e9365c43cfa5c9e8f9ad49d3c8444926c9aac819e0e4dc503c8fdf"
 dependencies = [
  "aws-lc-rs",
+ "log",
  "once_cell",
+ "ring",
  "rustls-pki-types",
  "rustls-webpki",
  "subtle",
@@ -6727,6 +6829,10 @@ name = "semver"
 version = "1.0.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a7852d02fc848982e0c167ef163aaff9cd91dc640ba85e263cb1ce46fae51cd"
+dependencies = [
+ "serde",
+ "serde_core",
+]
 
 [[package]]
 name = "send_wrapper"
@@ -8103,6 +8209,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "typed-path"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9ce898823d8cd0f028662d2f349694b1af0a5cc9be83f1d213a00d3147445e1e"
+
+[[package]]
 name = "typeid"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8207,6 +8319,35 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
 
 [[package]]
+name = "ureq"
+version = "3.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cde93ff05758a36a851a398a772b0b79a82fbe3c186a46f2696baaeaf84c966b"
+dependencies = [
+ "base64 0.23.1",
+ "flate2",
+ "log",
+ "percent-encoding",
+ "rustls",
+ "rustls-pki-types",
+ "rustls-platform-verifier",
+ "ureq-proto",
+ "utf8-zero",
+]
+
+[[package]]
+name = "ureq-proto"
+version = "0.6.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "841583fc36089d7d59419568ae157f43a5a03a2e5a81ba87c77d1596ef46e922"
+dependencies = [
+ "base64 0.23.1",
+ "http",
+ "httparse",
+ "log",
+]
+
+[[package]]
 name = "url"
 version = "2.5.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8265,6 +8406,12 @@ name = "utf16_iter"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c8232dd3cdaed5356e0f716d285e4b40b932ac434100fe9b7e0e8e935b9e6246"
+
+[[package]]
+name = "utf8-zero"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b8c0a043c9540bae7c578c88f91dda8bd82e59ae27c21baca69c8b191aaf5a6e"
 
 [[package]]
 name = "utf8_iter"
@@ -8757,6 +8904,16 @@ dependencies = [
  "rayon",
  "thread_local",
  "vello_common 0.2.0",
+]
+
+[[package]]
+name = "verifysign"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6acfcc42a8d44f340d001193d97ef56bf33210b51ad760ae8308c97d5241ca51"
+dependencies = [
+ "core-foundation 0.10.1",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -9582,6 +9739,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "winreg"
+version = "0.55.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb5a765337c50e9ec252c2069be9bf91c7df47afb103b642ba3a53bf8101be97"
+dependencies = [
+ "cfg-if",
+ "windows-sys 0.59.0",
+]
+
+[[package]]
 name = "winsafe"
 version = "0.0.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9655,7 +9822,7 @@ dependencies = [
  "wordcraft-doc",
  "wordcraft-geom",
  "zeroize",
- "zip",
+ "zip 3.0.0",
 ]
 
 [[package]]
@@ -9712,7 +9879,7 @@ dependencies = [
  "quick-xml 0.41.0",
  "wordcraft-doc",
  "wordcraft-geom",
- "zip",
+ "zip 3.0.0",
 ]
 
 [[package]]
@@ -9809,7 +9976,7 @@ name = "wordcraft-ui-egui"
 version = "0.11.0"
 dependencies = [
  "chrono",
- "craft-i18n",
+ "craft-i18n 0.1.0 (git+https://github.com/storytold/craft-libs?rev=17744430be327d0257496a6a31c8d38fe20a6756)",
  "craft-ui 0.1.0 (git+https://github.com/storytold/craft-libs?rev=d27646a5f7c8b4fc85d9dd3213b8c88b58e0088d)",
  "egui 0.36.2",
  "image",
@@ -10235,6 +10402,23 @@ dependencies = [
  "flate2",
  "indexmap",
  "memchr",
+ "zopfli",
+]
+
+[[package]]
+name = "zip"
+version = "9.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1156b39d142a34b999c2310a50455e0cb3760bf7efad0122f796d813bee26ccb"
+dependencies = [
+ "crc32fast",
+ "flate2",
+ "getrandom 0.4.3",
+ "indexmap",
+ "memchr",
+ "nix",
+ "typed-path",
+ "windows-sys 0.61.2",
  "zopfli",
 ]
 

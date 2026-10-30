@@ -7,6 +7,8 @@ This local Linux x64 test uses generated, disposable fixtures; it does not estab
 
 Both standalone and combined-extension profiles passed in local VS Code 1.102.0. The workbook open/agent/edit/save/reopen sequence took approximately 11 seconds in each profile; the complete test command's maximum resident set reported by `/usr/bin/time` was 885,124 KiB. The PDF sequence took approximately 3 seconds in each profile; the complete PDF test command reported 575,176 KiB maximum resident set. These are single-run measurements of individual process peaks, not aggregate multi-process memory; they depend on hardware and test fixture structure. See [rendering](../rendering.md) for the host's reported hardware and earlier padded-file measurements.
 
+On 2026-10-30, the content-filled workbook test was repeated after updating GridCraft to 0.13.0. The standalone and combined profiles passed in approximately 10.7 and 10.8 seconds respectively. Memory was not remeasured in that run.
+
 Reproduce on Linux with the development dependencies, built renderers, `python3`, Poppler's `pdfimages`, desktop VS Code and `xvfb-run`:
 
 ```sh

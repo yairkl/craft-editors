@@ -12,8 +12,8 @@ gridcraft-engine = { path = "../../upstream/checkouts/gridcraft/crates/engine" }
 gridcraft-mcp = { path = "../../upstream/checkouts/gridcraft/crates/mcp" }
 gridcraft-xlsx = { path = "../../upstream/checkouts/gridcraft/crates/xlsx" }
 gridcraft-ui-egui = { path = "../../upstream/checkouts/gridcraft/crates/ui-egui" }
-egui = "=0.36.2"
-eframe = { version = "=0.36.2", default-features = false, features = ["glow", "default_fonts"] }
+egui = "=0.37.0"
+eframe = { version = "=0.37.0", default-features = false, features = ["glow", "default_fonts"] }
 wasm-bindgen = "=0.2.129"
 wasm-bindgen-futures = "=0.4.79"
 js-sys = "=0.3.106"
