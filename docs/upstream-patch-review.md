@@ -45,6 +45,20 @@ These are review units, not ready-to-submit patches. Check current upstream code
 
 For all four, inspect the upstream revision at the time of the proposal, keep one behavioral concern per change, and run upstream-native tests as well as the integration checks above. Maintainer agreement, review and acceptance are not assumed.
 
+To inspect the standalone VectorCraft candidate without altering the integration checkout, run the following from the repository root after `npm run upstream:fetch`:
+
+```sh
+review_dir=$(mktemp -d)
+git clone --no-hardlinks upstream/checkouts/vectorcraft "$review_dir"
+git -C "$review_dir" checkout --detach 714434527e1a3e03c4b49096e30dd92b258aab50
+git -C "$review_dir" apply --check "$PWD/upstream/patches/vectorcraft-mcp-wasm.patch"
+git -C "$review_dir" apply "$PWD/upstream/patches/vectorcraft-mcp-wasm.patch"
+git -C "$review_dir" diff --check
+git -C "$review_dir" diff
+```
+
+This reproduces the downstream change against the pinned revision, not an upstream-ready PR or a test of current upstream. The isolated checkout remains at `review_dir` for inspection; review upstream's current state and add the native and WebAssembly tests described above before proposing it. For patches that depend on earlier entries, apply those entries first in manifest order in a separate checkout.
+
 ## Updating a pin
 
 1. Inspect the upstream changes, license and relevant current APIs; decide whether each downstream change is still needed.
