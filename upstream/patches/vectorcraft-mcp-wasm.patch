@@ -1,8 +1,8 @@
 diff --git a/crates/mcp/src/headless.rs b/crates/mcp/src/headless.rs
-index 34c0509c16ca71ecfc176d9e67911753f89f4cad..7a9719ae1de0f43aa905aae76abb0341f85f851a 100644
+index c16e0023a641d3cc80c7ca9955ae8e305ae78152..3d16ecf3c3b59c4fdad6b71b24ed623b090348a4 100644
 --- a/crates/mcp/src/headless.rs
 +++ b/crates/mcp/src/headless.rs
-@@ -271,12 +271,17 @@ impl Headless {
+@@ -273,12 +273,17 @@ impl Headless {
          let mut out = json!({"width": img.width, "height": img.height});
          match s(p, "path") {
              Some(path) => {

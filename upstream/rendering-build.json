@@ -1,7 +1,7 @@
 {
   "rust": "rustc 1.95.0 (59807616e 2026-04-14)",
   "wasmBindgen": "0.2.129",
-  "adapterLockSha256": "adea46c06550414a738702a1552817fb0018ef12af284da46eb68d898883bd99",
+  "adapterLockSha256": "d2771b26ed40a314d83e55733496609c8ba62949c589371ec5d107991dc81851",
   "fontAssets": {
     "schemaVersion": 2,
     "fonts": [
@@ -34,7 +34,7 @@
     "pdfcraft": "418ac6a2af49b7ac2fed44ca2cae8d5d1d2cec0d",
     "wordcraft": "85db9cfef5b12f02dc78f3e67774924a0d5e68c7",
     "deckcraft": "14f40c408c67d2cb43e30a47dd179aada6dba53a",
-    "vectorcraft": "714434527e1a3e03c4b49096e30dd92b258aab50"
+    "vectorcraft": "68b68a30acad9b3d8a72802b35f43b82e2bd7d3a"
   },
   "artifacts": {
     "grid/viewer.js": {
@@ -42,16 +42,16 @@
       "sha256": "f0c8146ba2a099a7477036dbbd03fd1c1ec63d984f52d96ed394ec117c6b66c9"
     },
     "grid/viewer_bg.wasm": {
-      "bytes": 19821858,
-      "sha256": "926b6c6cdcfac653bae0c1e3f811b4da256b2e4c4a53ab2218e6321edf59015a"
+      "bytes": 19822843,
+      "sha256": "e5ef45b4ef7516720dcd9fac0a3bff4eba94ce44fbfbbd9dddc30671eb2f26ec"
     },
     "grid/node/viewer.js": {
       "bytes": 89371,
       "sha256": "5a64174db862aba610b978933a81d6bc1f2697da9e7637977257fa30c04025a4"
     },
     "grid/node/viewer_bg.wasm": {
-      "bytes": 19821858,
-      "sha256": "926b6c6cdcfac653bae0c1e3f811b4da256b2e4c4a53ab2218e6321edf59015a"
+      "bytes": 19822843,
+      "sha256": "e5ef45b4ef7516720dcd9fac0a3bff4eba94ce44fbfbbd9dddc30671eb2f26ec"
     },
     "grid/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
@@ -63,51 +63,51 @@
     },
     "pdf/viewer.js": {
       "bytes": 167528,
-      "sha256": "036767d692c84bd5a3c4c7e854fa7d5c958993556689b257aae2634866484d23"
+      "sha256": "762a4efc507d6e0729ff752e00a3a9d8118258d261958557d98f1f3f3c2ae21e"
     },
     "pdf/viewer_bg.wasm": {
-      "bytes": 48741443,
-      "sha256": "a78da87bb7fd181602e3e4ff9b20c4de98e511471c592eacd73bfbb9047ddfdd"
+      "bytes": 48729073,
+      "sha256": "bc084fc4bf965a8609f54680f8c3f1d1ec9b4591ad44088b9e2f63d3bd30db16"
     },
     "pdf/node/viewer.js": {
       "bytes": 164024,
-      "sha256": "3c32dbb53008db8f653c33b9f8501de0f373da8620059b283b1d46ff2d4c06f0"
+      "sha256": "1ce3b7a74bcd55152c6f4e244d8e4386185d71ac78deb001db2016375fc9e123"
     },
     "pdf/node/viewer_bg.wasm": {
-      "bytes": 48741443,
-      "sha256": "a78da87bb7fd181602e3e4ff9b20c4de98e511471c592eacd73bfbb9047ddfdd"
+      "bytes": 48729073,
+      "sha256": "bc084fc4bf965a8609f54680f8c3f1d1ec9b4591ad44088b9e2f63d3bd30db16"
     },
     "word/viewer.js": {
       "bytes": 159767,
-      "sha256": "efaad3b2bd6800914ed8f16cdf4b3729ecb61e445c80454b80777a09607b5187"
+      "sha256": "9d296d0bbd3bd249de7aede5a8acaf092957c1fdee046e4aefc07762345b1d8d"
     },
     "word/viewer_bg.wasm": {
-      "bytes": 44589811,
-      "sha256": "78755f04fa5450da68c8f177a27c7f3bc80c85b08a3420c7927c9e36e52c0af3"
+      "bytes": 44584606,
+      "sha256": "61ffe21de07a86485c29166b38412787ca491c4788461ac1d511c98ca9dfcead"
     },
     "word/node/viewer.js": {
       "bytes": 156265,
-      "sha256": "a8a9ddadd181ad211088f2593349f1cb0da1d53c997e9ff17a11704dba1db276"
+      "sha256": "2b84c5c61d91997851a39c30fc6746d4b789768491665181046b348a3f0fd588"
     },
     "word/node/viewer_bg.wasm": {
-      "bytes": 44589811,
-      "sha256": "78755f04fa5450da68c8f177a27c7f3bc80c85b08a3420c7927c9e36e52c0af3"
+      "bytes": 44584606,
+      "sha256": "61ffe21de07a86485c29166b38412787ca491c4788461ac1d511c98ca9dfcead"
     },
     "deck/viewer.js": {
       "bytes": 88002,
       "sha256": "5115bd934969c302d19d837037a7993373c0244053bf1e18caf92c34c78197f9"
     },
     "deck/viewer_bg.wasm": {
-      "bytes": 27468786,
-      "sha256": "e1df3c83a61519998199e00e8dbdec2b2478281aec7ddf356e99a4463a1f2ca8"
+      "bytes": 27468132,
+      "sha256": "0532515fcfef5d974abcb798189084aca806af46cca11ee63b60e241e30922e8"
     },
     "deck/node/viewer.js": {
       "bytes": 84517,
       "sha256": "45d09bec6cf8cfa59319df23ecdbf2461c0f04107e9ba4572b75bf864a855a71"
     },
     "deck/node/viewer_bg.wasm": {
-      "bytes": 27468786,
-      "sha256": "e1df3c83a61519998199e00e8dbdec2b2478281aec7ddf356e99a4463a1f2ca8"
+      "bytes": 27468132,
+      "sha256": "0532515fcfef5d974abcb798189084aca806af46cca11ee63b60e241e30922e8"
     },
     "deck/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
@@ -119,19 +119,19 @@
     },
     "vector/viewer.js": {
       "bytes": 88633,
-      "sha256": "e16abb7a04af9af4f0140c992831056d0f5c25a75724b80a3dd618a5e47502dd"
+      "sha256": "46fb55defd155f18f38947bf92ca7169ff03b288b8f715996b37a7783ce888d8"
     },
     "vector/viewer_bg.wasm": {
-      "bytes": 67815698,
-      "sha256": "c3a14ee72dc91f175a3c2c9dbb1f881f8dfd2e3a55919200abb9103ccd4c9921"
+      "bytes": 68901691,
+      "sha256": "0a82f6d25c9fe650543494e6a2e4c21c1c2730b56923d210e40293bfc05b55e1"
     },
     "vector/node/viewer.js": {
       "bytes": 85152,
-      "sha256": "4af07fb7fbfe92c7401062ab068fcc8cf7e58bf6491910b45ae4aa7314ef7e5e"
+      "sha256": "95570bc2159a48094ea09ef9561ddfd0cfcde15a159f94930b81d8e68ee489bd"
     },
     "vector/node/viewer_bg.wasm": {
-      "bytes": 67815698,
-      "sha256": "c3a14ee72dc91f175a3c2c9dbb1f881f8dfd2e3a55919200abb9103ccd4c9921"
+      "bytes": 68901691,
+      "sha256": "0a82f6d25c9fe650543494e6a2e4c21c1c2730b56923d210e40293bfc05b55e1"
     },
     "vector/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
@@ -214,9 +214,15 @@
     "vectorcraft": [
       {
         "path": "upstream/patches/vectorcraft-mcp-wasm.patch",
-        "sha256": "067ad2792e038e8bfc8f01055b4e141575bf52d2578f695597de4c79bcc0636d",
+        "sha256": "800f1756fd0e9f8ba151d8fa33ea203e31121ff30a19d630d9c7a93a45ed08f5",
         "purpose": "Allow headless MCP to build for WebAssembly.",
         "removalCondition": "Remove when upstream supports the embedded WebAssembly MCP rendering path without filesystem writes or the adapter no longer needs it."
+      },
+      {
+        "path": "upstream/patches/vectorcraft-host-command.patch",
+        "sha256": "d8379932af5a19477e63b1cf823d6eb2966f4b602ea5cde1f8803cb0f227b6dd",
+        "purpose": "Delegate file lifecycle and committed undo/redo to the embedding host.",
+        "removalCondition": "Remove when upstream exposes an equivalent host-command callback and the adapter uses it."
       },
       {
         "path": "upstream/patches/vectorcraft-branding.patch",
@@ -226,7 +232,7 @@
       },
       {
         "path": "upstream/patches/vectorcraft-ui-host.patch",
-        "sha256": "784d65179826e18c97cfe329caa160af43d6d25f7c2938d203d552521c8fcc7e",
+        "sha256": "108e85bb5f096ffef9926543ffa7a066b2c4873928f50a8b8bdbb7fe3677cf42",
         "purpose": "Provide embedded lifecycle and UI hooks.",
         "removalCondition": "Remove when upstream supplies the required lifecycle, history and optional UI capabilities and the adapter uses them."
       }

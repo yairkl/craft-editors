@@ -141,16 +141,22 @@
     {
       "id": "vectorcraft",
       "repository": "https://github.com/storytold/vectorcraft",
-      "revision": "714434527e1a3e03c4b49096e30dd92b258aab50",
-      "version": "0.17.0",
+      "revision": "68b68a30acad9b3d8a72802b35f43b82e2bd7d3a",
+      "version": "0.18.0",
       "minimumRust": "1.95",
       "license": "MIT OR Apache-2.0",
       "patches": [
         {
           "path": "upstream/patches/vectorcraft-mcp-wasm.patch",
-          "sha256": "067ad2792e038e8bfc8f01055b4e141575bf52d2578f695597de4c79bcc0636d",
+          "sha256": "800f1756fd0e9f8ba151d8fa33ea203e31121ff30a19d630d9c7a93a45ed08f5",
           "purpose": "Allow headless MCP to build for WebAssembly.",
           "removalCondition": "Remove when upstream supports the embedded WebAssembly MCP rendering path without filesystem writes or the adapter no longer needs it."
+        },
+        {
+          "path": "upstream/patches/vectorcraft-host-command.patch",
+          "sha256": "d8379932af5a19477e63b1cf823d6eb2966f4b602ea5cde1f8803cb0f227b6dd",
+          "purpose": "Delegate file lifecycle and committed undo/redo to the embedding host.",
+          "removalCondition": "Remove when upstream exposes an equivalent host-command callback and the adapter uses it."
         },
         {
           "path": "upstream/patches/vectorcraft-branding.patch",
@@ -160,7 +166,7 @@
         },
         {
           "path": "upstream/patches/vectorcraft-ui-host.patch",
-          "sha256": "784d65179826e18c97cfe329caa160af43d6d25f7c2938d203d552521c8fcc7e",
+          "sha256": "108e85bb5f096ffef9926543ffa7a066b2c4873928f50a8b8bdbb7fe3677cf42",
           "purpose": "Provide embedded lifecycle and UI hooks.",
           "removalCondition": "Remove when upstream supplies the required lifecycle, history and optional UI capabilities and the adapter uses them."
         }
