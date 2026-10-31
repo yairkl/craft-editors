@@ -1,8 +1,8 @@
 diff --git a/crates/render/src/raster.rs b/crates/render/src/raster.rs
-index e906144e42a4fc9a4afa52653f2687220add4121..72471ce9a00862b03739626d86daaf6a96b78acc 100644
+index c002c6ec927635cd18128b9f10a10eabbb8be015..d94ad77953031d3d137c2a988a8e5bc4e7f5d23c 100644
 --- a/crates/render/src/raster.rs
 +++ b/crates/render/src/raster.rs
-@@ -408,7 +408,6 @@ fn warning_settings(settings: &InterpreterSettings, warnings: Arc<Mutex<Vec<Rend
+@@ -415,7 +415,6 @@ fn warning_settings(settings: &InterpreterSettings, warnings: Arc<Mutex<Vec<Rend
              // exhausted budget, or the colours that fell back: once per page is enough.
              let warning = match warning {
                  InterpreterWarning::ContentTruncated => RenderWarning::ContentTruncated,

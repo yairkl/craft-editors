@@ -98,6 +98,11 @@ export async function run(): Promise<void> {
       assert.equal(reading.show.presenter, false, 'Reading View cannot create an overlapping presenter window');
       assert.equal(doc.dirty, false, 'Presentation/view controls must not modify the file');
       await doc.request('test:command', { command: 'show.end' });
+      await doc.request('test:command', { command: 'show.customShow', params: { name: 'Custom show', slides: [0] } });
+      await waitFor(() => doc.dirty);
+      await doc.request('test:command', { command: 'show.start', params: { custom: 'Custom show' } });
+      assert.equal((await doc.request('test:inspect') as { show: unknown }).show, null, 'A valid custom slideshow cannot bypass the embedded presentation restriction');
+      await api.editing.revertCustomDocument(doc, cancellation.token);
     }
     const before = await doc.request('test:text'); assert.equal(typeof before, 'string');
     assert.ok(String(before).includes('Craft'));

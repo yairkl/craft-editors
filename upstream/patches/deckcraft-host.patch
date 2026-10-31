@@ -1,19 +1,8 @@
-diff --git a/crates/ui-egui/src/lib.rs b/crates/ui-egui/src/lib.rs
-index 094d7aba81e7fb138099e24153a57adc0bc4b9d5..8395330c197a5d24f4c67f8dc5c9f2bda0655a14 100644
---- a/crates/ui-egui/src/lib.rs
-+++ b/crates/ui-egui/src/lib.rs
-@@ -241,6 +241,10 @@ const STATUS_LINGER_MS: f64 = 6000.0;
- /// Platform services injected by the host (desktop or web).
- #[derive(Default)]
- pub struct Services {
-+    /// Embedded document host owns file lifecycle and committed undo/redo.
-+    pub host_command: Option<Box<dyn Fn(&str) -> bool>>,
-+    /// Omit standalone file and window chrome when embedded.
-+    pub embedded: bool,
-     /// Open-file dialog for a purpose (`open`, `picture`, `audio`, `video`) → path.
-     pub pick_open: Option<PickFn>,
-     /// Save dialog with a suggested name → path.
-@@ -937,6 +941,7 @@ impl SlideApp {
+diff --git a/crates/ui-egui/src/app/commands.rs b/crates/ui-egui/src/app/commands.rs
+index 216dd30d3ede2dbeb9dd416943d981002397de5b..827de784e06916b3f121fe7248d264de7cd2aeb2 100644
+--- a/crates/ui-egui/src/app/commands.rs
++++ b/crates/ui-egui/src/app/commands.rs
+@@ -18,6 +18,7 @@ impl SlideApp {
      /// Run a command by id (UI commands here, everything else in the engine). Errors show in the
      /// status bar and are returned.
      pub fn run(&mut self, id: &str, params: Value) -> Result<Value, String> {
@@ -21,7 +10,7 @@ index 094d7aba81e7fb138099e24153a57adc0bc4b9d5..8395330c197a5d24f4c67f8dc5c9f2bd
          let r = if UI_COMMANDS.iter().any(|c| c.0 == id) {
              self.run_ui(id, &params)
          } else {
-@@ -1305,7 +1310,13 @@ impl SlideApp {
+@@ -164,7 +165,13 @@ impl SlideApp {
                      self.start_show(from, false);
                  }
              }
@@ -36,7 +25,31 @@ index 094d7aba81e7fb138099e24153a57adc0bc4b9d5..8395330c197a5d24f4c67f8dc5c9f2bd
              "show.end" => {
                  self.show = None;
                  self.media.stop_owned(media::Owner::Show);
-@@ -1440,6 +1451,10 @@ impl SlideApp {
+diff --git a/crates/ui-egui/src/app/files.rs b/crates/ui-egui/src/app/files.rs
+index 0f3c944f7ab48240664e64bd1dbc088ed181a3d8..20c0ef8501cb0fe79e55e4b259a441262b14c176 100644
+--- a/crates/ui-egui/src/app/files.rs
++++ b/crates/ui-egui/src/app/files.rs
+@@ -379,6 +379,7 @@ impl SlideApp {
+     }
+ 
+     pub fn save_as_dialog(&mut self, format: &str) {
++        if self.services.host_command.as_ref().is_some_and(|host| host("file.saveAs")) { return; }
+         let name = self.session.active().map(|d| d.title()).unwrap_or_else(|| "Presentation".into());
+         let ext = if format == "pptx" { "pptx" } else { "deckcraft" };
+         let suggested = format!("{name}.{ext}");
+@@ -418,6 +419,7 @@ impl SlideApp {
+     }
+ 
+     pub fn save(&mut self) {
++        if self.services.host_command.as_ref().is_some_and(|host| host("file.save")) { return; }
+         if self.session.active().and_then(|d| d.path.clone()).is_some() {
+             match self.session.execute("file.save", &json!({})) {
+                 Ok(_) => self.set_status("Saved"),
+diff --git a/crates/ui-egui/src/app/playback.rs b/crates/ui-egui/src/app/playback.rs
+index 1b4f1d25eb51fde7e6eaca1468282404baf89c49..4641923b9d78e2ee02d66a1b1f9e1e599322fbb1 100644
+--- a/crates/ui-egui/src/app/playback.rs
++++ b/crates/ui-egui/src/app/playback.rs
+@@ -30,6 +30,10 @@ impl SlideApp {
      /// Leave animation preview, stop editor-owned media, and create a show at the requested slide
      /// with the current reading/presenter configuration; an out-of-range slide starts an ended show.
      pub fn start_show(&mut self, from: usize, reading: bool) {
@@ -47,19 +60,14 @@ index 094d7aba81e7fb138099e24153a57adc0bc4b9d5..8395330c197a5d24f4c67f8dc5c9f2bd
          self.anim_preview = None;
          self.media.stop_owned(media::Owner::Editor);
          if let Some(d) = self.session.active() {
-@@ -1668,6 +1683,7 @@ impl SlideApp {
-     }
+@@ -42,6 +46,10 @@ impl SlideApp {
  
-     pub fn save_as_dialog(&mut self, format: &str) {
-+        if self.services.host_command.as_ref().is_some_and(|host| host("file.saveAs")) { return; }
-         let name = self.session.active().map(|d| d.title()).unwrap_or_else(|| "Presentation".into());
-         let ext = if format == "pptx" { "pptx" } else { "deckcraft" };
-         let suggested = format!("{name}.{ext}");
-@@ -1707,6 +1723,7 @@ impl SlideApp {
-     }
- 
-     pub fn save(&mut self) {
-+        if self.services.host_command.as_ref().is_some_and(|host| host("file.save")) { return; }
-         if self.session.active().and_then(|d| d.path.clone()).is_some() {
-             match self.session.execute("file.save", &json!({})) {
-                 Ok(_) => self.set_status("Saved"),
+     /// Play custom show `name` from its first slide. Set Up Slide Show is left as it was.
+     pub fn start_custom_show(&mut self, name: &str, reading: bool) {
++        if self.services.embedded && !reading {
++            self.set_status("Presenting is unavailable in this host. Use Reading View here, or present with a standalone application.");
++            return;
++        }
+         let state = self.session.active().and_then(|d| deckcraft_anim::ShowState::play_custom(&d.doc, name));
+         let Some(state) = state else { return };
+         let from = state.slide;
