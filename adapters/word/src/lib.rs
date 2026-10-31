@@ -228,8 +228,8 @@ impl Document {
             .host_flush()
             .map_err(|_| error("The document draft could not be committed."))
     }
-    fn raw_input(&mut self, _ctx: &egui::Context, raw: &mut egui::RawInput) {
-        self.app.raw_input_hook(raw);
+    fn raw_input(&mut self, ctx: &egui::Context, raw: &mut egui::RawInput) {
+        self.app.raw_input_hook(ctx, raw);
     }
     fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.app.logic(ctx);
@@ -237,17 +237,15 @@ impl Document {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         self.app.ui(ui);
     }
-    fn screenshot_events(raw: &egui::RawInput, capture: &Capture) {
-        for event in &raw.events {
-            if let egui::Event::Screenshot { image, .. } = event
-                && let Ok(mut target) = capture.lock()
-            {
-                *target = Some((**image).clone());
-            }
-        }
-    }
-    fn request_screenshot(ctx: &egui::Context, _capture: Capture) {
-        ctx.send_viewport_cmd(egui::ViewportCommand::Screenshot(Default::default()));
+    fn screenshot_events(_raw: &egui::RawInput, _capture: &Capture) {}
+    fn request_screenshot(ctx: &egui::Context, capture: Capture) {
+        ctx.send_viewport_cmd(egui::ViewportCommand::Screenshot(
+            egui::ScreenshotCallback::new(move |image| {
+                if let Ok(mut target) = capture.lock() {
+                    *target = Some((*image).clone());
+                }
+            }),
+        ));
     }
     fn set_theme(&mut self, ctx: &egui::Context, dark: bool) {
         self.app.ui.theme = if dark {
