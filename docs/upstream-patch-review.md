@@ -22,7 +22,7 @@ The [manifest](../upstream/manifest.json) is the source of truth for each reposi
 | `wordcraft-snapshots.patch` | Exposes document snapshots for host history and recovery. Propose snapshot and restore separately from UI policy. | `npm run test:office` |
 | `wordcraft-ui-host.patch` | Adds host lifecycle and chrome hooks. Split lifecycle, history and UI concerns before proposing. | `npm run test:office` |
 | `deckcraft-host.patch` | Adds host file/history handling and presentation behavior. Separate lifecycle callbacks from presentation-host capabilities. | `npm run test:office` |
-| `deckcraft-ui.patch` | Adjusts ribbon and status chrome for embedding. An optional chrome capability needs independent review. | `npm run test:office`, `npm run test:theme` |
+| `deckcraft-ui.patch` | Declares host services and adjusts ribbon and status chrome for embedding. Split the host API and optional chrome capability for upstream review. | `npm run test:office`, `npm run test:theme` |
 | `pdfcraft-automation.patch` | Exposes the automation session used by the MCP bridge. Review its public API independently of VS Code. | `npm run test:graphics` |
 | `pdfcraft-snapshots.patch` | Exposes document snapshots for history and recovery. Review snapshot ownership and restoration independently. | `npm run test:graphics` |
 | `pdfcraft-fonts.patch` | Registers host fonts, currently consumed only by Hebrew selection. Generalize coverage and preserve existing fallback behavior before an upstream proposal. | `npm run test:languages` |

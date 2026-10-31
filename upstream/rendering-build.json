@@ -1,7 +1,7 @@
 {
   "rust": "rustc 1.95.0 (59807616e 2026-04-14)",
   "wasmBindgen": "0.2.129",
-  "adapterLockSha256": "adea46c06550414a738702a1552817fb0018ef12af284da46eb68d898883bd99",
+  "adapterLockSha256": "c58074deb0a7f57f6dd31bc44b7ac86635dc69d8d2f8f037453e3eee5e0a2261",
   "fontAssets": {
     "schemaVersion": 2,
     "fonts": [
@@ -33,7 +33,7 @@
     "gridcraft": "43284377d2466037628e57d8ad0c891778fdb45c",
     "pdfcraft": "418ac6a2af49b7ac2fed44ca2cae8d5d1d2cec0d",
     "wordcraft": "85db9cfef5b12f02dc78f3e67774924a0d5e68c7",
-    "deckcraft": "14f40c408c67d2cb43e30a47dd179aada6dba53a",
+    "deckcraft": "29f0f7772c47aa2bfb74fcbb0c4d3b1503300849",
     "vectorcraft": "714434527e1a3e03c4b49096e30dd92b258aab50"
   },
   "artifacts": {
@@ -42,16 +42,16 @@
       "sha256": "f0c8146ba2a099a7477036dbbd03fd1c1ec63d984f52d96ed394ec117c6b66c9"
     },
     "grid/viewer_bg.wasm": {
-      "bytes": 19821858,
-      "sha256": "926b6c6cdcfac653bae0c1e3f811b4da256b2e4c4a53ab2218e6321edf59015a"
+      "bytes": 19823898,
+      "sha256": "5c220d109c9a84509928de77f7997521f0869aa0285a8dee583356f5377c3d60"
     },
     "grid/node/viewer.js": {
       "bytes": 89371,
       "sha256": "5a64174db862aba610b978933a81d6bc1f2697da9e7637977257fa30c04025a4"
     },
     "grid/node/viewer_bg.wasm": {
-      "bytes": 19821858,
-      "sha256": "926b6c6cdcfac653bae0c1e3f811b4da256b2e4c4a53ab2218e6321edf59015a"
+      "bytes": 19823898,
+      "sha256": "5c220d109c9a84509928de77f7997521f0869aa0285a8dee583356f5377c3d60"
     },
     "grid/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
@@ -63,51 +63,51 @@
     },
     "pdf/viewer.js": {
       "bytes": 167528,
-      "sha256": "036767d692c84bd5a3c4c7e854fa7d5c958993556689b257aae2634866484d23"
+      "sha256": "8587334edcfd56eeccfc6ce87dcb1c122bcd42cbdb971c1fdd755c10dc6da21a"
     },
     "pdf/viewer_bg.wasm": {
-      "bytes": 48741443,
-      "sha256": "a78da87bb7fd181602e3e4ff9b20c4de98e511471c592eacd73bfbb9047ddfdd"
+      "bytes": 48719656,
+      "sha256": "5d5b09bbe2f10987b38143bbf1e8a2700b23140930b2e59117ba3876bf596599"
     },
     "pdf/node/viewer.js": {
       "bytes": 164024,
-      "sha256": "3c32dbb53008db8f653c33b9f8501de0f373da8620059b283b1d46ff2d4c06f0"
+      "sha256": "95ac66ed1745f04ecaae036407e3d61097b5d26a614f87c62ed9bd04a2885ece"
     },
     "pdf/node/viewer_bg.wasm": {
-      "bytes": 48741443,
-      "sha256": "a78da87bb7fd181602e3e4ff9b20c4de98e511471c592eacd73bfbb9047ddfdd"
+      "bytes": 48719656,
+      "sha256": "5d5b09bbe2f10987b38143bbf1e8a2700b23140930b2e59117ba3876bf596599"
     },
     "word/viewer.js": {
       "bytes": 159767,
-      "sha256": "efaad3b2bd6800914ed8f16cdf4b3729ecb61e445c80454b80777a09607b5187"
+      "sha256": "3af2e1702872f3a48a5ec4f038a76ca9d4984b0ff4126d7d056a97f78f4633d2"
     },
     "word/viewer_bg.wasm": {
-      "bytes": 44589811,
-      "sha256": "78755f04fa5450da68c8f177a27c7f3bc80c85b08a3420c7927c9e36e52c0af3"
+      "bytes": 44595216,
+      "sha256": "4a15c4d96b776349278903eb30aaa3bafd13d212c4ffd294e40cd03de7d3c1e8"
     },
     "word/node/viewer.js": {
       "bytes": 156265,
-      "sha256": "a8a9ddadd181ad211088f2593349f1cb0da1d53c997e9ff17a11704dba1db276"
+      "sha256": "b2ae14829aff89055e5209fa0ecec1c0277b2f9befc22e97c697ea909bcad86c"
     },
     "word/node/viewer_bg.wasm": {
-      "bytes": 44589811,
-      "sha256": "78755f04fa5450da68c8f177a27c7f3bc80c85b08a3420c7927c9e36e52c0af3"
+      "bytes": 44595216,
+      "sha256": "4a15c4d96b776349278903eb30aaa3bafd13d212c4ffd294e40cd03de7d3c1e8"
     },
     "deck/viewer.js": {
       "bytes": 88002,
-      "sha256": "5115bd934969c302d19d837037a7993373c0244053bf1e18caf92c34c78197f9"
+      "sha256": "38b8a18ba1bb577c9436fbc0edcb560d689867439c92aeb070934f918dd265d3"
     },
     "deck/viewer_bg.wasm": {
-      "bytes": 27468786,
-      "sha256": "e1df3c83a61519998199e00e8dbdec2b2478281aec7ddf356e99a4463a1f2ca8"
+      "bytes": 27882550,
+      "sha256": "af453a8f4aa51829c0bb35a20ebf0bd89e1036bf112096fe859e053678403895"
     },
     "deck/node/viewer.js": {
       "bytes": 84517,
-      "sha256": "45d09bec6cf8cfa59319df23ecdbf2461c0f04107e9ba4572b75bf864a855a71"
+      "sha256": "8c15327a2193a8cee347255f99c1df75aa795aed943973015bb8a9aea1e98bdf"
     },
     "deck/node/viewer_bg.wasm": {
-      "bytes": 27468786,
-      "sha256": "e1df3c83a61519998199e00e8dbdec2b2478281aec7ddf356e99a4463a1f2ca8"
+      "bytes": 27882550,
+      "sha256": "af453a8f4aa51829c0bb35a20ebf0bd89e1036bf112096fe859e053678403895"
     },
     "deck/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
@@ -122,16 +122,16 @@
       "sha256": "e16abb7a04af9af4f0140c992831056d0f5c25a75724b80a3dd618a5e47502dd"
     },
     "vector/viewer_bg.wasm": {
-      "bytes": 67815698,
-      "sha256": "c3a14ee72dc91f175a3c2c9dbb1f881f8dfd2e3a55919200abb9103ccd4c9921"
+      "bytes": 67662466,
+      "sha256": "502ba508ba8f0f77d13f83bbea35e838012c5affb6cccc0b2d8d860bbfe206f4"
     },
     "vector/node/viewer.js": {
       "bytes": 85152,
       "sha256": "4af07fb7fbfe92c7401062ab068fcc8cf7e58bf6491910b45ae4aa7314ef7e5e"
     },
     "vector/node/viewer_bg.wasm": {
-      "bytes": 67815698,
-      "sha256": "c3a14ee72dc91f175a3c2c9dbb1f881f8dfd2e3a55919200abb9103ccd4c9921"
+      "bytes": 67662466,
+      "sha256": "502ba508ba8f0f77d13f83bbea35e838012c5affb6cccc0b2d8d860bbfe206f4"
     },
     "vector/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
@@ -200,14 +200,14 @@
     "deckcraft": [
       {
         "path": "upstream/patches/deckcraft-host.patch",
-        "sha256": "de4c7a1f9446a6efdd0e15e0735f3ae6fea16c6d86edc915971291250c3ba9e3",
+        "sha256": "90388a99d397a1376facbc288261d6c81a69cf2f4487569ba4bedc2d334bc720",
         "purpose": "Provide embedded lifecycle and presentation behavior.",
         "removalCondition": "Remove when upstream supplies the required lifecycle, history and presentation-host capabilities and the adapter uses them."
       },
       {
         "path": "upstream/patches/deckcraft-ui.patch",
-        "sha256": "bafea29335b0bdf29b377484b606e306fd1d23d84bf413688956c6f0ff1ca926",
-        "purpose": "Adjust native chrome for embedding.",
+        "sha256": "80ac4fab42bf346268c9de7be101f3bf3022e3c49f8f06e61c47f3d5ba1ba58d",
+        "purpose": "Declare host services and adjust native chrome for embedding.",
         "removalCondition": "Remove when upstream supports the required optional ribbon and status chrome or the embedding no longer requires those changes."
       }
     ],

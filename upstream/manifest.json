@@ -119,21 +119,21 @@
     {
       "id": "deckcraft",
       "repository": "https://github.com/storytold/deckcraft",
-      "revision": "14f40c408c67d2cb43e30a47dd179aada6dba53a",
-      "version": "0.11.1",
+      "revision": "29f0f7772c47aa2bfb74fcbb0c4d3b1503300849",
+      "version": "0.12.0",
       "minimumRust": "1.95",
       "license": "MIT OR Apache-2.0",
       "patches": [
         {
           "path": "upstream/patches/deckcraft-host.patch",
-          "sha256": "de4c7a1f9446a6efdd0e15e0735f3ae6fea16c6d86edc915971291250c3ba9e3",
+          "sha256": "90388a99d397a1376facbc288261d6c81a69cf2f4487569ba4bedc2d334bc720",
           "purpose": "Provide embedded lifecycle and presentation behavior.",
           "removalCondition": "Remove when upstream supplies the required lifecycle, history and presentation-host capabilities and the adapter uses them."
         },
         {
           "path": "upstream/patches/deckcraft-ui.patch",
-          "sha256": "bafea29335b0bdf29b377484b606e306fd1d23d84bf413688956c6f0ff1ca926",
-          "purpose": "Adjust native chrome for embedding.",
+          "sha256": "80ac4fab42bf346268c9de7be101f3bf3022e3c49f8f06e61c47f3d5ba1ba58d",
+          "purpose": "Declare host services and adjust native chrome for embedding.",
           "removalCondition": "Remove when upstream supports the required optional ribbon and status chrome or the embedding no longer requires those changes."
         }
       ]
