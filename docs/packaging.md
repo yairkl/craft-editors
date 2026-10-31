@@ -52,7 +52,7 @@ Run `npm run compile`, then choose an individual application or **All Craft exte
 
 ## CI artifact retention and releases
 
-Pushes, including tag pushes, do not start CI. Pull requests run checks selected from the changed files. When a PR builds packages, it uploads `craft-vsix-<run-id>` for one day; failure screenshots also expire after one day. The `test:windows-installed` label opts a PR into the Windows installed-package suite.
+Pushes, including tag pushes, do not start CI. Pull requests run checks selected from the changed files. When a PR builds packages, it uploads `craft-vsix-<run-id>` for one day; failure screenshots also expire after one day. The `test:windows-installed` label opts a PR into the Windows installed-package suite; `test:macos-editing` runs the spreadsheet editing suite on macOS.
 
 For a release, push a `v*` tag with a matching `docs/releases/<tag>.md`, then manually dispatch the CI workflow with that tag as its ref. The workflow runs the full release checks, creates a one-day transfer artifact, and publishes the VSIX archives and checksums as GitHub Release assets only when every required job succeeds. Tags containing a hyphen are prereleases. A failed job can be retried without moving the tag; package versions come from their manifests.
 
