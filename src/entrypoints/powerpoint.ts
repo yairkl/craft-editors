@@ -16,7 +16,7 @@ export async function activate(context: vscode.ExtensionContext) {
   let mcp: Awaited<ReturnType<typeof registerDeckMcp>> | undefined;
   if (context.extensionMode !== vscode.ExtensionMode.Test || existsSync(path.join(context.extensionPath, 'media/engines/deck/node/viewer.js'))) {
     try { mcp = await registerDeckMcp(context, provider); }
-    catch (error) { console.error('Craft PowerPoint MCP could not start:', error); void vscode.window.showWarningMessage('Craft PowerPoint agent tools could not start. Presentation editing remains available.'); }
+    catch (error) { console.error('Craft Presentations MCP could not start:', error); void vscode.window.showWarningMessage('Craft Presentations agent tools could not start. Presentation editing remains available.'); }
   }
   return { ...probe, onDidRender: provider.onDidRender, editing: context.extensionMode === vscode.ExtensionMode.Test ? provider : undefined, mcp: context.extensionMode === vscode.ExtensionMode.Test ? mcp : undefined };
 }

@@ -16,7 +16,7 @@ export async function activate(context: vscode.ExtensionContext) {
   let mcp: Awaited<ReturnType<typeof registerWordMcp>> | undefined;
   if (context.extensionMode !== vscode.ExtensionMode.Test || existsSync(path.join(context.extensionPath, 'media/engines/word/node/viewer.js'))) {
     try { mcp = await registerWordMcp(context, provider); }
-    catch (error) { console.error('Craft Word MCP could not start:', error); void vscode.window.showWarningMessage('Craft Word agent tools could not start. Word editing remains available.'); }
+    catch (error) { console.error('Craft Documents MCP could not start:', error); void vscode.window.showWarningMessage('Craft Documents agent tools could not start. Word editing remains available.'); }
   }
   return { ...probe, onDidRender: provider.onDidRender, editing: context.extensionMode === vscode.ExtensionMode.Test ? provider : undefined, mcp: context.extensionMode === vscode.ExtensionMode.Test ? mcp : undefined };
 }

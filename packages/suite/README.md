@@ -1,4 +1,4 @@
-# Craft Suite (beta)
+# Craft Editors (beta)
 
 Optional extension pack for Craft Spreadsheets, Word, PowerPoint, PDF and Vector. Each is independently installable; the pack contains no renderer or host code.
 

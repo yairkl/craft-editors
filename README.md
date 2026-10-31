@@ -1,4 +1,4 @@
-# Craft for VS Code
+# Craft Editors
 
 Open and edit spreadsheets, documents, presentations, PDFs and vector drawings in VS Code or a compatible Cursor build. This independent community project embeds the open-source Craft applications in editor tabs. Document processing runs in the editor session, including a remote extension host when using Remote SSH.
 
@@ -11,16 +11,16 @@ Install only the editors you need; each includes its own engine and works withou
 | Editor | Files | What you can do |
 | --- | --- | --- |
 | Craft Spreadsheets | `.xlsx`, `.csv` | Edit cells and formulas, sort data, and use native worksheet tabs. |
-| Craft Word | `.docx` | Read and edit documents. |
-| Craft PowerPoint | `.pptx` | Read and edit presentations. |
+| Craft Documents | `.docx` | Read and edit documents. |
+| Craft Presentations | `.pptx` | Read and edit presentations. |
 | Craft PDF | `.pdf` | Read PDFs and use supported editing tools. |
 | Craft Vector | `.svg`, `.vectorcraft` | View and edit vector drawings. |
 
-An optional **Craft Suite** pack groups the five extensions. Legacy `.doc` and `.ppt` and password-protected documents are not supported by this preview. Starting with beta 0.1.3, the editor limits files to 256 MiB by default; earlier previews use 32 MiB. For the newer preview, each app has a setting such as `craft.spreadsheets.maxFileSizeMiB` or `craft.pdf.maxFileSizeMiB` (up to 1024 MiB). Large or complex documents can consume substantially more memory than their file size.
+An optional **Craft Editors** pack groups the five extensions. Legacy `.doc` and `.ppt` and password-protected documents are not supported by this preview. Starting with beta 0.1.3, the editor limits files to 256 MiB by default; earlier previews use 32 MiB. For the newer preview, each app has a setting such as `craft.spreadsheets.maxFileSizeMiB` or `craft.pdf.maxFileSizeMiB` (up to 1024 MiB). Large or complex documents can consume substantially more memory than their file size.
 
 ## Install
 
-1. Download the desired VSIX files from the [latest beta release](https://github.com/yairkl/craft-vscode/releases). Desktop VS Code 1.102 or newer, or a compatible Cursor build, is required.
+1. Download the desired VSIX files from the [latest beta release](https://github.com/yairkl/craft-editors/releases). Desktop VS Code 1.102 or newer, or a compatible Cursor build, is required.
 2. Open the Extensions view, select **… → Install from VSIX…**, and choose each downloaded file. Reload when prompted. No Rust, Node.js or standalone Craft app is needed.
 3. Open a supported file. To use Craft Vector for an SVG or `.vectorcraft` file, choose **Reopen Editor With… → Craft Vector**. For Remote SSH, install the desired extension on the SSH host and reload the remote window.
 
@@ -46,7 +46,7 @@ Each editor includes an MCP bridge intended to give compatible agents access to 
 
 Complex Office, PDF and SVG fidelity; printing and signing; accessibility and IME input; and wider platform and font coverage are still being validated. An unfinished draft that cannot yet be serialized may not be recoverable after a crash. For details, see the [beta notes](docs/releases/v0.1.3-beta.1.md).
 
-Please [report an issue](https://github.com/yairkl/craft-vscode/issues) with your editor and OS versions, file type, and a shareable reproduction. Do not attach private documents. For security vulnerabilities, see [private reporting](SECURITY.md).
+Please [report an issue](https://github.com/yairkl/craft-editors/issues) with your editor and OS versions, file type, and a shareable reproduction. Do not attach private documents. For security vulnerabilities, see [private reporting](SECURITY.md).
 
 ## Development and relationship to upstream
 

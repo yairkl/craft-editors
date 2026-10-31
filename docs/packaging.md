@@ -5,11 +5,11 @@ One repository maintains shared host code and separate installable extensions. A
 | Package | Extension ID | Default file type | Renderer |
 | --- | --- | --- | --- |
 | Craft Spreadsheets | `craft-vscode-dev.craft-spreadsheets` | `.xlsx`, `.csv` | GridCraft only |
-| Craft Word | `craft-vscode-dev.craft-word` | `.docx` | WordCraft only |
-| Craft PowerPoint | `craft-vscode-dev.craft-powerpoint` | `.pptx` | DeckCraft only |
+| Craft Documents | `craft-vscode-dev.craft-word` | `.docx` | WordCraft only |
+| Craft Presentations | `craft-vscode-dev.craft-powerpoint` | `.pptx` | DeckCraft only |
 | Craft PDF | `craft-vscode-dev.craft-pdf` | `.pdf` | PdfCraft only |
 | Craft Vector | `craft-vscode-dev.craft-vector` | `.svg`, `.vectorcraft` (opt-in) | VectorCraft only |
-| Craft Suite | `craft-vscode-dev.craft-suite` | None | None; optional extension pack |
+| Craft Editors | `craft-vscode-dev.craft-suite` | None | None; optional extension pack |
 
 Word and PowerPoint support modern `.docx` and `.pptx`; legacy `.doc` and `.ppt` are not registered. `craft-vscode-dev` remains a development publisher identifier; nothing has been published to Marketplace.
 
@@ -85,3 +85,5 @@ Cursor's extension library uses Open VSX. Existing VSIX installers can also be i
 Before registry publication, test the native webviews and lifecycle in the current Cursor build, choose a lasting publisher ID (currently `craft-vscode-dev`), create an Eclipse account, sign the Open VSX Publisher Agreement, and create/claim the matching namespace. Store an Open VSX token as a protected CI secret. Publish the five app VSIX files first, then the Suite pack, whose member IDs must match. Upload already verified release archives with `ovsx publish`; do not rebuild independently per store. Publication is not enabled by this change and no token is stored in the repository.
 
 Sources: [Cursor announcement](https://forum.cursor.com/t/extension-marketplace-changes-transition-to-openvsx/109138), [Open VSX publishing guide](https://github.com/eclipse-openvsx/openvsx/wiki/Publishing-Extensions).
+
+Extension icons are original artwork. Their editable SVG sources are in `assets/icons/`; export the corresponding PNG at 256 × 256 pixels to `packages/<extension>/icon.png` when changing one.

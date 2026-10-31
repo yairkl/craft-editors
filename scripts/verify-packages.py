@@ -19,6 +19,8 @@ for name in [*PROGRAMS, 'suite']:
         files = set(z.namelist())
         installed = json.loads(z.read('extension/package.json'))
         assert installed == manifest, f'{name}: packaged manifest drift'
+        assert installed.get('icon') == 'icon.png' and 'extension/icon.png' in files, f'{name}: missing extension icon'
+        assert z.read('extension/icon.png').startswith(b'\x89PNG\r\n\x1a\n'), f'{name}: icon is not PNG'
         assert not installed.get('extensionDependencies'), f'{name}: unexpected required extension'
         assert not any('node_modules/' in f or '-checks.js' in f or '/test/' in f for f in files)
         if name in PROGRAMS:

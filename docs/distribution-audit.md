@@ -15,4 +15,4 @@ A local audit of the generated dependency inventories found a declared license e
 3. Review application names and artwork against each upstream project's brand terms. Use an independent publisher and avoid implying endorsement unless agreed with ArtCraft.
 4. Confirm publisher identity, ownership, extension IDs, versioning, update and incident response for both registries. Test installed packages and their notices in VS Code and Cursor. Publish the already-verified archives only after all required release checks pass.
 
-Track unresolved publication decisions in [issue #14](https://github.com/yairkl/craft-vscode/issues/14). The project has not yet completed this review or published to a marketplace.
+Track unresolved publication decisions in [issue #14](https://github.com/yairkl/craft-editors/issues/14). The project has not yet completed this review or published to a marketplace.

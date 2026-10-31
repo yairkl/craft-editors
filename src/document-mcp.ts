@@ -170,13 +170,13 @@ class DocumentSession {
 export async function registerWordMcp(context: vscode.ExtensionContext, provider: EditingProvider): Promise<{ command: string; args: string[]; env: Record<string, string> }> {
   const runtimePath = path.join(context.extensionPath, 'media/engines/word/node/viewer.js');
   const app: App = { formats: ['docx'], open: 'open_document', save: 'save_document', create: 'new_document', execute: 'execute', readonly: ['list_commands', 'get_text', 'inspect_document', 'parity', 'render_page'] };
-  return registerAgentServer(context, { id: 'craft.word.mcp', name: 'Craft Word', createSession: () => { const runtime = require(runtimePath) as { WordMcpHeadless: new () => Headless }; return new DocumentSession(new runtime.WordMcpHeadless(), provider, app); } });
+  return registerAgentServer(context, { id: 'craft.word.mcp', name: 'Craft Documents', createSession: () => { const runtime = require(runtimePath) as { WordMcpHeadless: new () => Headless }; return new DocumentSession(new runtime.WordMcpHeadless(), provider, app); } });
 }
 
 export async function registerDeckMcp(context: vscode.ExtensionContext, provider: EditingProvider): Promise<{ command: string; args: string[]; env: Record<string, string> }> {
   const runtimePath = path.join(context.extensionPath, 'media/engines/deck/node/viewer.js');
   const app: App = { formats: ['pptx'], open: 'open_presentation', save: 'save_presentation', create: 'new_presentation', execute: 'run_command', readonly: ['list_commands', 'inspect_document', 'inspect_slide', 'render_slide'] };
-  return registerAgentServer(context, { id: 'craft.powerpoint.mcp', name: 'Craft PowerPoint', createSession: () => { const runtime = require(runtimePath) as { DeckMcpHeadless: new () => Headless }; return new DocumentSession(new runtime.DeckMcpHeadless(), provider, app); } });
+  return registerAgentServer(context, { id: 'craft.powerpoint.mcp', name: 'Craft Presentations', createSession: () => { const runtime = require(runtimePath) as { DeckMcpHeadless: new () => Headless }; return new DocumentSession(new runtime.DeckMcpHeadless(), provider, app); } });
 }
 
 export async function registerVectorMcp(context: vscode.ExtensionContext, provider: EditingProvider): Promise<{ command: string; args: string[]; env: Record<string, string> }> {

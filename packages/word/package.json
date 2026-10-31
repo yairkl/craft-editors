@@ -5,7 +5,7 @@
   "preview": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/yairkl/craft-vscode.git"
+    "url": "https://github.com/yairkl/craft-editors.git"
   },
   "engines": {
     "vscode": "^1.102.0"
@@ -19,7 +19,7 @@
     }
   },
   "name": "craft-word",
-  "displayName": "Craft Word",
+  "displayName": "Craft Documents",
   "description": "Native WordCraft DOCX viewing and editing in VS Code.",
   "categories": [
     "Other"
@@ -32,13 +32,13 @@
     "mcpServerDefinitionProviders": [
       {
         "id": "craft.word.mcp",
-        "label": "Craft Word"
+        "label": "Craft Documents"
       }
     ],
     "customEditors": [
       {
         "viewType": "craft.word.preview",
-        "displayName": "Craft Word",
+        "displayName": "Craft Documents",
         "selector": [
           {
             "filenamePattern": "*.docx"
@@ -48,7 +48,7 @@
       },
       {
         "viewType": "craft.word.integrationProbe",
-        "displayName": "Craft Word Integration Probe (development)",
+        "displayName": "Craft Documents Integration Probe (development)",
         "selector": [
           {
             "filenamePattern": "*.docx"
@@ -58,7 +58,7 @@
       }
     ],
     "configuration": {
-      "title": "Craft Word",
+      "title": "Craft Documents",
       "properties": {
         "craft.word.maxFileSizeMiB": {
           "type": "integer",
@@ -76,9 +76,11 @@
     "media/**",
     "notices/**",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "icon.png"
   ],
   "extensionKind": [
     "workspace"
-  ]
+  ],
+  "icon": "icon.png"
 }
