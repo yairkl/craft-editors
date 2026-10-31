@@ -227,17 +227,15 @@ impl Document {
     fn ui(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
         self.app.ui(ui, frame);
     }
-    fn screenshot_events(raw: &egui::RawInput, capture: &Capture) {
-        for event in &raw.events {
-            if let egui::Event::Screenshot { image, .. } = event
-                && let Ok(mut target) = capture.lock()
-            {
-                *target = Some((**image).clone());
-            }
-        }
-    }
-    fn request_screenshot(ctx: &egui::Context, _capture: Capture) {
-        ctx.send_viewport_cmd(egui::ViewportCommand::Screenshot(Default::default()));
+    fn screenshot_events(_raw: &egui::RawInput, _capture: &Capture) {}
+    fn request_screenshot(ctx: &egui::Context, capture: Capture) {
+        ctx.send_viewport_cmd(egui::ViewportCommand::Screenshot(
+            egui::ScreenshotCallback::new(move |image| {
+                if let Ok(mut target) = capture.lock() {
+                    *target = Some((*image).clone());
+                }
+            }),
+        ));
     }
     fn set_theme(&mut self, ctx: &egui::Context, dark: bool) {
         use pdfcraft_ui_egui::theme::{ThemeKind, ThemePreference};

@@ -1,34 +1,39 @@
 diff --git a/crates/engine/src/lib.rs b/crates/engine/src/lib.rs
-index f11671bf85c2fe8c3bdc3f3d01be50b4d1c77494..a29c07e746859e360da846d2a346096a36b5f021 100644
+index 889b83936837923b58dddf7c0e3e79145fce291d..383f569350e0720a2f4ccecfd86a88db8e329172 100644
 --- a/crates/engine/src/lib.rs
 +++ b/crates/engine/src/lib.rs
-@@ -395,6 +395,12 @@ impl Editor {
-     }
- }
+@@ -60,6 +60,13 @@ mod xfa_form;
+ 
+ use std::sync::Arc;
  
 +/// Exact in-memory state for an embedding host's revision history.
 +#[derive(Clone)]
 +pub struct HostSnapshot {
-+    editor: Option<Editor>,
++    editor: Option<history::Editor>,
 +    pub bytes: Arc<Vec<u8>>,
 +}
- pub struct Document {
-     pub id: DocId,
-     pub name: String,
-@@ -4155,6 +4161,30 @@ impl Session {
++
+ pub use links::{
+     MAX_REMOTE_DOCUMENT_BYTES, RemoteDocumentPathError, read_remote_document, remote_document_path_is_absolute, resolve_remote_document_path,
+ };
+diff --git a/crates/engine/src/session/editing.rs b/crates/engine/src/session/editing.rs
+index f8d5648a2d62f8fbcbe1ce1884d7a8e2cce06118..cfcd332c261a8f7c926449e77a93c735f4c47e91 100644
+--- a/crates/engine/src/session/editing.rs
++++ b/crates/engine/src/session/editing.rs
+@@ -222,6 +222,30 @@ impl Session {
          Ok(())
      }
  
-+    pub fn host_snapshot(&self, id: DocId) -> HostSnapshot {
++    pub fn host_snapshot(&self, id: DocId) -> crate::HostSnapshot {
 +        let Some(doc) = self.get(id) else {
-+            return HostSnapshot { editor: None, bytes: Arc::new(Vec::new()) };
++            return crate::HostSnapshot { editor: None, bytes: Arc::new(Vec::new()) };
 +        };
-+        HostSnapshot { editor: doc.editor.clone(), bytes: doc.bytes.clone() }
++        crate::HostSnapshot { editor: doc.editor.clone(), bytes: doc.bytes.clone() }
 +    }
-+    pub fn host_matches(&self, id: DocId, snapshot: &HostSnapshot) -> bool {
++    pub fn host_matches(&self, id: DocId, snapshot: &crate::HostSnapshot) -> bool {
 +        self.get(id).is_some_and(|doc| Arc::ptr_eq(&doc.bytes, &snapshot.bytes) || doc.bytes == snapshot.bytes)
 +    }
-+    pub fn host_restore(&mut self, id: DocId, snapshot: &HostSnapshot) -> Result<(), EditError> {
++    pub fn host_restore(&mut self, id: DocId, snapshot: &crate::HostSnapshot) -> Result<(), EditError> {
 +        let doc = self.doc_mut(id)?;
 +        let previous = doc.editor.clone();
 +        doc.editor = snapshot.editor.clone();

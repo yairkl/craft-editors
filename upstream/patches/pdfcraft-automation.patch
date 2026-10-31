@@ -1,8 +1,8 @@
 diff --git a/crates/automation/src/lib.rs b/crates/automation/src/lib.rs
-index e94354021f95ae5b642f49185b3599c7bdebdd9b..77a09c365b4a0adb6643476de79958578bc14a1a 100644
+index e1ae0141c42e7f943e96fc43a754efcf5684ee48..6bc0928283fa4e92b027572de20aefc4a73d88a8 100644
 --- a/crates/automation/src/lib.rs
 +++ b/crates/automation/src/lib.rs
-@@ -184,6 +184,11 @@ impl Automation {
+@@ -149,6 +149,11 @@ impl Automation {
          &self.session
      }
  

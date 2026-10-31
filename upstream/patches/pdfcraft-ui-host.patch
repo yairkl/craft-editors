@@ -1,8 +1,58 @@
+diff --git a/crates/ui-egui/src/app.rs b/crates/ui-egui/src/app.rs
+index 8925a0dca163f3780b21a689d4e74cf404d72b1d..d0c03b9b72947e83de9e1c8c1818ba768c28b49e 100644
+--- a/crates/ui-egui/src/app.rs
++++ b/crates/ui-egui/src/app.rs
+@@ -120,6 +120,8 @@ impl PdfCraftApp {
+             unsaved_flag: Default::default(),
+             os_events: None,
+             host_save: None,
++            embedded: false,
++            host_command: None,
+             host_dirty: None,
+             close_request: None,
+             save_prompt_button: Default::default(),
+@@ -573,7 +575,7 @@ impl eframe::App for PdfCraftApp {
+         if self.draws_window_frame() {
+             window_controls::resize_edges(&ctx);
+         }
+-        chrome::tab_strip(self, ui);
++        if !self.embedded { chrome::tab_strip(self, ui); }
+         chrome::mode_bar(self, ui);
+         // Whichever way another tab came to the front, it shows instead of the expanded view.
+         if self.all_tools_full && self.all_tools_tab != self.shown_tab() {
+diff --git a/crates/ui-egui/src/app/files.rs b/crates/ui-egui/src/app/files.rs
+index 3c68dc561960f9dcc357a7f76810c1802360adb6..23dcfe7f25857dad8327674a288cf37bd04dfe29 100644
+--- a/crates/ui-egui/src/app/files.rs
++++ b/crates/ui-egui/src/app/files.rs
+@@ -77,6 +77,7 @@ impl PdfCraftApp {
+     }
+ 
+     pub(super) fn open_bytes_with_focus(&mut self, name: &str, path: Option<String>, bytes: Vec<u8>, activate: bool) -> Result<(), String> {
++        if self.embedded && !self.views.is_empty() { return Err("Open additional documents in VS Code editor tabs.".into()); }
+         // Images and text files become new, unsaved PDFs (Create a PDF).
+         let active = self.active;
+         if let Some(r) = self.open_converted(name, &bytes) {
+@@ -611,6 +612,7 @@ impl PdfCraftApp {
+     }
+ 
+     pub fn open_dialog(&mut self) {
++        if self.host_command.as_mut().is_some_and(|host| host("file.open")) { return; }
+         self.startup_superseded = true;
+         #[cfg(not(target_arch = "wasm32"))]
+         self.pick(
+@@ -644,6 +646,7 @@ impl PdfCraftApp {
+     }
+ 
+     pub fn close_tab(&mut self, index: usize) {
++        if self.embedded && self.host_command.as_mut().is_some_and(|host| host("file.close")) { return; }
+         if index >= self.views.len() {
+             return;
+         }
 diff --git a/crates/ui-egui/src/chrome.rs b/crates/ui-egui/src/chrome.rs
-index 2723d16c2311c96ee70b6da8629ad95594b0ac2d..fc44da9fa7c72285bf3fc0406cf0d91ed15ec31d 100644
+index a46f2173c87a804f7479aac217663276ffbd6852..e1db6e7ce98c487492c58bcfc1b062c96fc4978b 100644
 --- a/crates/ui-egui/src/chrome.rs
 +++ b/crates/ui-egui/src/chrome.rs
-@@ -521,10 +521,12 @@ pub fn mode_bar(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
+@@ -510,10 +510,12 @@ pub fn mode_bar(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
                          if print.clicked() {
                              app.run_command("print.dialog");
                          }
@@ -16,10 +66,10 @@ index 2723d16c2311c96ee70b6da8629ad95594b0ac2d..fc44da9fa7c72285bf3fc0406cf0d91e
                          if icons::button(ui, "info", 32.0, false, &tip).clicked() {
                              app.dialog = Some(Dialog::Properties(PropsTab::Description));
 diff --git a/crates/ui-egui/src/commands.rs b/crates/ui-egui/src/commands.rs
-index c0e12d5d095569b60f6c62e7d3713109eea4f8b9..e5f746d23ab5769f48a88aa0c066e0390532184d 100644
+index acccbcc55a685139912f180c8a1129a33849431a..4d6d13d13cef50dd6d92df57fd5cfb63a674a4db 100644
 --- a/crates/ui-egui/src/commands.rs
 +++ b/crates/ui-egui/src/commands.rs
-@@ -104,6 +104,9 @@ impl PdfCraftApp {
+@@ -103,6 +103,9 @@ impl PdfCraftApp {
      /// Last-resort guard (AGENTS.md §4): a command that panics is reported and the app, with its
      /// open documents, keeps running. Edits are applied to a copy, so the document is unchanged.
      pub fn execute(&mut self, id: &str) -> bool {
@@ -29,67 +79,30 @@ index c0e12d5d095569b60f6c62e7d3713109eea4f8b9..e5f746d23ab5769f48a88aa0c066e039
          match pdfcraft_engine::guard(|| self.execute_unguarded(id)) {
              Ok(done) => done,
              Err(m) => {
-diff --git a/crates/ui-egui/src/create_ui.rs b/crates/ui-egui/src/create_ui.rs
-index 6dceb50657522aa4037840e7e06643c75213b8da..b9a1c3261224815cd0fbe51733515fb8c4eb2740 100644
---- a/crates/ui-egui/src/create_ui.rs
-+++ b/crates/ui-egui/src/create_ui.rs
-@@ -98,6 +98,7 @@ impl PdfCraftApp {
-     }
- 
-     fn open_created_bytes(&mut self, name: &str, created: Result<Arc<Vec<u8>>, String>) -> Result<(), String> {
-+        if self.embedded { return Err("Create a separate PDF using the host or the standalone application.".into()); }
-         let bytes = created?;
-         let id = self.session.open_new(name, bytes).map_err(|e| e.to_string())?;
-         // The reading-colours preference is app-wide: the newly created document starts with it.
 diff --git a/crates/ui-egui/src/editing.rs b/crates/ui-egui/src/editing.rs
-index 9a13d570d9e549367f4fce62f85fc1b63828cb53..9e0f277cd5a41dc6ae6473fd1e314d8b36256e74 100644
+index 4d09b5cf4b1d6f6e3eb2919603cdedfd45b28cd2..29ef1c84f0930497b5c9368a9f578dfe763d8177 100644
 --- a/crates/ui-egui/src/editing.rs
 +++ b/crates/ui-egui/src/editing.rs
-@@ -210,6 +210,7 @@ impl PdfCraftApp {
- 
-     /// Undo the last change: to the Combine files list while its tab shows, else the document.
-     pub fn undo(&mut self) {
-+        if self.host_command.as_mut().is_some_and(|host| host("edit.undo")) { return; }
-         // While a polygon, cloud or run of connected lines is being drawn, Undo takes back its
-         // last point instead of the last finished edit.
-         if let Some((i, _)) = self.active_ids()
-@@ -225,6 +226,7 @@ impl PdfCraftApp {
+@@ -187,8 +187,32 @@ impl PdfCraftApp {
+         }
      }
  
-     pub fn redo(&mut self) {
-+        if self.host_command.as_mut().is_some_and(|host| host("edit.redo")) { return; }
-         if self.combine_showing() {
-             self.combine_history_step(false);
-         } else {
-@@ -646,7 +648,43 @@ impl PdfCraftApp {
-     }
- 
-     /// Save the active document. Returns `true` if it was written.
 +    pub fn host_draft(&self) -> Option<crate::HostDraftSnapshot> {
 +        let v = self.active.and_then(|i| self.views.get(i))?;
 +        Some(crate::HostDraftSnapshot {
-+            content: v.content.clone(),
-+            line: v.line_editor.clone(),
-+            form: v.forms.clone(),
-+            fill: v.fill_text.clone(),
-+            pending: v.pending_edit.clone(),
++            content: v.content.clone(), line: v.line_editor.clone(), form: v.forms.clone(),
++            fill: v.fill_text.clone(), pending: v.pending_edit.clone(),
 +        })
 +    }
 +    pub fn host_restore_draft(&mut self, draft: &Option<crate::HostDraftSnapshot>) {
 +        if let (Some(v), Some(d)) = (self.active.and_then(|i| self.views.get_mut(i)), draft) {
-+            v.content = d.content.clone();
-+            v.line_editor = d.line.clone();
-+            v.forms = d.form.clone();
-+            v.fill_text = d.fill.clone();
-+            v.pending_edit = d.pending.clone();
++            v.content = d.content.clone(); v.line_editor = d.line.clone(); v.forms = d.form.clone();
++            v.fill_text = d.fill.clone(); v.pending_edit = d.pending.clone();
 +        }
 +    }
-+    /// Host saves must not end a live text/form draft during autosave.
 +    pub fn host_pending(&self) -> bool {
 +        self.active.and_then(|i| self.views.get(i)).is_some_and(|v| {
-+            v.pending_edit.is_some()
-+                || v.forms.focus.is_some()
-+                || v.content.draft.is_some()
++            v.pending_edit.is_some() || v.forms.focus.is_some() || v.content.draft.is_some()
 +                || v.line_editor.as_ref().is_some_and(|ed| ed.has_changes())
 +                || v.fill_text.as_ref().is_some_and(|t| !t.text.trim().is_empty())
 +        })
@@ -97,32 +110,39 @@ index 9a13d570d9e549367f4fce62f85fc1b63828cb53..9e0f277cd5a41dc6ae6473fd1e314d8b
 +    pub fn host_flush(&mut self) -> bool {
 +        self.active_ids().is_none_or(|(_, id)| self.commit_typing_in(id))
 +    }
+     /// Undo the last change: to the Combine files list while its tab shows, else the document.
+     pub fn undo(&mut self) {
++        if self.host_command.as_mut().is_some_and(|host| host("edit.undo")) { return; }
+         // While a polygon, cloud or run of connected lines is being drawn, Undo takes back its
+         // last point instead of the last finished edit.
+         if let Some((i, _)) = self.active_ids()
+@@ -204,6 +228,7 @@ impl PdfCraftApp {
+     }
+ 
+     pub fn redo(&mut self) {
++        if self.host_command.as_mut().is_some_and(|host| host("edit.redo")) { return; }
+         if self.combine_showing() {
+             self.combine_history_step(false);
+         } else {
+diff --git a/crates/ui-egui/src/editing/save.rs b/crates/ui-egui/src/editing/save.rs
+index f685247c9d1ae433b00416781415cda347b31aff..4a06ef6fddc503ea1b4979f99aa8d9caf5a5b10a 100644
+--- a/crates/ui-egui/src/editing/save.rs
++++ b/crates/ui-egui/src/editing/save.rs
+@@ -23,6 +23,8 @@ pub enum SaveTarget {
+ impl PdfCraftApp {
+     /// Save the active document. Returns `true` if it was written.
      pub fn save_active(&mut self, target: SaveTarget) -> bool {
 +        let command = if matches!(target, SaveTarget::As) { "file.save_as" } else { "file.save" };
-+        if self.host_command.as_mut().is_some_and(|host| host(command)) {
-+            return false;
-+        }
++        if self.host_command.as_mut().is_some_and(|host| host(command)) { return false; }
          match self.active {
              Some(i) => self.save_view(i, target),
              None => false,
-diff --git a/crates/ui-egui/src/files.rs b/crates/ui-egui/src/files.rs
-index 0b031c8a8ad2a89953211cd111880505c60ee090..77b17733b27f06222ae9fcd57960da654a4caf3f 100644
---- a/crates/ui-egui/src/files.rs
-+++ b/crates/ui-egui/src/files.rs
-@@ -845,6 +845,7 @@ impl PdfCraftApp {
-     }
- 
-     pub(crate) fn open_created(&mut self, name: &str, bytes: Arc<Vec<u8>>, message: &str) {
-+        if self.embedded { self.notify("Opening a generated second document is not supported in this beta. Use the standalone app for this workflow."); return; }
-         match self.session.open_new(name, bytes) {
-             Ok(id) => {
-                 // The reading-colours preference is app-wide: the newly created document starts with it.
 diff --git a/crates/ui-egui/src/lib.rs b/crates/ui-egui/src/lib.rs
-index 0300afd46195aaf817cfbcae139dd4ecce82659b..d7f5e96de750c2f5ad2109ea94bf4759cfe072f1 100644
+index 65bc7e4b1bbf57c4c251c8fc8c1a9eb762dabfab..c3e50df877daf9d2aca424cadd92d9d6a0c3eee7 100644
 --- a/crates/ui-egui/src/lib.rs
 +++ b/crates/ui-egui/src/lib.rs
-@@ -622,7 +622,29 @@ pub struct RecentFile {
-     pub size: usize,
+@@ -229,7 +229,29 @@ struct PendingOpen {
+     then: Option<&'static str>,
  }
  
 +/// Live text/form drafts retained alongside the host's committed model snapshots.
@@ -148,60 +168,22 @@ index 0300afd46195aaf817cfbcae139dd4ecce82659b..d7f5e96de750c2f5ad2109ea94bf4759
  pub struct PdfCraftApp {
 +    pub embedded: bool,
 +    pub host_command: Option<Box<dyn FnMut(&str) -> bool>>,
-     pub docking: docking::Workspace,
-     pub(crate) pending_panel_reveals: Vec<docking::Panel>,
+     /// Tools side and pane widths; which panes are open is `left_open` and `right`.
+     pub side_panels: side_panels::SidePanels,
      pub session: Session,
-@@ -1179,6 +1201,8 @@ impl PdfCraftApp {
-             unsaved_flag: Default::default(),
-             os_events: None,
-             host_save: None,
-+            embedded: false,
-+            host_command: None,
-             host_dirty: None,
-             close_request: None,
-             save_prompt_button: Default::default(),
-@@ -1384,6 +1408,7 @@ impl PdfCraftApp {
-     }
- 
-     fn open_bytes_with_focus(&mut self, name: &str, path: Option<String>, bytes: Vec<u8>, activate: bool) -> Result<(), String> {
-+        if self.embedded && !self.views.is_empty() { return Err("Open additional documents in VS Code editor tabs.".into()); }
-         // Images and text files become new, unsaved PDFs (Create a PDF).
-         let active = self.active;
-         if let Some(r) = self.open_converted(name, &bytes) {
-@@ -2197,6 +2222,9 @@ impl PdfCraftApp {
-     }
- 
-     pub fn open_dialog(&mut self) {
-+        if self.host_command.as_mut().is_some_and(|host| host("file.open")) {
-+            return;
-+        }
-         self.startup_superseded = true;
-         #[cfg(not(target_arch = "wasm32"))]
-         self.pick(
-@@ -2230,6 +2258,7 @@ impl PdfCraftApp {
-     }
- 
-     pub fn close_tab(&mut self, index: usize) {
-+        if self.embedded && self.host_command.as_mut().is_some_and(|host| host("file.close")) { return; }
-         if index >= self.views.len() {
-             return;
-         }
-@@ -3694,7 +3723,9 @@ impl eframe::App for PdfCraftApp {
-         if self.draws_window_frame() {
-             window_controls::resize_edges(&ctx);
-         }
--        chrome::tab_strip(self, ui);
-+        if !self.embedded {
-+            chrome::tab_strip(self, ui);
-+        }
-         chrome::mode_bar(self, ui);
-         if self.active.is_some() {
-             chrome::right_rail(self, ui);
-diff --git a/crates/ui-egui/src/sign_ui.rs b/crates/ui-egui/src/sign_ui.rs
-index 6d09115b74e0d864a3bfb02f0ad62d0388e5c207..9bb13eb9eb6a7d69786bcd200915ae1c6203df70 100644
---- a/crates/ui-egui/src/sign_ui.rs
-+++ b/crates/ui-egui/src/sign_ui.rs
-@@ -626,6 +626,7 @@ impl PdfCraftApp {
+diff --git a/crates/ui-egui/src/tools/sign_ui.rs b/crates/ui-egui/src/tools/sign_ui.rs
+index eaf138b2e1a5c6f418dc69411248741d47c9e284..a5ace6d905b9bf721f910ca7e270b9555372235d 100644
+--- a/crates/ui-egui/src/tools/sign_ui.rs
++++ b/crates/ui-egui/src/tools/sign_ui.rs
+@@ -580,6 +580,7 @@ impl PdfCraftApp {
+     /// Open saved revision `n` (1 = the oldest) of the active document as a new document.
+     /// A repeat reuses the tab: every click used to open another identical one.
+     pub fn open_revision(&mut self, n: usize) {
++        if self.embedded { self.notify("Open saved versions in separate VS Code tabs."); return; }
+         let Some((_, id)) = self.active_ids() else { return };
+         let Some(doc) = self.session.get(id) else { return };
+         // The revision's byte range, as `Session::open_revision` reads it. An unknown `n`
+@@ -636,6 +637,7 @@ impl PdfCraftApp {
      /// Open the signed version of a signature as a new document (View signed version).
      /// A repeat reuses the tab: every click used to open another identical one.
      pub fn view_signed_version(&mut self, len: usize, revision: usize) {
@@ -210,10 +192,10 @@ index 6d09115b74e0d864a3bfb02f0ad62d0388e5c207..9bb13eb9eb6a7d69786bcd200915ae1c
          let Some(doc) = self.session.get(id) else { return };
          let end = len.min(doc.bytes.len());
 diff --git a/crates/ui-egui/src/widgets.rs b/crates/ui-egui/src/widgets.rs
-index 2d1f63996566d4fba3821852dcc6e8fa3a100d4c..93bb83a142e803706927fdbb781ce1d95d3fc8b3 100644
+index cb34b5901b7f7fb2091f55afcb6a840d3b43c400..b31103f1244039fd5ab466d3ad46569463b49a86 100644
 --- a/crates/ui-egui/src/widgets.rs
 +++ b/crates/ui-egui/src/widgets.rs
-@@ -515,19 +515,19 @@ pub fn progress_notice(app: &PdfCraftApp, ctx: &egui::Context) -> bool {
+@@ -559,19 +559,19 @@ pub fn progress_notice(app: &PdfCraftApp, ctx: &egui::Context) -> bool {
  pub fn artcraft_logo(ui: &mut egui::Ui, height: f32) -> Response {
      let dark = ui.visuals().dark_mode;
      let (uri, bytes): (&str, &'static [u8]) = if dark {
@@ -238,3 +220,27 @@ index 2d1f63996566d4fba3821852dcc6e8fa3a100d4c..93bb83a142e803706927fdbb781ce1d9
      )
  }
  
+diff --git a/crates/ui-egui/src/workflows/create_ui.rs b/crates/ui-egui/src/workflows/create_ui.rs
+index 6dceb50657522aa4037840e7e06643c75213b8da..b9a1c3261224815cd0fbe51733515fb8c4eb2740 100644
+--- a/crates/ui-egui/src/workflows/create_ui.rs
++++ b/crates/ui-egui/src/workflows/create_ui.rs
+@@ -98,6 +98,7 @@ impl PdfCraftApp {
+     }
+ 
+     fn open_created_bytes(&mut self, name: &str, created: Result<Arc<Vec<u8>>, String>) -> Result<(), String> {
++        if self.embedded { return Err("Create a separate PDF using the host or the standalone application.".into()); }
+         let bytes = created?;
+         let id = self.session.open_new(name, bytes).map_err(|e| e.to_string())?;
+         // The reading-colours preference is app-wide: the newly created document starts with it.
+diff --git a/crates/ui-egui/src/workflows/files.rs b/crates/ui-egui/src/workflows/files.rs
+index 0b031c8a8ad2a89953211cd111880505c60ee090..77b17733b27f06222ae9fcd57960da654a4caf3f 100644
+--- a/crates/ui-egui/src/workflows/files.rs
++++ b/crates/ui-egui/src/workflows/files.rs
+@@ -845,6 +845,7 @@ impl PdfCraftApp {
+     }
+ 
+     pub(crate) fn open_created(&mut self, name: &str, bytes: Arc<Vec<u8>>, message: &str) {
++        if self.embedded { self.notify("Opening a generated second document is not supported in this beta. Use the standalone app for this workflow."); return; }
+         match self.session.open_new(name, bytes) {
+             Ok(id) => {
+                 // The reading-colours preference is app-wide: the newly created document starts with it.
