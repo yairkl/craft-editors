@@ -64,7 +64,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
   rendering:
     needs: [changes, check]
-    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.build == 'true' || contains(github.event.pull_request.labels.*.name, 'test:windows-installed')
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.build == 'true' || contains(github.event.pull_request.labels.*.name, 'test:windows-installed') || contains(github.event.pull_request.labels.*.name, 'test:macos-editing')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -208,6 +208,31 @@ jobs:
         with:
           name: platform-screenshots-${{ matrix.os }}
           path: artifacts/platform/*.png
+          if-no-files-found: ignore
+          retention-days: 1
+
+  macos-editing:
+    needs: [rendering]
+    if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'test:macos-editing')
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: craft-vsix-${{ github.run_id }}
+          path: dist/vsix
+      - run: python3 scripts/unpack-test-renderers.py
+      - run: npm run test:editing
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: macos-editing-screenshots
+          path: artifacts/rendering/*.png
           if-no-files-found: ignore
           retention-days: 1
 
