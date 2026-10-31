@@ -1,20 +1,45 @@
+diff --git a/crates/ui-egui/src/app.rs b/crates/ui-egui/src/app.rs
+index e865118d09f65b7ba429e4bc48d81f7c8b0384e5..03a2747b3898735561313cffe0ee95ed3643ab40 100644
+--- a/crates/ui-egui/src/app.rs
++++ b/crates/ui-egui/src/app.rs
+@@ -23,6 +23,8 @@ pub(crate) use commands::{discards_document, works_without_document};
+ pub(crate) use input::control_click_as_secondary;
+ 
+ impl WordApp {
++    /// Commit drafts before an embedding host serializes the document.
++    pub fn host_flush(&mut self) -> Result<(), String> { panes::flush_comment_drafts(self) }
+     /// Creates the app: adopts the system locale, then initializes the document session, UI state,
+     /// services, printing, canvas, dialogs, previews, control and screenshot state, font and theme
+     /// tracking.
+diff --git a/crates/ui-egui/src/app/commands.rs b/crates/ui-egui/src/app/commands.rs
+index da20111fcdae9aa1ddd8a4e7551bb596efd891b6..963b21641d5f5007cb2da39849fc9d3774e505bd 100644
+--- a/crates/ui-egui/src/app/commands.rs
++++ b/crates/ui-egui/src/app/commands.rs
+@@ -28,6 +28,7 @@ impl WordApp {
+     /// Close, Envelopes, Labels and Finish & Merge on a document with unsaved changes first ask
+     /// Save / Don't Save / Cancel, and the command runs once that is answered (`ui.saveChanges`).
+     pub fn run(&mut self, id: &str, params: Value) -> Result<Value, String> {
++        if self.services.host_command.as_ref().is_some_and(|host| host(id)) { return Ok(Value::Null); }
+         // Comment text still being typed is written first, so a save or export has it and a
+         // close, New or Open counts it as a change (#1348). A draft the document refuses is not
+         // part of it: saving and exporting go on without it (the refusal stays on the status
 diff --git a/crates/ui-egui/src/chrome.rs b/crates/ui-egui/src/chrome.rs
-index 60053a871d360794de6a3a58e9c881d63e2ae51b..c52b9b9e64b3653cc6cea334bf650531f8e6f9e4 100644
+index 2f0801f631d5dfe6e3dc8af6cce1698208894ab6..5b45ba82f5eb788465abee02829c979aedb2c243 100644
 --- a/crates/ui-egui/src/chrome.rs
 +++ b/crates/ui-egui/src/chrome.rs
-@@ -276,6 +276,7 @@ impl MacTitleBar {
- }
- 
+@@ -278,6 +278,7 @@ impl MacTitleBar {
+ /// Draws the title bar with window dragging, AutoSave, quick access, account, community and search
+ /// controls, and the centred clickable document title.
  pub fn title_bar(app: &mut WordApp, ui: &mut Ui) {
 +    if app.services.embedded { return; }
      let t = Tokens::get(ui.ctx());
      // macOS: shorter, so the system's traffic lights are centred in it; the tallest controls
      // shrink to keep a margin above and below them.
 diff --git a/crates/ui-egui/src/file_dialogs.rs b/crates/ui-egui/src/file_dialogs.rs
-index f40ebf1867dd582238ddd5594107b89682895315..c3950fbda19274de6de8c463ec009de02c9ada0a 100644
+index 9b04472edab14b0f3f83bb12b9e49501e7d289b4..ba4b53d666ef7641b155b3095704885925929196 100644
 --- a/crates/ui-egui/src/file_dialogs.rs
 +++ b/crates/ui-egui/src/file_dialogs.rs
-@@ -361,6 +361,7 @@ impl WordApp {
+@@ -365,6 +365,7 @@ impl WordApp {
  
      /// Ask where to save, then save there (File › Save As).
      pub fn save_as_dialog(&mut self) {
@@ -22,7 +47,7 @@ index f40ebf1867dd582238ddd5594107b89682895315..c3950fbda19274de6de8c463ec009de0
          let _ = self.save_as(AfterSave::Nothing);
      }
  
-@@ -442,6 +443,7 @@ impl WordApp {
+@@ -446,6 +447,7 @@ impl WordApp {
      }
  
      pub(crate) fn open_dialog(&mut self) {
@@ -30,11 +55,24 @@ index f40ebf1867dd582238ddd5594107b89682895315..c3950fbda19274de6de8c463ec009de0
          if let Some(f) = &self.services.open_async {
              f("document");
              return;
-diff --git a/crates/ui-egui/src/lib.rs b/crates/ui-egui/src/lib.rs
-index ccddf1d230c8e0e4f910144677cab8dda3815e1f..8095dad4277094297bdff24654c849366db0efad 100644
---- a/crates/ui-egui/src/lib.rs
-+++ b/crates/ui-egui/src/lib.rs
-@@ -99,6 +99,10 @@ pub use file_dialogs::{FileDialogAnswer, FileDialogRequest, open_filters};
+diff --git a/crates/ui-egui/src/ribbon.rs b/crates/ui-egui/src/ribbon.rs
+index 59cd1471bdc5129344f509abcfdd6faefa92f7f4..47e9b0b78043b9c8d278d31f2569d46ee631ca5a 100644
+--- a/crates/ui-egui/src/ribbon.rs
++++ b/crates/ui-egui/src/ribbon.rs
+@@ -107,7 +107,7 @@ pub fn show(app: &mut WordApp, ui: &mut Ui) {
+     // contextual ones (the Outlining tab right after File). A contextual tab (Table, Picture
+     // Format) may be stored while the selection moved away, and a tab may have been hidden.
+     let user_tabs = app.session.ribbon.tabs().into_owned();
+-    let mut tabs: Vec<(String, bool)> = vec![("File".to_string(), false)];
++    let mut tabs: Vec<(String, bool)> = if app.services.embedded { Vec::new() } else { vec![("File".to_string(), false)] };
+     tabs.extend(user_tabs.iter().filter(|e| !e.hidden).map(|e| (e.name.clone(), e.custom)));
+     for ct in contextual_tabs(&app.session) {
+         if ct == "Outlining" {
+diff --git a/crates/ui-egui/src/services.rs b/crates/ui-egui/src/services.rs
+index b591fbc42716c7573fd87c70d6aefde5d28e7e0a..c59fd86750d525bb97e0eff11534c7f7783c89b8 100644
+--- a/crates/ui-egui/src/services.rs
++++ b/crates/ui-egui/src/services.rs
+@@ -4,6 +4,10 @@ use super::{FileDialogAnswer, FileDialogRequest, async_saves, paste_picture, pri
  /// Platform services injected by the host (file dialogs, file I/O).
  #[derive(Default)]
  pub struct Services {
@@ -45,33 +83,3 @@ index ccddf1d230c8e0e4f910144677cab8dda3815e1f..8095dad4277094297bdff24654c84936
      /// Desktop: discover configured printers on a worker.
      pub printers: Option<printing::Discover>,
      /// Desktop: submit the PDF with the chosen settings on a worker.
-@@ -697,6 +701,8 @@ impl SaveChoice {
- }
- 
- impl WordApp {
-+    /// Commit drafts before an embedding host serializes the document.
-+    pub fn host_flush(&mut self) -> Result<(), String> { panes::flush_comment_drafts(self) }
-     pub fn new(session: Session, services: Services) -> Self {
-         // Numeral › System follows the system locale, found here rather than in layout.
-         if let Some(tag) = sys_locale::get_locale() {
-@@ -905,6 +911,7 @@ impl WordApp {
-     /// Close, Envelopes, Labels and Finish & Merge on a document with unsaved changes first ask
-     /// Save / Don't Save / Cancel, and the command runs once that is answered (`ui.saveChanges`).
-     pub fn run(&mut self, id: &str, params: Value) -> Result<Value, String> {
-+        if self.services.host_command.as_ref().is_some_and(|host| host(id)) { return Ok(Value::Null); }
-         // Comment text still being typed is written first, so a save or export has it and a
-         // close, New or Open counts it as a change (#1348). A draft the document refuses is not
-         // part of it: saving and exporting go on without it (the refusal stays on the status
-diff --git a/crates/ui-egui/src/ribbon.rs b/crates/ui-egui/src/ribbon.rs
-index 516d5c70fd1521796437b333dded6ad626d1fad1..833b56122c453d31d8a47418e09acd77614c0220 100644
---- a/crates/ui-egui/src/ribbon.rs
-+++ b/crates/ui-egui/src/ribbon.rs
-@@ -292,7 +292,7 @@ pub fn show(app: &mut WordApp, ui: &mut Ui) {
-     // contextual ones (the Outlining tab right after File). A contextual tab (Table, Picture
-     // Format) may be stored while the selection moved away, and a tab may have been hidden.
-     let user_tabs = app.session.ribbon.tabs().into_owned();
--    let mut tabs: Vec<(String, bool)> = vec![("File".to_string(), false)];
-+    let mut tabs: Vec<(String, bool)> = if app.services.embedded { Vec::new() } else { vec![("File".to_string(), false)] };
-     tabs.extend(user_tabs.iter().filter(|e| !e.hidden).map(|e| (e.name.clone(), e.custom)));
-     for ct in contextual_tabs(&app.session) {
-         if ct == "Outlining" {

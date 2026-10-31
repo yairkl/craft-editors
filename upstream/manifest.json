@@ -97,20 +97,20 @@
     {
       "id": "wordcraft",
       "repository": "https://github.com/storytold/wordcraft",
-      "revision": "85db9cfef5b12f02dc78f3e67774924a0d5e68c7",
-      "version": "0.11.0",
+      "revision": "3de6ff95af86c19d67030cd96dba15cd6a45a25e",
+      "version": "0.12.0",
       "minimumRust": "1.95",
       "license": "MIT OR Apache-2.0",
       "patches": [
         {
           "path": "upstream/patches/wordcraft-snapshots.patch",
-          "sha256": "58fd26cf389c9dbf8b7c596a9fb77dd03ba152d284f6f4bf20d815b263bd4643",
+          "sha256": "085e7d423bb8ff42571236480bd5b81a46a5920b0c93bc1491d4d0640a771696",
           "purpose": "Expose reusable host document snapshots.",
           "removalCondition": "Remove when upstream exposes snapshots and restoration sufficient for host history and recovery and the adapter uses them."
         },
         {
           "path": "upstream/patches/wordcraft-ui-host.patch",
-          "sha256": "cdc4a7fa80d8bfdfd1e7f6f2e14cef5d16414c9de738be342a53524d0ccdeaaf",
+          "sha256": "1b8abc084fd13e079e775346869555a96bb9e0f554cbb8769a5afacb052646ef",
           "purpose": "Provide embedded lifecycle and UI hooks.",
           "removalCondition": "Remove when upstream supplies the required lifecycle, history, flush and optional UI hooks and the adapter uses them."
         }

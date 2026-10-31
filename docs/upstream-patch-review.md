@@ -19,7 +19,7 @@ The [manifest](../upstream/manifest.json) is the source of truth for each reposi
 | Patch | Effect and review boundary | Relevant integration checks |
 | --- | --- | --- |
 | `gridcraft-host-commands.patch` | Delegates file actions and committed undo/redo to the host through the services and command modules; routes native autosave through the same callback. Extract a general host callback with standalone defaults. Zoom-step changes live in the adapter, not this patch. | `npm run test:editing`, `npm run test:rendering` |
-| `wordcraft-snapshots.patch` | Exposes document snapshots for host history and recovery. Propose snapshot and restore separately from UI policy. | `npm run test:office` |
+| `wordcraft-snapshots.patch` | Exposes document snapshots for host history and recovery. Restoration also advances the upstream body-replacement epoch so an IME composition cannot survive an undo/redo body swap. Propose snapshot and restore separately from UI policy. | `npm run test:office`, `npm run test:languages` |
 | `wordcraft-ui-host.patch` | Adds host lifecycle and chrome hooks. Split lifecycle, history and UI concerns before proposing. | `npm run test:office` |
 | `deckcraft-host.patch` | Adds host file/history handling and presentation behavior. Separate lifecycle callbacks from presentation-host capabilities. | `npm run test:office` |
 | `deckcraft-ui.patch` | Adjusts ribbon and status chrome for embedding. An optional chrome capability needs independent review. | `npm run test:office`, `npm run test:theme` |

@@ -1,23 +1,24 @@
 diff --git a/crates/engine/src/lib.rs b/crates/engine/src/lib.rs
-index 0158a6054f289c9984d8fc5598bc276dcc5327f1..441a6ccebf30d7c8af50f35e1dc4578ca660de9e 100644
+index 529ce064857185cb8c1517e25fc6e7ce60087db6..5210de75afe90b7fa6fb33a2d3a9f85c9f9f7747 100644
 --- a/crates/engine/src/lib.rs
 +++ b/crates/engine/src/lib.rs
-@@ -18,6 +18,7 @@ pub mod recovery;
- pub mod ribbon;
- pub mod sample;
- mod session;
-+pub use session::HostSnapshot;
- pub mod speech;
- 
- use std::collections::HashMap;
+@@ -34,7 +34,7 @@ pub use io::Password;
+ pub use keymap::KeyMap;
+ pub use ribbon::RibbonLayout;
+ pub use session::{
+-    CellRange, ColumnBlock, DocInfo, DocState, EditSnapshot, FindState, MathEdit, Prefs, Selection, Session, StylesPaneDock, UNDO_LIST_MAX,
++    CellRange, ColumnBlock, DocInfo, DocState, EditSnapshot, FindState, HostSnapshot, MathEdit, Prefs, Selection, Session, StylesPaneDock, UNDO_LIST_MAX,
+     ViewState, WindowView, blank_document, next_math_session, set_system_locale,
+ };
+ /// The outcome a command reports for IME receipt classification.
 diff --git a/crates/engine/src/session.rs b/crates/engine/src/session.rs
-index 4bf1265d30568f660a39d032530cbb9683e1f71d..5f08e272d81dc17f50936c67c55639967894699c 100644
+index 86898641d4984a1a625f95faf1a5a9ef1c37e7c0..72f5866600478a2b0aa8bd7b1f835d9c89f6bf4d 100644
 --- a/crates/engine/src/session.rs
 +++ b/crates/engine/src/session.rs
-@@ -365,6 +365,18 @@ impl EditSnapshot {
- }
+@@ -41,6 +41,32 @@ pub use snapshot_types::EditSnapshot;
+ use snapshot_types::{LayoutSlots, RunSnapshot};
+ pub use view::{StylesPaneDock, ViewState};
  
- /// An editing session.
 +/// Exact, reusable snapshots for an embedding host's undo/redo callbacks.
 +#[derive(Clone)]
 +pub struct HostSnapshot {
@@ -30,23 +31,20 @@ index 4bf1265d30568f660a39d032530cbb9683e1f71d..5f08e272d81dc17f50936c67c5563996
 +    redo: Vec<Arc<Undo>>,
 +}
 +
- pub struct Session {
-     pub doc: Document,
-     pub sel: Selection,
-@@ -1341,6 +1353,16 @@ impl Session {
-     ///
-     /// The destructuring lists every field, so a new field does not build until someone decides
-     /// whether a snapshot must cover it.
++impl Session {
 +    pub fn host_snapshot(&self) -> HostSnapshot {
 +        HostSnapshot { doc: self.doc.clone(), sel: self.sel.clone(), pending: self.pending.clone(),
 +            column: self.column.clone(), evicted: self.undo_evicted, history: self.history.clone(), redo: self.redo.clone() }
 +    }
 +    pub fn restore_host_snapshot(&mut self, snapshot: HostSnapshot) {
++        self.note_body_replaced();
 +        self.doc = snapshot.doc; self.sel = snapshot.sel; self.pending = snapshot.pending;
 +        self.column = snapshot.column; self.undo_evicted = snapshot.evicted; self.autocap = None; self.history = snapshot.history; self.redo = snapshot.redo;
-+        self.typing_open = false; self.join_next = false; self.join_anchor = false;
++        self.typing_open = false; self.join_next = false; self.equation_join_next = false; self.ime_text_join = None; self.join_anchor = false;
 +        self.also_selected.clear(); self.clamp_selection(); self.touch();
 +    }
-     pub fn edit_snapshot(&self) -> EditSnapshot {
-         let Session {
-             doc,
++}
++
+ /// An editing session: the app-wide state (clipboard, preferences, macros, the command registry…)
+ /// and the open documents. The active document's state is in the session's own fields, which
+ /// every command works on; the other open documents wait in [`DocState`] values and are swapped

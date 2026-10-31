@@ -11,8 +11,8 @@ crate-type = ["cdylib", "rlib"]
 wordcraft-engine = { path = "../../upstream/checkouts/wordcraft/crates/engine" }
 wordcraft-mcp = { path = "../../upstream/checkouts/wordcraft/crates/mcp" }
 wordcraft-ui-egui = { path = "../../upstream/checkouts/wordcraft/crates/ui-egui" }
-egui = "=0.36.2"
-eframe = { version = "=0.36.2", default-features = false, features = ["glow", "default_fonts"] }
+egui = "=0.37.0"
+eframe = { version = "=0.37.0", default-features = false, features = ["glow", "default_fonts"] }
 wasm-bindgen = "=0.2.129"
 wasm-bindgen-futures = "=0.4.79"
 js-sys = "=0.3.106"
