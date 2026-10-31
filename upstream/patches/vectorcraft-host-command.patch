@@ -1,0 +1,14 @@
+diff --git a/crates/ui-egui/src/app/commands.rs b/crates/ui-egui/src/app/commands.rs
+index b31f42d85877f4805bab7855a039e2e236c15a75..d3c3bff96242dcd9efeb0a766f0a8d469ea6a425 100644
+--- a/crates/ui-egui/src/app/commands.rs
++++ b/crates/ui-egui/src/app/commands.rs
+@@ -4,6 +4,9 @@ use super::*;
+ impl VectorcraftApp {
+     /// Run a UI or engine command by id. The single entry point for every frontend path.
+     pub fn run(&mut self, id: &str, params: Value) -> Result<Value, String> {
++        if self.services.host_command.as_mut().is_some_and(|host| host(id)) {
++            return Ok(Value::Null);
++        }
+         // A file dialog it shows off the UI thread runs it again with the path picked.
+         if self.picks.is_entry_free() {
+             let entry = picks::Entry::Command(id.to_string(), params.clone());

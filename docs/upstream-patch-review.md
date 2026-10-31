@@ -29,6 +29,7 @@ The [manifest](../upstream/manifest.json) is the source of truth for each reposi
 | `pdfcraft-rendering.patch` | Removes a warning match arm for the pinned rendering dependency. This is a dependency compatibility adjustment, not an embedding feature; reassess it against current upstream and dependency versions before proposing it. | `npm run renderers:build`, `npm run test:graphics` |
 | `pdfcraft-ui-host.patch` | Combines host lifecycle, drafts and UI changes. Split these by behavior and review unsupported host actions as capabilities. | `npm run test:graphics`, `npm run test:theme` |
 | `vectorcraft-mcp-wasm.patch` | Rejects writing rendered images to a path on WebAssembly while allowing image data to be returned. A portable MCP change should preserve native behavior. | `npm run renderers:build`, `npm run test:graphics` (closed-file agent returns a PNG and rejects a path without creating a file) |
+| `vectorcraft-host-command.patch` | Delegates file and committed-history commands to the host. Review the callback separately from embedded chrome. | `npm run test:graphics` |
 | `vectorcraft-branding.patch` | Removes restricted branding from modified builds. This is a downstream distribution decision, not an assumed upstream proposal. | `npm run test:graphics`, package and notice review |
 | `vectorcraft-ui-host.patch` | Adds embedded lifecycle and UI hooks. Separate host callbacks from chrome and other UI policy. | `npm run test:graphics`, `npm run test:theme` |
 
@@ -50,7 +51,7 @@ To inspect the standalone VectorCraft candidate without altering the integration
 ```sh
 review_dir=$(mktemp -d)
 git clone --no-hardlinks upstream/checkouts/vectorcraft "$review_dir"
-git -C "$review_dir" checkout --detach 714434527e1a3e03c4b49096e30dd92b258aab50
+git -C "$review_dir" checkout --detach 68b68a30acad9b3d8a72802b35f43b82e2bd7d3a
 git -C "$review_dir" apply --check "$PWD/upstream/patches/vectorcraft-mcp-wasm.patch"
 git -C "$review_dir" apply "$PWD/upstream/patches/vectorcraft-mcp-wasm.patch"
 git -C "$review_dir" diff --check
@@ -59,7 +60,7 @@ git -C "$review_dir" diff
 
 This reproduces the downstream change against the pinned revision, not an upstream-ready PR or a test of current upstream. The isolated checkout remains at `review_dir` for inspection; review upstream's current state and add the native and WebAssembly tests described above before proposing it. For patches that depend on earlier entries, apply those entries first in manifest order in a separate checkout.
 
-On 2026-10-30, the VectorCraft patch also passed `git apply --check` against upstream main at `e85e1493846c885ebaf48f2a8fea0dce6aec0fec`. This confirms textual applicability only; behavior and tests on that revision have not been verified.
+On 2026-10-30, the previous VectorCraft 0.17 patch passed `git apply --check` against upstream main at `e85e1493846c885ebaf48f2a8fea0dce6aec0fec`. That was a textual check of the previous patch, not a behavior test or a verification of the current patch against that older revision.
 
 ## Updating a pin
 
