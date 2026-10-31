@@ -5,7 +5,7 @@
   "preview": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/yairkl/craft-vscode.git"
+    "url": "https://github.com/yairkl/craft-editors.git"
   },
   "engines": {
     "vscode": "^1.102.0"
@@ -19,7 +19,7 @@
     }
   },
   "name": "craft-powerpoint",
-  "displayName": "Craft PowerPoint",
+  "displayName": "Craft Presentations",
   "description": "Native DeckCraft PPTX viewing and editing in VS Code.",
   "categories": [
     "Other"
@@ -32,13 +32,13 @@
     "mcpServerDefinitionProviders": [
       {
         "id": "craft.powerpoint.mcp",
-        "label": "Craft PowerPoint"
+        "label": "Craft Presentations"
       }
     ],
     "customEditors": [
       {
         "viewType": "craft.powerpoint.preview",
-        "displayName": "Craft PowerPoint",
+        "displayName": "Craft Presentations",
         "selector": [
           {
             "filenamePattern": "*.pptx"
@@ -48,7 +48,7 @@
       },
       {
         "viewType": "craft.powerpoint.integrationProbe",
-        "displayName": "Craft PowerPoint Integration Probe (development)",
+        "displayName": "Craft Presentations Integration Probe (development)",
         "selector": [
           {
             "filenamePattern": "*.pptx"
@@ -58,7 +58,7 @@
       }
     ],
     "configuration": {
-      "title": "Craft PowerPoint",
+      "title": "Craft Presentations",
       "properties": {
         "craft.powerpoint.maxFileSizeMiB": {
           "type": "integer",
@@ -76,9 +76,11 @@
     "media/**",
     "notices/**",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "icon.png"
   ],
   "extensionKind": [
     "workspace"
-  ]
+  ],
+  "icon": "icon.png"
 }

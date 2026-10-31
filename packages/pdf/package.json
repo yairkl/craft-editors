@@ -5,7 +5,7 @@
   "preview": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/yairkl/craft-vscode.git"
+    "url": "https://github.com/yairkl/craft-editors.git"
   },
   "engines": {
     "vscode": "^1.102.0"
@@ -76,9 +76,11 @@
     "media/**",
     "notices/**",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "icon.png"
   ],
   "extensionKind": [
     "workspace"
-  ]
+  ],
+  "icon": "icon.png"
 }

@@ -1,6 +1,6 @@
 # Native document editing
 
-Craft Spreadsheets (XLSX/CSV), Craft Word (DOCX) and Craft PowerPoint (PPTX) embed their native application interfaces. One shared `EditingProvider` handles VS Code file lifecycle; each entry point supplies only its format, engine directory, editor ID and file-dialog label. The engine adapters implement the same serialize, acknowledgment, history and replace operations. Craft PDF and Craft Vector now use the same host with native editable interfaces. Vector accepts SVG and `.vectorcraft`; Save As keeps the source format. See [the adapter design](decisions/0002-shared-editing-host.md).
+Craft Spreadsheets (XLSX/CSV), Craft Documents (DOCX) and Craft Presentations (PPTX) embed their native application interfaces. One shared `EditingProvider` handles VS Code file lifecycle; each entry point supplies only its format, engine directory, editor ID and file-dialog label. The engine adapters implement the same serialize, acknowledgment, history and replace operations. Craft PDF and Craft Vector now use the same host with native editable interfaces. Vector accepts SVG and `.vectorcraft`; Save As keeps the source format. See [the adapter design](decisions/0002-shared-editing-host.md).
 
 GridCraft's worksheet tabs belong to its embedded canvas; VS Code workbench tabs represent files. WordCraft supplies its native document canvas/ribbon, and DeckCraft supplies its native slide canvas/ribbon/thumbnails. No custom host header or Save/Save As buttons appear above these native interfaces.
 
