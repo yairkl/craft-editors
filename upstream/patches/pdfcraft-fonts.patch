@@ -1,5 +1,5 @@
 diff --git a/crates/fonts/src/craft.rs b/crates/fonts/src/craft.rs
-index e778a42ad73840d379317c9219006e25f7f5f044..70bbc8cacf632ecff7d67234eb73a260a7d595d3 100644
+index dff96762aa1d22a501f0b593f470c43e77497488..c7be36bb5ae3fdb7cf1320b3ff47a2812583c277 100644
 --- a/crates/fonts/src/craft.rs
 +++ b/crates/fonts/src/craft.rs
 @@ -92,14 +92,22 @@ pub fn document_devanagari_font() -> Option<&'static CraftFont> {

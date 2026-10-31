@@ -1,7 +1,7 @@
 {
   "rust": "rustc 1.95.0 (59807616e 2026-04-14)",
   "wasmBindgen": "0.2.129",
-  "adapterLockSha256": "adea46c06550414a738702a1552817fb0018ef12af284da46eb68d898883bd99",
+  "adapterLockSha256": "4ed0e9353deba0ff8cbc92f95fd9376eebb916968fcbef588cee3d119781f8e9",
   "fontAssets": {
     "schemaVersion": 2,
     "fonts": [
@@ -31,27 +31,27 @@
   },
   "sources": {
     "gridcraft": "43284377d2466037628e57d8ad0c891778fdb45c",
-    "pdfcraft": "418ac6a2af49b7ac2fed44ca2cae8d5d1d2cec0d",
+    "pdfcraft": "75360d1d7db06fed974f48c914d4c04132757187",
     "wordcraft": "85db9cfef5b12f02dc78f3e67774924a0d5e68c7",
     "deckcraft": "14f40c408c67d2cb43e30a47dd179aada6dba53a",
     "vectorcraft": "714434527e1a3e03c4b49096e30dd92b258aab50"
   },
   "artifacts": {
     "grid/viewer.js": {
-      "bytes": 92868,
-      "sha256": "f0c8146ba2a099a7477036dbbd03fd1c1ec63d984f52d96ed394ec117c6b66c9"
+      "bytes": 167631,
+      "sha256": "17a7e4d6587fe5540260bf7232ad7929800af069891f181487469af43e953b50"
     },
     "grid/viewer_bg.wasm": {
-      "bytes": 19821858,
-      "sha256": "926b6c6cdcfac653bae0c1e3f811b4da256b2e4c4a53ab2218e6321edf59015a"
+      "bytes": 23657787,
+      "sha256": "3b661f7e16ce701dd3c44aa55773ce907d6f01b2235ea20f3ba1d484e09f4246"
     },
     "grid/node/viewer.js": {
-      "bytes": 89371,
-      "sha256": "5a64174db862aba610b978933a81d6bc1f2697da9e7637977257fa30c04025a4"
+      "bytes": 164134,
+      "sha256": "5b8f63174dc69cf477af636b2c57f3226847009f0c2d2b63127877e3b4fdb2cc"
     },
     "grid/node/viewer_bg.wasm": {
-      "bytes": 19821858,
-      "sha256": "926b6c6cdcfac653bae0c1e3f811b4da256b2e4c4a53ab2218e6321edf59015a"
+      "bytes": 23657787,
+      "sha256": "3b661f7e16ce701dd3c44aa55773ce907d6f01b2235ea20f3ba1d484e09f4246"
     },
     "grid/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
@@ -62,52 +62,60 @@
       "sha256": "22a98f9d0c5a0532d291bdc9a3050439420b3d11143b4568fcfd3c66fff36995"
     },
     "pdf/viewer.js": {
-      "bytes": 167528,
-      "sha256": "036767d692c84bd5a3c4c7e854fa7d5c958993556689b257aae2634866484d23"
+      "bytes": 172451,
+      "sha256": "c3896ed07d1a25b5c15a74954407dfa5912ce9db95d65da561f51189d5d3c866"
     },
     "pdf/viewer_bg.wasm": {
-      "bytes": 48741443,
-      "sha256": "a78da87bb7fd181602e3e4ff9b20c4de98e511471c592eacd73bfbb9047ddfdd"
+      "bytes": 51139558,
+      "sha256": "53d9272df96407d7c9011610e307f275ab5308de5191fe133f877459719a37c3"
     },
     "pdf/node/viewer.js": {
-      "bytes": 164024,
-      "sha256": "3c32dbb53008db8f653c33b9f8501de0f373da8620059b283b1d46ff2d4c06f0"
+      "bytes": 168964,
+      "sha256": "a5589256448cf6233888c989716ea972d17a60d518127ccca2b940a03ceecd6e"
     },
     "pdf/node/viewer_bg.wasm": {
-      "bytes": 48741443,
-      "sha256": "a78da87bb7fd181602e3e4ff9b20c4de98e511471c592eacd73bfbb9047ddfdd"
+      "bytes": 51139558,
+      "sha256": "53d9272df96407d7c9011610e307f275ab5308de5191fe133f877459719a37c3"
+    },
+    "pdf/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
+      "bytes": 280,
+      "sha256": "22a98f9d0c5a0532d291bdc9a3050439420b3d11143b4568fcfd3c66fff36995"
+    },
+    "pdf/node/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
+      "bytes": 280,
+      "sha256": "22a98f9d0c5a0532d291bdc9a3050439420b3d11143b4568fcfd3c66fff36995"
     },
     "word/viewer.js": {
-      "bytes": 159767,
-      "sha256": "efaad3b2bd6800914ed8f16cdf4b3729ecb61e445c80454b80777a09607b5187"
+      "bytes": 84836,
+      "sha256": "7e40bbf5ac154b23dec9c2c6cea06a59e12a4f7aa2edbad10bdd809a5d704498"
     },
     "word/viewer_bg.wasm": {
-      "bytes": 44589811,
-      "sha256": "78755f04fa5450da68c8f177a27c7f3bc80c85b08a3420c7927c9e36e52c0af3"
+      "bytes": 40738892,
+      "sha256": "a827bddaf0699405cd41ad7d1c4667331413a5c58d798e35beeb383d0805cd89"
     },
     "word/node/viewer.js": {
-      "bytes": 156265,
-      "sha256": "a8a9ddadd181ad211088f2593349f1cb0da1d53c997e9ff17a11704dba1db276"
+      "bytes": 81334,
+      "sha256": "dbb9f4d867078d9e803c0b1a61225fc26dfe7b8147e5d38c277ef78d332155a2"
     },
     "word/node/viewer_bg.wasm": {
-      "bytes": 44589811,
-      "sha256": "78755f04fa5450da68c8f177a27c7f3bc80c85b08a3420c7927c9e36e52c0af3"
+      "bytes": 40738892,
+      "sha256": "a827bddaf0699405cd41ad7d1c4667331413a5c58d798e35beeb383d0805cd89"
     },
     "deck/viewer.js": {
-      "bytes": 88002,
-      "sha256": "5115bd934969c302d19d837037a7993373c0244053bf1e18caf92c34c78197f9"
+      "bytes": 162762,
+      "sha256": "ce3aa79230c7744b9fd06ecaa4a931da30445e33a8aba902a3014ac1160c9f7f"
     },
     "deck/viewer_bg.wasm": {
-      "bytes": 27468786,
-      "sha256": "e1df3c83a61519998199e00e8dbdec2b2478281aec7ddf356e99a4463a1f2ca8"
+      "bytes": 31296738,
+      "sha256": "ee31c3751f45d97a03e0a8ea3d6a2887855ceb7c153a8143ab6fed550fc4e103"
     },
     "deck/node/viewer.js": {
-      "bytes": 84517,
-      "sha256": "45d09bec6cf8cfa59319df23ecdbf2461c0f04107e9ba4572b75bf864a855a71"
+      "bytes": 159277,
+      "sha256": "4ab97f39c1d60bc4a37fc97c7d64eea825d886aa208a55ea3062e8d6d03f4291"
     },
     "deck/node/viewer_bg.wasm": {
-      "bytes": 27468786,
-      "sha256": "e1df3c83a61519998199e00e8dbdec2b2478281aec7ddf356e99a4463a1f2ca8"
+      "bytes": 31296738,
+      "sha256": "ee31c3751f45d97a03e0a8ea3d6a2887855ceb7c153a8143ab6fed550fc4e103"
     },
     "deck/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
@@ -118,20 +126,20 @@
       "sha256": "22a98f9d0c5a0532d291bdc9a3050439420b3d11143b4568fcfd3c66fff36995"
     },
     "vector/viewer.js": {
-      "bytes": 88633,
-      "sha256": "e16abb7a04af9af4f0140c992831056d0f5c25a75724b80a3dd618a5e47502dd"
+      "bytes": 163393,
+      "sha256": "c271c165a939c2e78d8ca3067de87986ea5cf2488433c8be13175b128fd07e11"
     },
     "vector/viewer_bg.wasm": {
-      "bytes": 67815698,
-      "sha256": "c3a14ee72dc91f175a3c2c9dbb1f881f8dfd2e3a55919200abb9103ccd4c9921"
+      "bytes": 71633739,
+      "sha256": "7e4ba29d6c296afe05bfea0b211db7762cfbf2140d94f5db493a97d82fe4f068"
     },
     "vector/node/viewer.js": {
-      "bytes": 85152,
-      "sha256": "4af07fb7fbfe92c7401062ab068fcc8cf7e58bf6491910b45ae4aa7314ef7e5e"
+      "bytes": 159912,
+      "sha256": "35eb3bfe4ec00948c9b1c6ec14ae5812dfee94daa27d64497c12d10653de2794"
     },
     "vector/node/viewer_bg.wasm": {
-      "bytes": 67815698,
-      "sha256": "c3a14ee72dc91f175a3c2c9dbb1f881f8dfd2e3a55919200abb9103ccd4c9921"
+      "bytes": 71633739,
+      "sha256": "7e4ba29d6c296afe05bfea0b211db7762cfbf2140d94f5db493a97d82fe4f068"
     },
     "vector/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
@@ -154,31 +162,31 @@
     "pdfcraft": [
       {
         "path": "upstream/patches/pdfcraft-automation.patch",
-        "sha256": "f5ad3c25f083cf24ea176149acfe084d51297eaef11a2974589c669ec2a0635e",
+        "sha256": "704ac41277603d0a3f827575a4d9a8c1641f4c80a12eacd676e96979365fad4b",
         "purpose": "Expose the embedded automation session.",
         "removalCondition": "Remove when upstream exposes the automation session required by the embedded MCP bridge and the adapter uses it."
       },
       {
         "path": "upstream/patches/pdfcraft-snapshots.patch",
-        "sha256": "2b37df753a9ac80b96781bf6b6f29a55ea25ba4080370abe16beffc28e259117",
+        "sha256": "ced68565f1a7871c487371912326ae6796344c3f9c3c86bb2fbf796e833fbae1",
         "purpose": "Expose host-owned document snapshots.",
         "removalCondition": "Remove when upstream exposes snapshots and restoration sufficient for host history and drafts and the adapter uses them."
       },
       {
         "path": "upstream/patches/pdfcraft-fonts.patch",
-        "sha256": "e533d16cec47d137c3fdfc7186bbb83bdc83489d218a7499c150f1ed13839f71",
+        "sha256": "58372fdd74586f2266e6d4baa1be6b84b4f7157647a9c522b86b0ce950a606aa",
         "purpose": "Register host-provided font data for the Hebrew font selection path.",
         "removalCondition": "Remove when upstream provides a suitable host-font registration and selection mechanism or the fallback is no longer needed."
       },
       {
         "path": "upstream/patches/pdfcraft-rendering.patch",
-        "sha256": "64f76d00dd68d713631a8570a088a1f7bdb72499b41e5e9702af80167ce23a99",
+        "sha256": "3a2f0c82e9ff2f558d8aff33d9139afa94f197bf3939d35e1fc3eb06eba66c9c",
         "purpose": "Support embedded rendering behavior.",
         "removalCondition": "Remove when the pinned PdfCraft and rendering dependency versions compile together without this compatibility adjustment."
       },
       {
         "path": "upstream/patches/pdfcraft-ui-host.patch",
-        "sha256": "ab02d2d66506b2dbf9d9f197d76039a5da9c12612faf5217d8274181132b8462",
+        "sha256": "169e09bcf6063c6aab8bfc99ddc0431b995080e144e47e522d4286441e7da711",
         "purpose": "Provide embedded lifecycle, drafts and UI hooks.",
         "removalCondition": "Remove when upstream supplies the required lifecycle, draft and optional UI capabilities and the adapter uses them."
       }

@@ -9,6 +9,8 @@ Both standalone and combined-extension profiles passed in local VS Code 1.102.0.
 
 On 2026-10-30, the content-filled workbook test was repeated after updating GridCraft to 0.13.0. The standalone and combined profiles passed in approximately 10.7 and 10.8 seconds respectively. Memory was not remeasured in that run.
 
+On 2026-10-31, the content-filled PDF test was repeated after updating PdfCraft to 0.15.0. The standalone and combined profiles passed in approximately 3.6 and 3.2 seconds respectively. Memory was not remeasured in that run.
+
 Reproduce on Linux with the development dependencies, built renderers, `python3`, Poppler's `pdfimages`, desktop VS Code and `xvfb-run`:
 
 ```sh
