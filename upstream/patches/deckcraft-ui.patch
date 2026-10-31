@@ -1,16 +1,8 @@
 diff --git a/crates/ui-egui/src/ribbon.rs b/crates/ui-egui/src/ribbon.rs
-index 117e08e89512627c8c237e15bc6603db14ea814d..5280a4f43a90697a410ab02454d27a92eb7658ff 100644
+index 51c46b6c72dbc7685b482b4550205fed612708b3..40fc9fbb12b6c6dcbcbbc81bde915b8d868d578a 100644
 --- a/crates/ui-egui/src/ribbon.rs
 +++ b/crates/ui-egui/src/ribbon.rs
-@@ -55,6 +55,7 @@ fn run(app: &mut SlideApp, id: &str, p: Value) {
- 
- /// The window's title row: traffic-light space, quick access, centred title, actions.
- pub fn title_bar(app: &mut SlideApp, ui: &mut Ui) {
-+    if app.services.embedded { return; }
-     let t = Tokens::get(ui.ctx());
-     let (height, left, control_h) = title_geometry(app.integrated_titlebar);
-     egui::Panel::top("title_bar").exact_size(height).frame(egui::Frame::NONE.fill(t.chrome)).show(ui, |ui| {
-@@ -171,7 +172,7 @@ pub fn show(app: &mut SlideApp, ui: &mut Ui) {
+@@ -133,7 +133,7 @@ pub fn show(app: &mut SlideApp, ui: &mut Ui) {
          // PowerPoint.
          let mut x = rect.min.x + 12.0;
          let y = rect.min.y + 2.0;
@@ -19,10 +11,14 @@ index 117e08e89512627c8c237e15bc6603db14ea814d..5280a4f43a90697a410ab02454d27a92
              let w = ui.fonts_mut(|f| f.layout_no_wrap("File".to_string(), theme::font(13.0), t.text).size().x) + 18.0;
              let r = Rect::from_min_size(pos2(x, y), vec2(w, 24.0));
              let resp = ui.interact(r, ui.scope_id().with("tab_file"), Sense::click());
-@@ -2191,6 +2192,10 @@ pub fn paint_anim_tile(p: &egui::Painter, r: Rect, label: &str, class: AnimClass
+diff --git a/crates/ui-egui/src/ribbon/slide_show.rs b/crates/ui-egui/src/ribbon/slide_show.rs
+index 89c78c11b0fe95ce2e6e81831fc105b8b537b59e..0c0cf8597880bb0507785bfeec3a570a763a1085 100644
+--- a/crates/ui-egui/src/ribbon/slide_show.rs
++++ b/crates/ui-egui/src/ribbon/slide_show.rs
+@@ -3,6 +3,10 @@ use super::{Icon, SlideApp, Ui, big, big_button, big_button_ex, group, json, row
  // ---------- Slide Show / Record / Review / View ----------
  
- fn slide_show(app: &mut SlideApp, ui: &mut Ui) {
+ pub(super) fn slide_show(app: &mut SlideApp, ui: &mut Ui) {
 +    if app.services.embedded {
 +        ui.label("Presenting is unavailable in this host. Use View > Reading View to preview slides, or present with a standalone application.");
 +        return;
@@ -30,10 +26,10 @@ index 117e08e89512627c8c237e15bc6603db14ea814d..5280a4f43a90697a410ab02454d27a92
      group(ui, |ui| {
          if big_button(ui, Icon::PlayFromStart, "Play from\nStart", true).clicked() {
              app.start_show(app.show_start_index(), false);
-@@ -2241,6 +2246,10 @@ fn slide_show(app: &mut SlideApp, ui: &mut Ui) {
+@@ -53,6 +57,10 @@ pub(super) fn slide_show(app: &mut SlideApp, ui: &mut Ui) {
  }
  
- fn record(app: &mut SlideApp, ui: &mut Ui) {
+ pub(super) fn record(app: &mut SlideApp, ui: &mut Ui) {
 +    if app.services.embedded {
 +        ui.label("Presenting is unavailable in this host. Use View > Reading View to preview slides, or present with a standalone application.");
 +        return;
@@ -41,6 +37,33 @@ index 117e08e89512627c8c237e15bc6603db14ea814d..5280a4f43a90697a410ab02454d27a92
      group(ui, |ui| {
          let r = big_button(ui, Icon::Cameo, "Cameo", false);
          let _ = r.on_hover_text("Camera capture is not available yet");
+diff --git a/crates/ui-egui/src/ribbon/title_bar.rs b/crates/ui-egui/src/ribbon/title_bar.rs
+index 6c7e825e8c5579d380e5a6390f1963fe4a525e55..a3f8bad0c003358e0b4181fd8a4684951781718f 100644
+--- a/crates/ui-egui/src/ribbon/title_bar.rs
++++ b/crates/ui-egui/src/ribbon/title_bar.rs
+@@ -30,6 +30,7 @@ pub(super) fn title_geometry(integrated: bool) -> (f32, f32, f32) {
+ 
+ /// The window's title row: traffic-light space, quick access, centred title, actions.
+ pub fn title_bar(app: &mut SlideApp, ui: &mut Ui) {
++    if app.services.embedded { return; }
+     let t = Tokens::get(ui.ctx());
+     let (height, left, control_h) = title_geometry(app.integrated_titlebar);
+     egui::Panel::top("title_bar").exact_size(height).frame(egui::Frame::NONE.fill(t.chrome)).show(ui, |ui| {
+diff --git a/crates/ui-egui/src/services.rs b/crates/ui-egui/src/services.rs
+index 88f03ac2cf10274f5d7879bce60eaec3ac2c1eb3..630ce1784863c91ed35da1c4cbd2adf958673bb9 100644
+--- a/crates/ui-egui/src/services.rs
++++ b/crates/ui-egui/src/services.rs
+@@ -36,6 +36,10 @@ pub type Inbox = std::sync::Arc<std::sync::Mutex<Vec<InboxEvent>>>;
+ /// Platform services injected by the host (desktop or web).
+ #[derive(Default)]
+ pub struct Services {
++    /// Embedded host owns file lifecycle and committed history.
++    pub host_command: Option<Box<dyn Fn(&str) -> bool>>,
++    /// Omit standalone window chrome and presentation windows when embedded.
++    pub embedded: bool,
+     /// Open-file dialog for a purpose (`open`, `picture`, `audio`, `video`) → path.
+     pub pick_open: Option<PickFn>,
+     /// Save dialog with a suggested name → path.
 diff --git a/crates/ui-egui/src/status.rs b/crates/ui-egui/src/status.rs
 index 0301af446b9ea75d9c917349c8de8e6485714ec7..592da39a9f1b284c2846a9beb86c7764756d5033 100644
 --- a/crates/ui-egui/src/status.rs
