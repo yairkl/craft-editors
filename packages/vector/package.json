@@ -72,6 +72,32 @@
           "description": "Maximum document size in MiB for opening and saving. Large or complex documents may require substantially more memory."
         }
       }
+    },
+    "commands": [
+      {
+        "command": "craft.vector.openSvgText",
+        "title": "Open SVG as Text",
+        "icon": "$(code)"
+      },
+      {
+        "command": "craft.vector.openSvgDrawing",
+        "title": "Open SVG in Craft Vector",
+        "icon": "$(edit)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "craft.vector.openSvgText",
+          "when": "resourceExtname == .svg && activeCustomEditorId == 'craft.vector.preview'",
+          "group": "navigation@10"
+        },
+        {
+          "command": "craft.vector.openSvgDrawing",
+          "when": "resourceExtname == .svg && activeEditor == 'workbench.editors.files.textFileEditor'",
+          "group": "navigation@10"
+        }
+      ]
     }
   },
   "files": [

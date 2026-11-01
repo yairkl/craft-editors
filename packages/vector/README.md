@@ -6,7 +6,7 @@ Craft Vector includes a bridge for the pinned VectorCraft MCP tools, intended fo
 
 Finish any active drawing interaction before using agent tools. Screenshots returned as image data are available in headless sessions; writing a screenshot to a native path and desktop-only controls are not available. For an open document, use VS Code Save As for a copy. The bridge is tested in a Linux Remote SSH extension host; real-client editing and remote workflows need end-to-end validation.
 
-Open an SVG or `.vectorcraft` file with **Reopen Editor With… → Craft Vector**. Configure it as the default if desired; SVG text editing stays available.
+Open an SVG or `.vectorcraft` file with **Reopen Editor With… → Craft Vector**. Configure it as the default if desired. For SVG, the editor title buttons switch between Craft Vector and the text editor; VS Code handles unsaved changes when switching.
 
 Uses the native VectorCraft UI, with VS Code Save, Save As (same format), Undo/Redo, Revert and recovery. SVG saves normalize the XML and may change unsupported features. Test on copies of complex artwork. Native `.vectorcraft` keeps the richer model. Dark/light follows VS Code.
 

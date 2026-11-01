@@ -72,6 +72,15 @@ export async function run(): Promise<void> {
     }
     let doc = await open(uri);
     assert.equal(doc.dirty, false);
+    if (descriptor.format === 'svg') {
+      await vscode.commands.executeCommand('craft.vector.openSvgText');
+      assert.equal(vscode.window.activeTextEditor?.document.uri.toString(), uri.toString(), 'SVG opens in the native text editor');
+      assert.match(vscode.window.activeTextEditor!.document.getText(), /<svg\b/);
+      const rendered = receipt(api);
+      await vscode.commands.executeCommand('craft.vector.openSvgDrawing');
+      assert.equal((await rendered).rendered, true, 'SVG returns to Craft Vector');
+      const reopened = api.editing.getDocument(uri); assert.ok(reopened); doc = reopened;
+    }
     if (descriptor.format === 'pdf') {
       assert.ok(api.mcp);
       const client = agent(api.mcp);
