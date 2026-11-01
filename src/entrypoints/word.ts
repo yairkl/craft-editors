@@ -9,7 +9,13 @@ export async function activate(context: vscode.ExtensionContext) {
   const probe = activateHost(context, {
     format: 'docx', previewId: 'craft.word.preview', probeId: 'craft.word.integrationProbe',
   });
-  const provider = new EditingProvider(context, { format: 'docx', engine: 'word', viewType: 'craft.word.preview', label: 'Word document' });
+  const provider = new EditingProvider(context, { format: 'docx', additionalFormats: ['md'], engine: 'word', viewType: 'craft.word.preview', label: 'Word document' });
+  context.subscriptions.push(
+    vscode.commands.registerCommand('craft.word.openMarkdownText', () => vscode.commands.executeCommand('workbench.action.reopenTextEditor')),
+    vscode.commands.registerCommand('craft.word.openMarkdownDocument', () => vscode.commands.executeCommand('reopenActiveEditorWith', 'craft.word.markdown')),
+    vscode.commands.registerCommand('craft.word.saveMarkdownAsDocument', () => provider.saveMarkdownAsDocument()),
+    vscode.window.registerCustomEditorProvider('craft.word.markdown', provider, { supportsMultipleEditorsPerDocument: false, webviewOptions: { retainContextWhenHidden: true } }),
+  );
   context.subscriptions.push(provider, vscode.window.registerCustomEditorProvider(
     'craft.word.preview', provider, { supportsMultipleEditorsPerDocument: false, webviewOptions: { retainContextWhenHidden: true } },
   ));

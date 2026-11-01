@@ -17,6 +17,7 @@ export async function run(): Promise<void> {
   for (const descriptor of selected.filter(item => item.format === 'docx' || item.format === 'pptx')) {
     const extension = vscode.extensions.getExtension<Api>(descriptor.id); assert.ok(extension);
     const api = await extension.activate(); assert.ok(api.editing);
+    if (descriptor.format === 'docx') await checkMarkdown(api, directory, cancellation.token);
     const original = await vscode.workspace.fs.readFile(fixture(`minimal.${descriptor.format}`));
     const uri = vscode.Uri.joinPath(directory, `roundtrip.${descriptor.format}`);
     await vscode.workspace.fs.writeFile(uri, original);
@@ -182,6 +183,81 @@ export async function run(): Promise<void> {
     console.log(`Native ${descriptor.format}: input, undo/redo, Save/reopen, Save As, Revert and recovery passed.`);
   }
   cancellation.dispose();
+}
+async function checkMarkdown(api: Api, directory: vscode.Uri, token: vscode.CancellationToken): Promise<void> {
+  const uri = vscode.Uri.joinPath(directory, 'roundtrip.md');
+  const source = Buffer.from('# Craft title\n\nA **bold** [link](https://example.com).\n');
+  await vscode.workspace.fs.writeFile(uri, source);
+  await vscode.commands.executeCommand('vscode.open', uri);
+  assert.equal(vscode.window.activeTextEditor?.document.uri.toString(), uri.toString(), 'Markdown remains in the text editor by default');
+  await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+  const openMarkdown = async () => {
+    const rendered = receipt(api);
+    await vscode.commands.executeCommand('vscode.openWith', uri, 'craft.word.markdown');
+    const result = await rendered; assert.equal(result.rendered, true, result.failure);
+    const doc = api.editing.getDocument(uri); assert.ok(doc); return doc;
+  };
+  let md = await openMarkdown();
+  assert.equal(await md.request('test:markdown-safe'), true, 'Simple Markdown can be saved without loss');
+  await md.request('test:paste', { text: 'Edit ' });
+  await waitFor(() => md.dirty);
+  assert.equal(await md.request('test:markdown-safe'), true, 'Ordinary edits remain representable in Markdown');
+  await api.editing.saveCustomDocument(md, token);
+  assert.ok(Buffer.from(await vscode.workspace.fs.readFile(uri)).toString().includes('Edit '));
+  await vscode.commands.executeCommand('craft.word.openMarkdownText');
+  assert.equal(vscode.window.activeTextEditor?.document.uri.toString(), uri.toString());
+  const rendered = receipt(api);
+  await vscode.commands.executeCommand('craft.word.openMarkdownDocument');
+  assert.equal((await rendered).rendered, true);
+  md = api.editing.getDocument(uri)!; assert.ok(md);
+  const savedMarkdown = await vscode.workspace.fs.readFile(uri);
+  await md.request('test:command', { command: 'select.all' });
+  await md.request('test:command', { command: 'format.color', params: { color: 'FF0000' } });
+  await waitFor(() => md.dirty);
+  assert.equal(await md.request('test:markdown-safe'), false, 'Color formatting cannot be represented by Markdown');
+  await assert.rejects(api.editing.saveCustomDocument(md, token));
+  assert.deepEqual(await vscode.workspace.fs.readFile(uri), savedMarkdown);
+  await api.editing.revertCustomDocument(md, token);
+  await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+  const unsupported = Buffer.from('# Craft drawing\n\n![alt](relative-image.png)\n');
+  await vscode.workspace.fs.writeFile(uri, unsupported);
+  md = await openMarkdown();
+  assert.equal(await md.request('test:markdown-safe'), false, 'An unsupported image reference cannot be silently overwritten');
+  await md.request('test:paste', { text: 'Edit ' });
+  await waitFor(() => md.dirty);
+  await assert.rejects(api.editing.saveCustomDocument(md, token));
+  assert.deepEqual(await vscode.workspace.fs.readFile(uri), unsupported);
+  const copy = vscode.Uri.joinPath(directory, 'markdown-copy.docx');
+  await api.editing.saveCustomDocumentAs(md, copy, token);
+  assert.equal(Buffer.from(await vscode.workspace.fs.readFile(copy)).subarray(0, 2).toString(), 'PK');
+  const backupUri = vscode.Uri.joinPath(directory, 'markdown.backup');
+  const expectedText = await md.request('test:text');
+  const backup = await api.editing.backupCustomDocument(md, { destination: backupUri }, token);
+  const recoveredUri = vscode.Uri.joinPath(directory, 'recovered.md');
+  await vscode.workspace.fs.writeFile(recoveredUri, unsupported);
+  const recovered = await api.editing.openCustomDocument(recoveredUri, { backupId: backup.id, untitledDocumentData: undefined }, token);
+  const panel = api.editing.createRecoveryTestPanel();
+  const recoveryRender = receipt(api);
+  await api.editing.resolveCustomEditor(recovered, panel, token);
+  assert.equal((await recoveryRender).rendered, true, 'A DOCX snapshot recovers inside the Markdown editor');
+  assert.equal(await recovered.request('test:text'), expectedText, 'Recovery retains the unsaved edit');
+  assert.equal(await recovered.request('test:markdown-safe'), false, 'Recovery retains the unsafe-source protection');
+  assert.equal(recovered.dirty, true);
+  panel.dispose(); recovered.dispose();
+  await api.editing.revertCustomDocument(md, token);
+  await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+  backup.delete();
+  const frontMatter = Buffer.from('---\ntitle: Craft\n---\n\nCraft text\n');
+  await vscode.workspace.fs.writeFile(uri, frontMatter);
+  md = await openMarkdown();
+  assert.equal(await md.request('test:markdown-safe'), false, 'Front matter cannot be silently reinterpreted');
+  await md.request('test:paste', { text: 'Edit ' });
+  await waitFor(() => md.dirty);
+  await assert.rejects(api.editing.saveCustomDocument(md, token));
+  assert.deepEqual(await vscode.workspace.fs.readFile(uri), frontMatter);
+  await api.editing.revertCustomDocument(md, token);
+  await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+  console.log('Markdown text switching, safe save, unsupported source protection, DOCX copy and backup passed.');
 }
 function receipt(api: Api): Promise<RenderResult> {
   return new Promise((resolve, reject) => {

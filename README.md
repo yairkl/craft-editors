@@ -11,7 +11,7 @@ Install only the editors you need; each includes its own engine and works withou
 | Editor | Files | What you can do |
 | --- | --- | --- |
 | Craft Spreadsheets | `.xlsx`, `.csv`, `.tsv` | Edit cells and formulas, sort data, and use native worksheet tabs. |
-| Craft Documents | `.docx` | Read and edit documents. |
+| Craft Documents | `.docx`, `.md` | Read and edit documents; Markdown uses conservative save checks. |
 | Craft Presentations | `.pptx` | Read and edit presentations. |
 | Craft PDF | `.pdf` | Read PDFs and use supported editing tools. |
 | Craft Vector | `.svg`, `.vectorcraft` | View and edit vector drawings. |
@@ -27,6 +27,8 @@ An optional **Craft Editors** pack groups the five extensions. Legacy `.doc` and
 The extensions are not yet published to the VS Code Marketplace or Open VSX. For the optional Suite in this beta, install its five member VSIX files first. See [installation details and preview limits](docs/releases/v0.1.3-beta.1.md).
 
 ## Working with files
+
+Markdown opens in your usual editor by default; use **Reopen Editor With… → Craft Documents** or the title-bar button for the word processor. Markdown source and document features that cannot pass the conversion checks require a DOCX copy; unsupported source features might not appear in that copy. See the [document guide](packages/word/README.md#markdown).
 
 Use VS Code Save, Save As, Undo, Redo and Revert. The editors follow VS Code's light/dark theme. Spreadsheet, Word and PowerPoint ribbons start collapsed; select a tab to show their tools.
 
