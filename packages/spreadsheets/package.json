@@ -64,6 +64,16 @@
       {
         "command": "craft.spreadsheets.saveAsWorkbook",
         "title": "Craft Spreadsheets: Save CSV as Excel Workbook"
+      },
+      {
+        "command": "craft.spreadsheets.openCsvText",
+        "title": "Open CSV as Text",
+        "icon": "$(code)"
+      },
+      {
+        "command": "craft.spreadsheets.openCsvGrid",
+        "title": "Open CSV as Spreadsheet",
+        "icon": "$(table)"
       }
     ],
     "configuration": {
@@ -78,6 +88,20 @@
           "description": "Maximum document size in MiB for opening and saving. Large or complex documents may require substantially more memory."
         }
       }
+    },
+    "menus": {
+      "editor/title": [
+        {
+          "command": "craft.spreadsheets.openCsvText",
+          "when": "resourceExtname == .csv && activeCustomEditorId == 'craft.spreadsheets.preview'",
+          "group": "navigation@10"
+        },
+        {
+          "command": "craft.spreadsheets.openCsvGrid",
+          "when": "resourceExtname == .csv && activeEditor == 'workbench.editors.files.textFileEditor'",
+          "group": "navigation@10"
+        }
+      ]
     }
   },
   "files": [

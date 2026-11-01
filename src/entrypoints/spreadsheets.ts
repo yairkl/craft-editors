@@ -11,6 +11,10 @@ export async function activate(context: vscode.ExtensionContext) {
   });
   const provider = new EditingProvider(context, { format: 'xlsx', additionalFormats: ['csv'], engine: 'grid', viewType: 'craft.spreadsheets.preview', label: 'Spreadsheet' });
   context.subscriptions.push(vscode.commands.registerCommand('craft.spreadsheets.saveAsWorkbook', () => provider.saveCsvAsWorkbook()));
+  context.subscriptions.push(
+    vscode.commands.registerCommand('craft.spreadsheets.openCsvText', () => vscode.commands.executeCommand('workbench.action.reopenTextEditor')),
+    vscode.commands.registerCommand('craft.spreadsheets.openCsvGrid', () => vscode.commands.executeCommand('reopenActiveEditorWith', 'craft.spreadsheets.preview')),
+  );
   context.subscriptions.push(provider, vscode.window.registerCustomEditorProvider(
     'craft.spreadsheets.preview', provider, { supportsMultipleEditorsPerDocument: false, webviewOptions: { retainContextWhenHidden: true } },
   ));

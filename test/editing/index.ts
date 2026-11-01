@@ -247,6 +247,14 @@ export async function run(): Promise<void> {
   await vscode.workspace.fs.writeFile(csvUri, csvSource);
   let csv = await open(api, csvUri);
   assert.equal(await csv.request('test:cell', { sheet: 0, row: 1, col: 0 }), 'Craft, quoted');
+  await vscode.commands.executeCommand('craft.spreadsheets.openCsvText');
+  assert.equal(vscode.window.activeTextEditor?.document.uri.toString(), csvUri.toString(), 'CSV opens in the native text editor');
+  assert.equal(vscode.window.activeTextEditor?.document.getText().replace(/\r\n/g, '\n'), new TextDecoder().decode(csvSource).replace(/\r\n/g, '\n'));
+  const csvRendered = renderedPromise(api);
+  await vscode.commands.executeCommand('craft.spreadsheets.openCsvGrid');
+  assert.equal((await csvRendered).rendered, true, 'CSV returns to the spreadsheet editor');
+  csv = api.editing.getDocument(csvUri)!;
+  assert.ok(csv, 'Reopened CSV has a spreadsheet document');
   await csv.request('test:edit', { row: 1, col: 1, text: 'שלום, "CSV"' });
   await vscode.commands.executeCommand('undo');
   assert.equal(await csv.request('test:cell', { sheet: 0, row: 1, col: 1 }), '42');
