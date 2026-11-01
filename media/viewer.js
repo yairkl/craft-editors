@@ -61,14 +61,14 @@ const themeObserver = new MutationObserver(() => syncTheme());
 themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class', 'data-vscode-theme-id'] });
 
 function csvNotice() {
-  if (document.body.dataset.format !== 'csv' || !viewer) return;
+  if (!['csv', 'tsv'].includes(document.body.dataset.format) || !viewer) return;
   const features = JSON.parse(viewer.csv_features());
   const notice = document.getElementById('csv-notice');
   notice.hidden = features.length === 0;
   notice.classList.toggle('needs-workbook', features.length > 0);
   document.getElementById('csv-message').textContent = features.length
-    ? `This CSV contains ${features.join(', ')}. Save as XLSX to keep them; closing without saving will discard unsaved changes. CSV autosave is paused.`
-    : 'CSV saves values only. Use XLSX to keep formulas, formatting, charts and multiple sheets.';
+    ? `This ${document.body.dataset.format.toUpperCase()} contains ${features.join(', ')}. Save as XLSX to keep them; closing without saving will discard unsaved changes. ${document.body.dataset.format.toUpperCase()} autosave is paused.`
+    : `${document.body.dataset.format.toUpperCase()} saves values only. Use XLSX to keep formulas, formatting, charts and multiple sheets.`;
 }
 document.getElementById('csv-workbook').addEventListener('click', () => hostCommand('file.saveCopyXlsx'));
 
@@ -92,7 +92,7 @@ window.addEventListener('message', async ({ data }) => {
       let result;
       switch (data.operation) {
         case 'agent:mcp': {
-          if (!['xlsx', 'csv', 'docx', 'pptx', 'svg', 'vectorcraft', 'pdf'].includes(document.body.dataset.format) || typeof viewer.mcp_message !== 'function' || typeof data.message !== 'string' || data.message.length > 1048576) throw new Error('Invalid document agent request.');
+          if (!['xlsx', 'csv', 'tsv', 'docx', 'pptx', 'svg', 'vectorcraft', 'pdf'].includes(document.body.dataset.format) || typeof viewer.mcp_message !== 'function' || typeof data.message !== 'string' || data.message.length > 1048576) throw new Error('Invalid document agent request.');
           result = viewer.mcp_message(data.message) ?? null;
           break;
         }
@@ -235,7 +235,7 @@ window.addEventListener('message', async ({ data }) => {
   }
   if (data.type === 'render:timeout') { fail(); return; }
   if (data.type !== 'render:open' || opened || !(data.bytes instanceof ArrayBuffer) ||
-      !['xlsx', 'csv', 'pdf', 'docx', 'pptx', 'svg', 'vectorcraft'].includes(data.format)) return;
+      !['xlsx', 'csv', 'tsv', 'pdf', 'docx', 'pptx', 'svg', 'vectorcraft'].includes(data.format)) return;
   opened = true;
   capture = data.capture === true;
   document.body.dataset.format = data.format;
@@ -245,15 +245,15 @@ window.addEventListener('message', async ({ data }) => {
     await module.default({ module_or_path: document.body.dataset.wasm });
     const bytes = new Uint8Array(data.bytes);
     {
-      Viewer = ['xlsx', 'csv'].includes(data.format) ? module.GridViewer : module.NativeViewer;
+      Viewer = ['xlsx', 'csv', 'tsv'].includes(data.format) ? module.GridViewer : module.NativeViewer;
       viewer = await Viewer.start(canvas, bytes, (width, height, pixels) => {
-        queueMicrotask(() => report(width, height, pixels, ['xlsx', 'csv'].includes(data.format) ? viewer.sheets().length || 1 : viewer.unit_count() || 1));
+        queueMicrotask(() => report(width, height, pixels, ['xlsx', 'csv', 'tsv'].includes(data.format) ? viewer.sheets().length || 1 : viewer.unit_count() || 1));
       }, event => {
         if (event.kind === 'changed') { send('editor:changed', { before: event.before, after: event.after, label: event.label }); queueMicrotask(csvNotice); }
         else if (event.kind === 'command') hostCommand(event.command);
       }, data.format);
       syncTheme();
-      if (data.recovered || data.format === 'csv') viewer.mark_original(new Uint8Array(data.originalBytes));
+      if (data.recovered || ['csv', 'tsv'].includes(data.format)) viewer.mark_original(new Uint8Array(data.originalBytes));
       csvNotice();
       engineReadyResolve();
     }

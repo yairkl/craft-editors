@@ -16,7 +16,7 @@
       return;
     }
     if (data.type !== 'open' || opened || !(data.bytes instanceof ArrayBuffer) ||
-        !['xlsx', 'csv', 'pdf', 'docx', 'pptx', 'svg', 'vectorcraft'].includes(data.format)) return;
+        !['xlsx', 'csv', 'tsv', 'pdf', 'docx', 'pptx', 'svg', 'vectorcraft'].includes(data.format)) return;
     opened = true;
     try {
       const hash = await crypto.subtle.digest('SHA-256', data.bytes);

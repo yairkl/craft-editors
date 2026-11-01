@@ -20,7 +20,7 @@
   },
   "name": "craft-spreadsheets",
   "displayName": "Craft Spreadsheets",
-  "description": "Native GridCraft XLSX and CSV viewing and editing in VS Code.",
+  "description": "Native GridCraft XLSX, CSV and TSV viewing and editing in VS Code.",
   "categories": [
     "Other"
   ],
@@ -45,6 +45,9 @@
           },
           {
             "filenamePattern": "*.csv"
+          },
+          {
+            "filenamePattern": "*.tsv"
           }
         ],
         "priority": "default"
@@ -63,7 +66,7 @@
     "commands": [
       {
         "command": "craft.spreadsheets.saveAsWorkbook",
-        "title": "Craft Spreadsheets: Save CSV as Excel Workbook"
+        "title": "Craft Spreadsheets: Save CSV or TSV as Excel Workbook"
       },
       {
         "command": "craft.spreadsheets.openCsvText",
@@ -73,6 +76,16 @@
       {
         "command": "craft.spreadsheets.openCsvGrid",
         "title": "Open CSV as Spreadsheet",
+        "icon": "$(table)"
+      },
+      {
+        "command": "craft.spreadsheets.openTsvText",
+        "title": "Open TSV as Text",
+        "icon": "$(code)"
+      },
+      {
+        "command": "craft.spreadsheets.openTsvGrid",
+        "title": "Open TSV as Spreadsheet",
         "icon": "$(table)"
       }
     ],
@@ -99,6 +112,16 @@
         {
           "command": "craft.spreadsheets.openCsvGrid",
           "when": "resourceExtname == .csv && activeEditor == 'workbench.editors.files.textFileEditor'",
+          "group": "navigation@10"
+        },
+        {
+          "command": "craft.spreadsheets.openTsvText",
+          "when": "resourceExtname == .tsv && activeCustomEditorId == 'craft.spreadsheets.preview'",
+          "group": "navigation@10"
+        },
+        {
+          "command": "craft.spreadsheets.openTsvGrid",
+          "when": "resourceExtname == .tsv && activeEditor == 'workbench.editors.files.textFileEditor'",
           "group": "navigation@10"
         }
       ]

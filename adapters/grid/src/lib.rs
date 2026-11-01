@@ -357,10 +357,10 @@ fn make_app(
     format: &str,
     commands: Rc<RefCell<Vec<String>>>,
 ) -> Result<SheetApp, JsValue> {
-    let name = if format == "csv" {
-        "Workbook.csv"
-    } else {
-        "Workbook.xlsx"
+    let name = match format {
+        "csv" => "Workbook.csv",
+        "tsv" => "Workbook.tsv",
+        _ => "Workbook.xlsx",
     };
     let (wb, _) = gridcraft_engine::io::open_bytes(name, bytes)
         .map_err(|_| JsValue::from_str("The workbook could not be opened."))?;
@@ -663,7 +663,7 @@ impl GridViewer {
             ));
         }
         let commands = Rc::new(RefCell::new(Vec::new()));
-        if !matches!(format.as_str(), "xlsx" | "csv") {
+        if !matches!(format.as_str(), "xlsx" | "csv" | "tsv") {
             return Err(JsValue::from_str("Unsupported spreadsheet format."));
         }
         let app = make_app(&bytes, &format, commands.clone())?;
@@ -760,10 +760,10 @@ impl GridViewer {
             .flush(false)
     }
     pub fn mark_original(&self, bytes: Vec<u8>) -> Result<(), JsValue> {
-        let name = if self.state.borrow().format == "csv" {
-            "Workbook.csv"
-        } else {
-            "Workbook.xlsx"
+        let name = match self.state.borrow().format.as_str() {
+            "csv" => "Workbook.csv",
+            "tsv" => "Workbook.tsv",
+            _ => "Workbook.xlsx",
         };
         let (wb, _) = gridcraft_engine::io::open_bytes(name, &bytes)
             .map_err(|_| JsValue::from_str("Original workbook could not be opened."))?;
@@ -771,7 +771,7 @@ impl GridViewer {
             .state
             .try_borrow_mut()
             .map_err(|_| JsValue::from_str("Renderer is busy."))?;
-        let csv = state.format == "csv";
+        let csv = matches!(state.format.as_str(), "csv" | "tsv");
         if csv {
             state.csv_styles = wb.styles.iter().map(|(_, style)| style.clone()).collect();
         }
@@ -805,19 +805,21 @@ impl GridViewer {
         // Internal snapshots/backups use XLSX even for CSV sources so formulas,
         // formatting and extra sheets survive view reconstruction and recovery.
         let target = format.as_deref().unwrap_or("xlsx");
-        if !matches!(target, "csv" | "xlsx") {
+        if !matches!(target, "csv" | "tsv" | "xlsx") {
             return Err(JsValue::from_str("Unsupported workbook format."));
         }
-        if target == "csv" && !csv_features(&snapshot.wb, &state.csv_styles).is_empty() {
+        if matches!(target, "csv" | "tsv")
+            && !csv_features(&snapshot.wb, &state.csv_styles).is_empty()
+        {
             return Err(JsValue::from_str("CSV_FEATURES"));
         }
         let bytes = gridcraft_engine::io::save_bytes_as(
             &snapshot.wb,
             "Workbook.xlsx",
-            if target == "csv" {
-                gridcraft_engine::io::FileKind::Csv
-            } else {
-                gridcraft_engine::io::FileKind::Xlsx
+            match target {
+                "csv" => gridcraft_engine::io::FileKind::Csv,
+                "tsv" => gridcraft_engine::io::FileKind::Tsv,
+                _ => gridcraft_engine::io::FileKind::Xlsx,
             },
         )
         .map_err(|_| JsValue::from_str("The workbook could not be serialized."))?;

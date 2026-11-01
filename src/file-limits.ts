@@ -4,7 +4,7 @@ export const DEFAULT_FILE_MIB = 256;
 export const MAX_FILE_MIB = 1024;
 const MIB = 1024 * 1024;
 const editors: Record<string, string> = {
-  xlsx: 'spreadsheets', csv: 'spreadsheets', docx: 'word', pptx: 'powerpoint',
+  xlsx: 'spreadsheets', csv: 'spreadsheets', tsv: 'spreadsheets', docx: 'word', pptx: 'powerpoint',
   pdf: 'pdf', svg: 'vector', vectorcraft: 'vector',
 };
 

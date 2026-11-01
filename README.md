@@ -10,7 +10,7 @@ Install only the editors you need; each includes its own engine and works withou
 
 | Editor | Files | What you can do |
 | --- | --- | --- |
-| Craft Spreadsheets | `.xlsx`, `.csv` | Edit cells and formulas, sort data, and use native worksheet tabs. |
+| Craft Spreadsheets | `.xlsx`, `.csv`, `.tsv` | Edit cells and formulas, sort data, and use native worksheet tabs. |
 | Craft Documents | `.docx` | Read and edit documents. |
 | Craft Presentations | `.pptx` | Read and edit presentations. |
 | Craft PDF | `.pdf` | Read PDFs and use supported editing tools. |
@@ -30,7 +30,7 @@ The extensions are not yet published to the VS Code Marketplace or Open VSX. For
 
 Use VS Code Save, Save As, Undo, Redo and Revert. The editors follow VS Code's light/dark theme. Spreadsheet, Word and PowerPoint ribbons start collapsed; select a tab to show their tools.
 
-Use the editor title buttons to switch an open CSV between text and spreadsheet views. CSV stores plain values, not workbook features such as formulas, formatting or extra worksheets. You can still use those features in the editor; when needed, **Save as XLSX** appears so you can keep them. Value edits and sorting can be saved to CSV. See the [spreadsheet guide](packages/spreadsheets/README.md) for details.
+Use the editor title buttons to switch an open CSV or TSV between text and spreadsheet views. CSV and TSV store plain values, not workbook features such as formulas, formatting or extra worksheets. You can still use those features in the editor; when needed, **Save as XLSX** appears so you can keep them. Value edits and sorting can be saved to CSV or TSV. See the [spreadsheet guide](packages/spreadsheets/README.md) for details.
 
 PDF opens in reading mode, with editing tools available. PowerPoint Reading View works inside the editor; full-screen slideshow and Presenter View are not supported in this preview.
 
