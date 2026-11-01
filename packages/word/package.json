@@ -89,7 +89,7 @@
       {
         "command": "craft.word.openMarkdownDocument",
         "title": "Open Markdown in Craft Documents",
-        "icon": "$(preview)"
+        "icon": "$(edit)"
       },
       {
         "command": "craft.word.saveMarkdownAsDocument",
