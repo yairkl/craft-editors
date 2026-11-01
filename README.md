@@ -1,22 +1,48 @@
-# Craft Editors
+<p align="center">
+  <img src="assets/icons/suite.svg" alt="Craft Editors" width="96">
+</p>
+
+<h1 align="center">Craft Editors</h1>
+
+<p align="center">
+  Spreadsheets, documents, presentations, PDFs and vector drawings,<br>
+  edited right inside VS Code tabs.
+</p>
+
+<p align="center">
+  <img src="assets/icons/spreadsheets.svg" alt="Spreadsheets" width="56">&nbsp;
+  <img src="assets/icons/word.svg" alt="Documents" width="56">&nbsp;
+  <img src="assets/icons/powerpoint.svg" alt="Presentations" width="56">&nbsp;
+  <img src="assets/icons/pdf.svg" alt="PDF" width="56">&nbsp;
+  <img src="assets/icons/vector.svg" alt="Vector" width="56">
+</p>
 
 Open and edit spreadsheets, documents, presentations, PDFs and vector drawings in VS Code or a compatible Cursor build. This independent community project embeds the open-source Craft applications in editor tabs. Document processing runs in the editor session, including a remote extension host when using Remote SSH.
 
-**Early preview:** Use copies of important files. Complex formatting and full file-format compatibility are still being tested. This project is not an official ArtCraft product.
+> [!WARNING]
+> **Early preview.** Use copies of important files. Complex formatting and full file-format compatibility are still being tested. This project is not an official ArtCraft product.
+
+## Highlights
+
+- **Five editors, install only what you need.** Each extension carries its own engine and works without the others.
+- **Native editing in VS Code.** Standard Save, Save As, Undo, Redo and Revert, and the editors follow VS Code's light/dark theme.
+- **Works over Remote SSH.** Install the extension on the SSH host; documents are processed there, in the editor session.
+- **Agent-ready.** Each editor ships an MCP bridge so compatible agents can work with open and closed documents.
+- **Multilingual.** Hebrew text, including niqqud, is bundled and tested.
 
 ## Choose an editor
 
 Install only the editors you need; each includes its own engine and works without the others.
 
-| Editor | Files | What you can do |
-| --- | --- | --- |
-| Craft Spreadsheets | `.xlsx`, `.csv`, `.tsv` | Edit cells and formulas, sort data, and use native worksheet tabs. |
-| Craft Documents | `.docx` | Read and edit documents. |
-| Craft Presentations | `.pptx` | Read and edit presentations. |
-| Craft PDF | `.pdf` | Read PDFs and use supported editing tools. |
-| Craft Vector | `.svg`, `.vectorcraft` | View and edit vector drawings. |
+| | Editor | Files | What you can do |
+| :---: | --- | --- | --- |
+| <img src="assets/icons/spreadsheets.svg" alt="" width="32"> | **Craft Spreadsheets** | `.xlsx`, `.csv`, `.tsv` | Edit cells and formulas, sort data, and use native worksheet tabs. |
+| <img src="assets/icons/word.svg" alt="" width="32"> | **Craft Documents** | `.docx` | Read and edit documents. |
+| <img src="assets/icons/powerpoint.svg" alt="" width="32"> | **Craft Presentations** | `.pptx` | Read and edit presentations. |
+| <img src="assets/icons/pdf.svg" alt="" width="32"> | **Craft PDF** | `.pdf` | Read PDFs and use supported editing tools. |
+| <img src="assets/icons/vector.svg" alt="" width="32"> | **Craft Vector** | `.svg`, `.vectorcraft` | View and edit vector drawings. |
 
-An optional **Craft Editors** pack groups the five extensions. Legacy `.doc` and `.ppt` and password-protected documents are not supported by this preview. Starting with beta 0.1.3, the editor limits files to 256 MiB by default; earlier previews use 32 MiB. For the newer preview, each app has a setting such as `craft.spreadsheets.maxFileSizeMiB` or `craft.pdf.maxFileSizeMiB` (up to 1024 MiB). Large or complex documents can consume substantially more memory than their file size.
+An optional <img src="assets/icons/suite.svg" alt="" width="18"> **Craft Editors** pack groups the five extensions. Legacy `.doc` and `.ppt` and password-protected documents are not supported by this preview. Starting with beta 0.1.3, the editor limits files to 256 MiB by default; earlier previews use 32 MiB. For the newer preview, each app has a setting such as `craft.spreadsheets.maxFileSizeMiB` or `craft.pdf.maxFileSizeMiB` (up to 1024 MiB). Large or complex documents can consume substantially more memory than their file size.
 
 ## Install
 
@@ -52,6 +78,6 @@ Please [report an issue](https://github.com/yairkl/craft-editors/issues) with yo
 
 See [Contributing](CONTRIBUTING.md) for setup and tests, [design](docs/design.md) for the shared host and adapters, [rendering](docs/rendering.md) for engine builds, and [packaging](docs/packaging.md) for releases. Five separate application extensions share a TypeScript host while each embeds its own pinned Rust/WASM engine. The optional Suite contains no renderer.
 
-This project integrates [GridCraft](https://github.com/storytold/gridcraft), [WordCraft](https://github.com/storytold/wordcraft), [DeckCraft](https://github.com/storytold/deckcraft), [PdfCraft](https://github.com/storytold/pdfcraft), and [VectorCraft](https://github.com/storytold/vectorcraft). Upstream names identify those applications; restricted upstream branding is not redistributed in modified builds. See the [draft collaboration proposal](docs/collaboration-proposal.md) and the related [ArtCraft issue](https://github.com/storytold/artcraft/issues/2244).
+This project integrates [GridCraft](https://github.com/storytold/gridcraft), [WordCraft](https://github.com/storytold/wordcraft), [DeckCraft](https://github.com/storytold/deckcraft), [PdfCraft](https://github.com/storytold/pdfcraft), and [VectorCraft](https://github.com/storytold/vectorcraft). Upstream names identify those applications; restricted upstream branding is not redistributed in modified builds.
 
 This repository is licensed under [MIT](LICENSE). Upstream code and bundled assets retain their own licenses and required notices, which are included in the VSIX packages.
