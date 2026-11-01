@@ -26,7 +26,7 @@ class WorkbookSession {
   private uriFor(value: unknown): vscode.Uri {
     if (typeof value !== 'string' || value.length === 0) throw new Error('Provide a workbook path or URI.');
     const uri = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(value) ? vscode.Uri.parse(value) : path.isAbsolute(value) ? vscode.Uri.file(value) : vscode.workspace.workspaceFolders?.[0] && vscode.Uri.joinPath(vscode.workspace.workspaceFolders[0].uri, value);
-    if (!uri || !/\.(xlsx|csv)$/i.test(uri.path)) throw new Error('Choose an XLSX or CSV workbook. Relative paths require an open workspace.');
+    if (!uri || !/\.(xlsx|csv|tsv)$/i.test(uri.path)) throw new Error('Choose an XLSX, CSV or TSV workbook. Relative paths require an open workspace.');
     return uri;
   }
   private async live(): Promise<EditableDocument | undefined> { return this.uri ? findLive(this.provider, this.uri) : undefined; }
@@ -67,9 +67,9 @@ class WorkbookSession {
       return result(request.id, 'Saved the open workbook.');
     }
     if (this.mode !== 'headless') throw new Error('Open a workbook before saving.');
-    if (target.path.toLowerCase().endsWith('.csv')) {
+    if (/\.(csv|tsv)$/i.test(target.path)) {
       const features = JSON.parse(this.backend.csv_features()) as string[];
-      if (features.length) throw new Error(`CSV cannot preserve ${features.join(', ')}. Save as XLSX instead.`);
+      if (features.length) throw new Error(`${target.path.toLowerCase().endsWith('.tsv') ? 'TSV' : 'CSV'} cannot preserve ${features.join(', ')}. Save as XLSX instead.`);
     }
     const output = this.backend.save_bytes(path.basename(target.path));
     if (sameTarget) {

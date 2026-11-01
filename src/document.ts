@@ -12,8 +12,8 @@ export async function readProbeDocument(
   token: vscode.CancellationToken,
   expectedFormat?: DocumentFormat,
 ): Promise<ProbeDocument> {
-  const format = /\.(xlsx|csv|pdf|docx|pptx|svg|vectorcraft)$/i.exec(uri.path)?.[1]?.toLowerCase() as DocumentFormat | undefined;
-  if (!format) throw new Error('Craft supports XLSX, CSV, DOCX, PPTX, PDF, SVG and VectorCraft files.');
+  const format = /\.(xlsx|csv|tsv|pdf|docx|pptx|svg|vectorcraft)$/i.exec(uri.path)?.[1]?.toLowerCase() as DocumentFormat | undefined;
+  if (!format) throw new Error('Craft supports XLSX, CSV, TSV, DOCX, PPTX, PDF, SVG and VectorCraft files.');
   if (expectedFormat && format !== expectedFormat) throw new Error(`This extension supports only ${expectedFormat.toUpperCase()} files.`);
   if (token.isCancellationRequested) throw new vscode.CancellationError();
   const limit = fileLimit(uri);

@@ -17,6 +17,7 @@ function bytes(value: unknown, limit: number): Uint8Array {
   if (result.byteLength > limit) throw fileLimitError(limit);
   return result;
 }
+function isDelimited(format: DocumentFormat): boolean { return format === 'csv' || format === 'tsv'; }
 function integer(value: unknown): value is number { return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 && value <= 0xffff_ffff; }
 function snapshot(value: unknown, limit: number): { bytes: Uint8Array; token: number } {
   if (typeof value !== 'object' || value === null) throw new Error('Invalid document response.');
@@ -55,7 +56,7 @@ export class EditableDocument implements vscode.CustomDocument {
   dispose(): void { this.disposed = true; this.rpc?.dispose(); this.disposables.forEach(item => item.dispose()); }
 }
 
-export interface EditableDescriptor { format: 'xlsx' | 'csv' | 'docx' | 'pptx' | 'pdf' | 'svg' | 'vectorcraft'; engine: 'grid' | 'word' | 'deck' | 'pdf' | 'vector'; viewType: string; label: string; additionalFormats?: DocumentFormat[] }
+export interface EditableDescriptor { format: 'xlsx' | 'csv' | 'tsv' | 'docx' | 'pptx' | 'pdf' | 'svg' | 'vectorcraft'; engine: 'grid' | 'word' | 'deck' | 'pdf' | 'vector'; viewType: string; label: string; additionalFormats?: DocumentFormat[] }
 
 export class EditingProvider implements vscode.CustomEditorProvider<EditableDocument>, vscode.Disposable {
   testUndoRequests = 0;
@@ -115,7 +116,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
         ready = true;
         void panel.webview.postMessage({ type: 'render:open', version: 1, sessionId, format: doc.format, editable: true,
           bytes: exactArrayBuffer(doc.cache),
-          ...(doc.dirty || doc.format === 'csv' ? { originalBytes: exactArrayBuffer(doc.diskBytes) } : {}),
+          ...(doc.dirty || isDelimited(doc.format) ? { originalBytes: exactArrayBuffer(doc.diskBytes) } : {}),
           recovered: doc.dirty, capture });
       } else if (m.type === 'editor:changed' && ready && integer(m.before) && integer(m.after) && m.before !== m.after) {
         const before = m.before, after = m.after;
@@ -160,7 +161,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
     return this.write(doc, doc.uri, token);
   }
   async saveCustomDocumentAs(doc: EditableDocument, target: vscode.Uri, token: vscode.CancellationToken): Promise<void> {
-    if (doc.format === 'csv' && this.descriptor.engine === 'grid' && target.path.toLowerCase().endsWith('.xlsx')) return this.saveWorkbookCopy(doc, target, token);
+    if (isDelimited(doc.format) && this.descriptor.engine === 'grid' && target.path.toLowerCase().endsWith('.xlsx')) return this.saveWorkbookCopy(doc, target, token);
     if (!target.path.toLowerCase().endsWith(`.${doc.format}`)) throw new Error(`Save As must use the ${doc.format.toUpperCase()} format.`);
     return this.write(doc, target, token);
   }
@@ -187,7 +188,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
         doc.diskBytes = data.bytes; doc.diskDigest = digest(data.bytes);
       }
       if (doc.token === data.token) {
-        const cache = doc.format === 'csv' ? snapshot(await doc.request('serialize', { flush: false }), doc.limit) : data;
+        const cache = isDelimited(doc.format) ? snapshot(await doc.request('serialize', { flush: false }), doc.limit) : data;
         if (cache.token === doc.token) doc.cache = cache.bytes;
       }
       // Only the snapshot actually written is acknowledged. Later edits stay dirty.
@@ -213,29 +214,29 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
     });
   }
   async backupCustomDocument(doc: EditableDocument, context: vscode.CustomDocumentBackupContext, token: vscode.CancellationToken): Promise<vscode.CustomDocumentBackup> {
-    const data = await this.serialize(doc, doc.format === 'csv' ? 'xlsx' : doc.format); cancelled(token);
+    const data = await this.serialize(doc, isDelimited(doc.format) ? 'xlsx' : doc.format); cancelled(token);
     const body = encodeBackup(data.bytes, doc.diskDigest);
     await vscode.workspace.fs.writeFile(context.destination, body);
     if (data.token === doc.token) doc.cache = data.bytes;
     return { id: context.destination.toString(), delete: () => { void vscode.workspace.fs.delete(context.destination).then(() => {}, () => {}); } };
   }
-  /** Export a CSV session as XLSX without acknowledging or overwriting its CSV source. */
+  /** Export a delimited-text session as XLSX without acknowledging or overwriting its source. */
   saveWorkbookCopy(doc: EditableDocument, target: vscode.Uri, token: vscode.CancellationToken): Promise<void> {
-    if (doc.format !== 'csv' || this.descriptor.engine !== 'grid' || !target.path.toLowerCase().endsWith('.xlsx') || target.toString() === doc.uri.toString()) return Promise.reject(new Error('Choose an .xlsx destination for this CSV workbook.'));
+    if (!isDelimited(doc.format) || this.descriptor.engine !== 'grid' || !target.path.toLowerCase().endsWith('.xlsx') || target.toString() === doc.uri.toString()) return Promise.reject(new Error('Choose an .xlsx destination for this CSV or TSV workbook.'));
     return doc.enqueue(async () => {
       cancelled(token);
       const data = await this.serialize(doc, 'xlsx');
       cancelled(token);
       await vscode.workspace.fs.writeFile(target, data.bytes);
       if (doc.token === data.token) doc.cache = data.bytes;
-      // The copy is saved; rich edits in the CSV session still need an explicit
+      // The copy is saved; rich edits in the delimited-text session still need an explicit
       // discard on closing. Export must never falsely acknowledge a CSV save.
     });
   }
   async saveCsvAsWorkbook(document?: EditableDocument): Promise<void> {
-    const doc = document ?? [...this.panels].find(([item, panel]) => item.format === 'csv' && panel.active)?.[0];
-    if (!doc || doc.format !== 'csv') { await vscode.window.showInformationMessage('Open a CSV file in Craft Spreadsheets first.'); return; }
-    const target = await vscode.window.showSaveDialog({ defaultUri: doc.uri.with({ path: doc.uri.path.replace(/\.csv$/i, '.xlsx') }), filters: { 'Excel workbook': ['xlsx'] }, saveLabel: 'Save XLSX copy' });
+    const doc = document ?? [...this.panels].find(([item, panel]) => isDelimited(item.format) && panel.active)?.[0];
+    if (!doc || !isDelimited(doc.format)) { await vscode.window.showInformationMessage('Open a CSV or TSV file in Craft Spreadsheets first.'); return; }
+    const target = await vscode.window.showSaveDialog({ defaultUri: doc.uri.with({ path: doc.uri.path.replace(/\.(csv|tsv)$/i, '.xlsx') }), filters: { 'Excel workbook': ['xlsx'] }, saveLabel: 'Save XLSX copy' });
     if (!target) return;
     const source = new vscode.CancellationTokenSource();
     try { await this.saveWorkbookCopy(doc, target, source.token); }

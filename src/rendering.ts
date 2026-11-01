@@ -25,7 +25,7 @@ export function renderHtml(webview: vscode.Webview, media: vscode.Uri, engine: v
 <link rel="stylesheet" href="${uri('viewer.css')}"><title>Craft document</title></head>
 <body data-session="${sessionId}" data-module="${webview.asWebviewUri(vscode.Uri.joinPath(engine, 'viewer.js'))}" data-wasm="${webview.asWebviewUri(vscode.Uri.joinPath(engine, 'viewer_bg.wasm'))}">
 
-<aside id="csv-notice" hidden role="status" aria-live="polite" aria-label="CSV format limitations"><span id="csv-message"></span> <button id="csv-workbook" type="button">Save as XLSX…</button></aside>
+<aside id="csv-notice" hidden role="status" aria-live="polite" aria-label="Delimited text format limitations"><span id="csv-message"></span> <button id="csv-workbook" type="button">Save as XLSX…</button></aside>
 <p id="status" role="status">Loading renderer…</p><main id="viewport"><canvas id="document" aria-label="${editable ? 'Document editor' : 'Read-only document preview'}"></canvas></main>
 <script type="module" nonce="${nonce}" src="${uri('viewer.js')}"></script></body></html>`;
 }
