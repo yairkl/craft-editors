@@ -10,6 +10,10 @@ export async function activate(context: vscode.ExtensionContext) {
     format: 'svg', previewId: 'craft.vector.preview', probeId: 'craft.vector.integrationProbe',
   });
   const provider = new EditingProvider(context, { format: 'svg', engine: 'vector', viewType: 'craft.vector.preview', label: 'Vector drawing', additionalFormats: ['vectorcraft'] });
+  context.subscriptions.push(
+    vscode.commands.registerCommand('craft.vector.openSvgText', () => vscode.commands.executeCommand('workbench.action.reopenTextEditor')),
+    vscode.commands.registerCommand('craft.vector.openSvgDrawing', () => vscode.commands.executeCommand('reopenActiveEditorWith', 'craft.vector.preview')),
+  );
   context.subscriptions.push(provider, vscode.window.registerCustomEditorProvider(
     'craft.vector.preview', provider, { supportsMultipleEditorsPerDocument: false, webviewOptions: { retainContextWhenHidden: true } },
   ));
