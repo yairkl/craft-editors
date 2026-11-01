@@ -28,6 +28,7 @@ for name in [*PROGRAMS, 'suite']:
             prefix = f'extension/media/engines/{engine}/'
             assert prefix + 'viewer_bg.wasm' in files and prefix + 'viewer.js' in files
             assert 'extension/out/src/file-limits.js' in files
+            assert 'extension/out/src/format-policy.js' in files
             assert 'extension/out/src/backup.js' in files
             assert 'extension/out/src/byte-buffer.js' in files
             assert 'extension/out/src/coalesced-task.js' in files
@@ -57,6 +58,9 @@ for name in [*PROGRAMS, 'suite']:
                 if other_name != name:
                     assert not any(p['name'].startswith(other_program + '-') for p in dependencies), f'{name}: sibling engine dependency'
             for editor in installed['contributes']['customEditors']:
+                if name == 'word' and editor['viewType'] == 'craft.word.markdown':
+                    assert editor['selector'] == [{'filenamePattern': '*.md'}] and editor['priority'] == 'option'
+                    continue
                 assert editor['selector'] == ([{'filenamePattern': '*.svg'}, {'filenamePattern': '*.vectorcraft'}] if name == 'vector' and not editor['viewType'].endswith('integrationProbe') else ([{'filenamePattern': '*.xlsx'}, {'filenamePattern': '*.csv'}, {'filenamePattern': '*.tsv'}] if name == 'spreadsheets' and not editor['viewType'].endswith('integrationProbe') else [{'filenamePattern': f'*.{extension}'}]))
             for renderer in (ROOT / 'media/engines' / engine).rglob('*'):
                 if renderer.is_file() and renderer.suffix in ('.js', '.wasm'):

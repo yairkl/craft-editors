@@ -160,12 +160,17 @@ impl NativeViewer {
         on_frame: js_sys::Function,
         on_event: js_sys::Function,
         format: String,
+        snapshot_format: Option<String>,
     ) -> Result<NativeViewer, JsValue> {
         if bytes.len() > 1024 * 1024 * 1024 {
             return Err(error("Document exceeds the 1 GiB adapter limit."));
         }
         let commands = Commands::default();
-        let document = Document::open(bytes, commands.clone(), &format)?;
+        let document = Document::open(
+            bytes,
+            commands.clone(),
+            snapshot_format.as_deref().unwrap_or(&format),
+        )?;
         let snapshots = BTreeMap::from([(0, document.snapshot())]);
         let state = Rc::new(RefCell::new(State {
             document,
@@ -233,7 +238,7 @@ impl NativeViewer {
             .map_err(|_| error("Editor is busy."))?
             .flush(false)
     }
-    pub fn serialize(&self, flush: bool) -> Result<JsValue, JsValue> {
+    pub fn serialize(&self, flush: bool, format: Option<String>) -> Result<JsValue, JsValue> {
         let mut state = self
             .state
             .try_borrow_mut()
@@ -247,7 +252,7 @@ impl NativeViewer {
             .snapshots
             .get(&state.token)
             .ok_or_else(|| error("Document state is unavailable."))?;
-        let bytes = Document::serialize(snapshot)?;
+        let bytes = Document::serialize(snapshot, format.as_deref())?;
         let result = js_sys::Object::new();
         js_sys::Reflect::set(
             &result,

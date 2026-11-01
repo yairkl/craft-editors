@@ -204,7 +204,10 @@ impl Document {
     }
     // Native tabs/close prompts are omitted; the host owns the saved revision.
     fn mark_saved(&mut self, _snapshot: &Snapshot) {}
-    fn serialize(snapshot: &Snapshot) -> Result<std::borrow::Cow<'_, [u8]>, JsValue> {
+    fn serialize<'a>(
+        snapshot: &'a Snapshot,
+        _format: Option<&str>,
+    ) -> Result<std::borrow::Cow<'a, [u8]>, JsValue> {
         Ok(std::borrow::Cow::Borrowed(snapshot.native.bytes.as_slice()))
     }
     fn flush(&mut self, preserve_draft: bool) -> Result<(), JsValue> {

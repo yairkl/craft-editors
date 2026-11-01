@@ -12,7 +12,9 @@ button:focus-visible, select:focus-visible { outline: 1px solid var(--vscode-foc
 #viewport { overflow: hidden; }
 canvas { display: block; width: 100%; height: 100%; outline: none; }
 
-#csv-notice { padding: 6px 12px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--vscode-panel-border); background: var(--vscode-editorWidget-background); }
+#csv-notice, #md-notice { padding: 6px 12px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--vscode-panel-border); background: var(--vscode-editorWidget-background); }
 #csv-notice.needs-workbook { border-left: 3px solid var(--vscode-editorWarning-foreground); }
-#csv-message { flex: 1; }
-#csv-workbook { white-space: nowrap; }
+#csv-message, #md-message { flex: 1; }
+#csv-workbook, #md-document { white-space: nowrap; }
+
+#md-notice { border-left: 3px solid var(--vscode-editorWarning-foreground); }

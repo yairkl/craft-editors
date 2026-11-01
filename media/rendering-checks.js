@@ -104,7 +104,7 @@ export async function verifyPreview(viewer, format, canvas, units) {
     await frame();
     return { readOnlyVerified: false, navigationVerified: true, resizeVerified: true };
   }
-  if (format === 'docx' || format === 'pptx' || format === 'svg' || format === 'vectorcraft') {
+  if (format === 'docx' || format === 'md' || format === 'pptx' || format === 'svg' || format === 'vectorcraft') {
     check(viewer.text().includes('Craft'), 'Expected document text was not parsed');
     check(units >= 1, 'Document needs visible pages or slides');
     const viewport = document.getElementById('viewport');
