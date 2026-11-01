@@ -110,7 +110,7 @@
         },
         {
           "path": "upstream/patches/wordcraft-ui-host.patch",
-          "sha256": "f2e7059372362bd4926fa252781d642c4d8f2d97ddd23f35ec5e5dba457dd4e0",
+          "sha256": "1b8abc084fd13e079e775346869555a96bb9e0f554cbb8769a5afacb052646ef",
           "purpose": "Provide embedded lifecycle and UI hooks.",
           "removalCondition": "Remove when upstream supplies the required lifecycle, history, flush and optional UI hooks and the adapter uses them."
         }
