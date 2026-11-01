@@ -18,6 +18,8 @@ The native interface follows VS Code’s light/dark theme on opening and while t
 
 Ctrl+wheel over the worksheet uses five-percentage-point steps in the VS Code adapter (10–400%). Native zoom buttons and Ctrl+Alt+plus/minus shortcuts retain GridCraft’s original ten-point behavior. Pinch gestures remain native. The slider and percentage dialog allow an exact zoom.
 
+Use the **Open CSV as Text** and **Open CSV as Spreadsheet** buttons in the editor title bar to switch between the native text editor and the spreadsheet. Switching uses the editor’s normal save/discard prompt for unsaved changes.
+
 CSV uses native delimiter detection/writing, quoted fields, multiline text and UTF-8. Value edits and sorting save back to CSV. A format notice offers **Save as XLSX…** only while the current changes require workbook features; the command palette also has **Craft Spreadsheets: Save CSV as Excel Workbook**. Formulas, formatting, charts and multiple sheets remain usable, but CSV cannot retain them. When those features are present, CSV saves/autosave defer and the workbook stays dirty, so closing invokes VS Code's unsaved-changes prompt. Save an XLSX copy to keep the workbook, or explicitly discard the unsaved CSV-session changes. The XLSX copy opens separately and leaves the CSV untouched. Internal snapshots/backups retain workbook features instead of flattening them to CSV. Native CSV value inference can normalize numeric/date fields.
 
 The command ribbon starts collapsed to give the document more space. Its tab row stays visible; click a ribbon tab to show the tools when needed.

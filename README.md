@@ -30,7 +30,7 @@ The extensions are not yet published to the VS Code Marketplace or Open VSX. For
 
 Use VS Code Save, Save As, Undo, Redo and Revert. The editors follow VS Code's light/dark theme. Spreadsheet, Word and PowerPoint ribbons start collapsed; select a tab to show their tools.
 
-CSV stores plain values, not workbook features such as formulas, formatting or extra worksheets. You can still use those features in the editor; when needed, **Save as XLSX** appears so you can keep them. Value edits and sorting can be saved to CSV. See the [spreadsheet guide](packages/spreadsheets/README.md) for details.
+Use the editor title buttons to switch an open CSV between text and spreadsheet views. CSV stores plain values, not workbook features such as formulas, formatting or extra worksheets. You can still use those features in the editor; when needed, **Save as XLSX** appears so you can keep them. Value edits and sorting can be saved to CSV. See the [spreadsheet guide](packages/spreadsheets/README.md) for details.
 
 PDF opens in reading mode, with editing tools available. PowerPoint Reading View works inside the editor; full-screen slideshow and Presenter View are not supported in this preview.
 
