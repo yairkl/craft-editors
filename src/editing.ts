@@ -8,6 +8,7 @@ import { decodeBackup, encodeBackup } from './backup';
 import { exactArrayBuffer } from './byte-buffer';
 import { CoalescedTask } from './coalesced-task';
 import { WebviewRpc } from './rpc';
+import { isDeferredSave, snapshotFormat } from './format-policy';
 
 const digest = (bytes: Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
 const cancelled = (token: vscode.CancellationToken): void => { if (token.isCancellationRequested) throw new vscode.CancellationError(); };
@@ -169,7 +170,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
     try { return snapshot(await doc.request('serialize', { flush: true, format }), doc.limit); }
     catch (error) {
       // Cancellation defers autosave without a validation dialog or a false saved acknowledgment.
-      if (error instanceof Error && ['DRAFT_PENDING', 'CSV_FEATURES'].includes(error.message)) throw new vscode.CancellationError();
+      if (isDeferredSave(error)) throw new vscode.CancellationError();
       throw error;
     }
   }
@@ -188,7 +189,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
         doc.diskBytes = data.bytes; doc.diskDigest = digest(data.bytes);
       }
       if (doc.token === data.token) {
-        const cache = isDelimited(doc.format) ? snapshot(await doc.request('serialize', { flush: false }), doc.limit) : data;
+        const cache = snapshotFormat(doc.format) !== doc.format ? snapshot(await doc.request('serialize', { flush: false }), doc.limit) : data;
         if (cache.token === doc.token) doc.cache = cache.bytes;
       }
       // Only the snapshot actually written is acknowledged. Later edits stay dirty.
@@ -214,7 +215,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
     });
   }
   async backupCustomDocument(doc: EditableDocument, context: vscode.CustomDocumentBackupContext, token: vscode.CancellationToken): Promise<vscode.CustomDocumentBackup> {
-    const data = await this.serialize(doc, isDelimited(doc.format) ? 'xlsx' : doc.format); cancelled(token);
+    const data = await this.serialize(doc, snapshotFormat(doc.format)); cancelled(token);
     const body = encodeBackup(data.bytes, doc.diskDigest);
     await vscode.workspace.fs.writeFile(context.destination, body);
     if (data.token === doc.token) doc.cache = data.bytes;
