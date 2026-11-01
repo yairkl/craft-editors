@@ -110,6 +110,5 @@ Release checks cover open/edit/save/reopen, failed writes, edits during save, re
 - [PdfCraft web entry and host bridge](https://github.com/storytold/pdfcraft/blob/main/apps/pdfcraft-web/src/main.rs)
 - [WordCraft browser services](https://github.com/storytold/wordcraft/blob/main/apps/wordcraft-web/src/web.rs)
 - [DeckCraft browser services](https://github.com/storytold/deckcraft/blob/main/apps/deckcraft-web/src/web.rs)
-- [Related upstream proposal #2244](https://github.com/storytold/artcraft/issues/2244)
 
 Source observations came from the initial research on 2026-10-15 and must be rechecked against pinned revisions during implementation. Links to upstream main are explanatory references, not dependency pins.
