@@ -61,6 +61,17 @@ impl wordcraft_mcp::Backend for AgentBackend {
 
 #[wasm_bindgen]
 impl NativeViewer {
+    pub fn markdown_safe(&self) -> Result<bool, JsValue> {
+        let state = self
+            .state
+            .try_borrow()
+            .map_err(|_| error("Editor is busy"))?;
+        Ok(markdown_bytes(
+            &state.document.app.session.doc,
+            state.document.markdown_source_safe,
+        )
+        .is_ok())
+    }
     pub fn mcp_message(&self, message: &str) -> Result<Option<String>, JsValue> {
         let mut agent = self
             .agent
@@ -158,14 +169,33 @@ impl WordMcpHeadless {
 struct Snapshot {
     native: HostSnapshot,
     doc: wordcraft_engine::doc::Document,
+    markdown_source_safe: bool,
 }
+fn markdown_bytes(
+    doc: &wordcraft_engine::doc::Document,
+    source_safe: bool,
+) -> Result<Vec<u8>, JsValue> {
+    if !source_safe {
+        return Err(error("MARKDOWN_FEATURES"));
+    }
+    let bytes = wordcraft_engine::io::save_bytes("Document.md", doc)
+        .map_err(|_| error("MARKDOWN_FEATURES"))?;
+    let reopened = wordcraft_engine::io::open_bytes("Document.md", &bytes)
+        .map_err(|_| error("MARKDOWN_FEATURES"))?;
+    if &reopened != doc {
+        return Err(error("MARKDOWN_FEATURES"));
+    }
+    Ok(bytes)
+}
+
 struct Document {
     app: WordApp,
     saved: wordcraft_engine::doc::Document,
     observed: std::cell::Cell<u64>,
+    markdown_source_safe: bool,
 }
 impl Document {
-    fn open(bytes: Vec<u8>, commands: Commands, _format: &str) -> Result<Self, JsValue> {
+    fn open(bytes: Vec<u8>, commands: Commands, format: &str) -> Result<Self, JsValue> {
         static FALLBACK_FONT_COUNT: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
         let count = FALLBACK_FONT_COUNT.get_or_init(|| {
             FALLBACK_FONTS
@@ -176,8 +206,19 @@ impl Document {
         if *count == 0 {
             return Err(error("The bundled fallback fonts could not be loaded."));
         }
-        let doc = wordcraft_engine::io::open_bytes("Document.docx", &bytes)
-            .map_err(|_| error("The Word document could not be opened."))?;
+        let name = match format {
+            "docx" => "Document.docx",
+            "md" => "Document.md",
+            _ => return Err(error("Unsupported document format.")),
+        };
+        let doc = wordcraft_engine::io::open_bytes(name, &bytes)
+            .map_err(|_| error("The document could not be opened."))?;
+        // A byte-identical initial round trip is deliberately conservative: it
+        // refuses to overwrite source syntax that WordCraft did not preserve.
+        let markdown_source_safe = format != "md"
+            || wordcraft_engine::io::save_bytes("Document.md", &doc)
+                .map(|rendered| rendered == bytes)
+                .unwrap_or(false);
         let saved = doc.clone();
         let services = Services {
             embedded: true,
@@ -192,12 +233,14 @@ impl Document {
             app,
             saved,
             observed,
+            markdown_source_safe,
         })
     }
     fn snapshot(&self) -> Snapshot {
         Snapshot {
             native: self.app.session.host_snapshot(),
             doc: self.app.session.doc.clone(),
+            markdown_source_safe: self.markdown_source_safe,
         }
     }
     fn changed(&self, old: &Snapshot) -> bool {
@@ -216,9 +259,17 @@ impl Document {
     }
     fn mark_saved(&mut self, snapshot: &Snapshot) {
         self.saved = snapshot.doc.clone();
+        self.markdown_source_safe = snapshot.markdown_source_safe;
         self.app.session.dirty = self.app.session.doc != self.saved;
     }
-    fn serialize(snapshot: &Snapshot) -> Result<std::borrow::Cow<'_, [u8]>, JsValue> {
+    fn serialize<'a>(
+        snapshot: &'a Snapshot,
+        format: Option<&str>,
+    ) -> Result<std::borrow::Cow<'a, [u8]>, JsValue> {
+        if format == Some("md") {
+            return markdown_bytes(&snapshot.doc, snapshot.markdown_source_safe)
+                .map(std::borrow::Cow::Owned);
+        }
         wordcraft_engine::io::save_bytes("Document.docx", &snapshot.doc)
             .map(std::borrow::Cow::Owned)
             .map_err(|_| error("The Word document could not be serialized."))

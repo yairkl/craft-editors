@@ -8,6 +8,7 @@ import { decodeBackup, encodeBackup } from './backup';
 import { exactArrayBuffer } from './byte-buffer';
 import { CoalescedTask } from './coalesced-task';
 import { WebviewRpc } from './rpc';
+import { isDeferredSave, snapshotFormat } from './format-policy';
 
 const digest = (bytes: Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
 const cancelled = (token: vscode.CancellationToken): void => { if (token.isCancellationRequested) throw new vscode.CancellationError(); };
@@ -30,15 +31,17 @@ export class EditableDocument implements vscode.CustomDocument {
   rpc: WebviewRpc | undefined;
   token = 0;
   savedToken = 0;
+  cacheFormat: DocumentFormat;
   disposed = false;
   private tail: Promise<unknown> = Promise.resolve();
   private readonly disposables: vscode.Disposable[] = [];
   readonly cacheRefresh = new CoalescedTask(async () => {
     if (this.disposed || !this.rpc) return;
     const cached = snapshot(await this.request('serialize', { flush: false }), this.limit);
-    if (!this.disposed && cached.token === this.token) this.cache = cached.bytes;
+    if (!this.disposed && cached.token === this.token) { this.cache = cached.bytes; this.cacheFormat = snapshotFormat(this.format); }
   });
   constructor(readonly uri: vscode.Uri, public cache: Uint8Array, public diskBytes: Uint8Array, public diskDigest: string, readonly recovered: boolean, readonly format: DocumentFormat) {
+    this.cacheFormat = recovered ? snapshotFormat(format) : format;
     if (recovered) this.savedToken = -1;
   }
   get limit(): number { return fileLimit(this.uri); }
@@ -56,7 +59,7 @@ export class EditableDocument implements vscode.CustomDocument {
   dispose(): void { this.disposed = true; this.rpc?.dispose(); this.disposables.forEach(item => item.dispose()); }
 }
 
-export interface EditableDescriptor { format: 'xlsx' | 'csv' | 'tsv' | 'docx' | 'pptx' | 'pdf' | 'svg' | 'vectorcraft'; engine: 'grid' | 'word' | 'deck' | 'pdf' | 'vector'; viewType: string; label: string; additionalFormats?: DocumentFormat[] }
+export interface EditableDescriptor { format: DocumentFormat; engine: 'grid' | 'word' | 'deck' | 'pdf' | 'vector'; viewType: string; label: string; additionalFormats?: DocumentFormat[] }
 
 export class EditingProvider implements vscode.CustomEditorProvider<EditableDocument>, vscode.Disposable {
   testUndoRequests = 0;
@@ -115,8 +118,8 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
       if (m.type === 'render:ready' && !ready) {
         ready = true;
         void panel.webview.postMessage({ type: 'render:open', version: 1, sessionId, format: doc.format, editable: true,
-          bytes: exactArrayBuffer(doc.cache),
-          ...(doc.dirty || isDelimited(doc.format) ? { originalBytes: exactArrayBuffer(doc.diskBytes) } : {}),
+          bytes: exactArrayBuffer(doc.cache), cacheFormat: doc.cacheFormat,
+          ...(doc.dirty || snapshotFormat(doc.format) !== doc.format ? { originalBytes: exactArrayBuffer(doc.diskBytes) } : {}),
           recovered: doc.dirty, capture });
       } else if (m.type === 'editor:changed' && ready && integer(m.before) && integer(m.after) && m.before !== m.after) {
         const before = m.before, after = m.after;
@@ -155,13 +158,14 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
   private async history(doc: EditableDocument, target: number): Promise<void> {
     await doc.request('history', { token: target }); doc.token = target;
     const cached = snapshot(await doc.request('serialize', { flush: false }), doc.limit);
-    if (cached.token === doc.token) doc.cache = cached.bytes;
+    if (cached.token === doc.token) { doc.cache = cached.bytes; doc.cacheFormat = snapshotFormat(doc.format); }
   }
   async saveCustomDocument(doc: EditableDocument, token: vscode.CancellationToken): Promise<void> {
     return this.write(doc, doc.uri, token);
   }
   async saveCustomDocumentAs(doc: EditableDocument, target: vscode.Uri, token: vscode.CancellationToken): Promise<void> {
     if (isDelimited(doc.format) && this.descriptor.engine === 'grid' && target.path.toLowerCase().endsWith('.xlsx')) return this.saveWorkbookCopy(doc, target, token);
+    if (doc.format === 'md' && this.descriptor.engine === 'word' && target.path.toLowerCase().endsWith('.docx')) return this.saveRichCopy(doc, target, token);
     if (!target.path.toLowerCase().endsWith(`.${doc.format}`)) throw new Error(`Save As must use the ${doc.format.toUpperCase()} format.`);
     return this.write(doc, target, token);
   }
@@ -169,7 +173,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
     try { return snapshot(await doc.request('serialize', { flush: true, format }), doc.limit); }
     catch (error) {
       // Cancellation defers autosave without a validation dialog or a false saved acknowledgment.
-      if (error instanceof Error && ['DRAFT_PENDING', 'CSV_FEATURES'].includes(error.message)) throw new vscode.CancellationError();
+      if (isDeferredSave(error)) throw new vscode.CancellationError();
       throw error;
     }
   }
@@ -188,8 +192,8 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
         doc.diskBytes = data.bytes; doc.diskDigest = digest(data.bytes);
       }
       if (doc.token === data.token) {
-        const cache = isDelimited(doc.format) ? snapshot(await doc.request('serialize', { flush: false }), doc.limit) : data;
-        if (cache.token === doc.token) doc.cache = cache.bytes;
+        const cache = snapshotFormat(doc.format) !== doc.format ? snapshot(await doc.request('serialize', { flush: false }), doc.limit) : data;
+        if (cache.token === doc.token) { doc.cache = cache.bytes; doc.cacheFormat = snapshotFormat(doc.format); }
       }
       // Only the snapshot actually written is acknowledged. Later edits stay dirty.
       await doc.request('ack', { token: data.token });
@@ -209,29 +213,42 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
       // persisted cache still reverts; a future renderer starts at revision zero.
       if (doc.disposed) return;
       if (!integer(revision)) throw new Error('Invalid restored revision.');
-      doc.cache = data.bytes; doc.diskBytes = data.bytes; doc.diskDigest = digest(data.bytes);
+      doc.cache = data.bytes; doc.cacheFormat = doc.format; doc.diskBytes = data.bytes; doc.diskDigest = digest(data.bytes);
       doc.token = revision; doc.savedToken = revision;
     });
   }
   async backupCustomDocument(doc: EditableDocument, context: vscode.CustomDocumentBackupContext, token: vscode.CancellationToken): Promise<vscode.CustomDocumentBackup> {
-    const data = await this.serialize(doc, isDelimited(doc.format) ? 'xlsx' : doc.format); cancelled(token);
+    const data = await this.serialize(doc, snapshotFormat(doc.format)); cancelled(token);
     const body = encodeBackup(data.bytes, doc.diskDigest);
     await vscode.workspace.fs.writeFile(context.destination, body);
-    if (data.token === doc.token) doc.cache = data.bytes;
+    if (data.token === doc.token) { doc.cache = data.bytes; doc.cacheFormat = snapshotFormat(doc.format); }
     return { id: context.destination.toString(), delete: () => { void vscode.workspace.fs.delete(context.destination).then(() => {}, () => {}); } };
   }
-  /** Export a delimited-text session as XLSX without acknowledging or overwriting its source. */
-  saveWorkbookCopy(doc: EditableDocument, target: vscode.Uri, token: vscode.CancellationToken): Promise<void> {
-    if (!isDelimited(doc.format) || this.descriptor.engine !== 'grid' || !target.path.toLowerCase().endsWith('.xlsx') || target.toString() === doc.uri.toString()) return Promise.reject(new Error('Choose an .xlsx destination for this CSV or TSV workbook.'));
+  /** Save a richer copy without acknowledging or overwriting the source. */
+  private saveRichCopy(doc: EditableDocument, target: vscode.Uri, token: vscode.CancellationToken): Promise<void> {
+    const format = snapshotFormat(doc.format);
+    if (format === doc.format || !target.path.toLowerCase().endsWith(`.${format}`) || target.toString() === doc.uri.toString()) return Promise.reject(new Error(`Choose a .${format} destination for this document.`));
     return doc.enqueue(async () => {
       cancelled(token);
-      const data = await this.serialize(doc, 'xlsx');
+      const data = await this.serialize(doc, format);
       cancelled(token);
       await vscode.workspace.fs.writeFile(target, data.bytes);
-      if (doc.token === data.token) doc.cache = data.bytes;
-      // The copy is saved; rich edits in the delimited-text session still need an explicit
-      // discard on closing. Export must never falsely acknowledge a CSV save.
+      if (doc.token === data.token) { doc.cache = data.bytes; doc.cacheFormat = format; }
+      // A copy does not acknowledge or overwrite the original document.
     });
+  }
+  saveWorkbookCopy(doc: EditableDocument, target: vscode.Uri, token: vscode.CancellationToken): Promise<void> {
+    if (!isDelimited(doc.format) || this.descriptor.engine !== 'grid') return Promise.reject(new Error('Choose a CSV or TSV workbook.'));
+    return this.saveRichCopy(doc, target, token);
+  }
+  async saveMarkdownAsDocument(document?: EditableDocument): Promise<void> {
+    const doc = document ?? [...this.panels].find(([item, panel]) => item.format === 'md' && panel.active)?.[0];
+    if (!doc || doc.format !== 'md' || this.descriptor.engine !== 'word') { await vscode.window.showInformationMessage('Open a Markdown file in Craft Documents first.'); return; }
+    const target = await vscode.window.showSaveDialog({ defaultUri: doc.uri.with({ path: doc.uri.path.replace(/\.md$/i, '.docx') }), filters: { 'Word document': ['docx'] }, saveLabel: 'Save DOCX copy' });
+    if (!target) return;
+    const source = new vscode.CancellationTokenSource();
+    try { await this.saveRichCopy(doc, target, source.token); } finally { source.dispose(); }
+    await vscode.commands.executeCommand('vscode.openWith', target, this.descriptor.viewType);
   }
   async saveCsvAsWorkbook(document?: EditableDocument): Promise<void> {
     const doc = document ?? [...this.panels].find(([item, panel]) => isDelimited(item.format) && panel.active)?.[0];
@@ -246,6 +263,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
   private async command(doc: EditableDocument, panel: vscode.WebviewPanel, command: string): Promise<void> {
     switch (command) {
       case 'file.saveCopyXlsx': await this.saveCsvAsWorkbook(doc); break;
+      case 'file.saveCopyDocx': await this.saveMarkdownAsDocument(doc); break;
       case 'file.save': await vscode.workspace.save(doc.uri); break;
       case 'file.saveAs': await vscode.workspace.saveAs(doc.uri); break;
       case 'file.revert': await vscode.commands.executeCommand('workbench.action.files.revert'); break;

@@ -26,6 +26,7 @@ export function renderHtml(webview: vscode.Webview, media: vscode.Uri, engine: v
 <body data-session="${sessionId}" data-module="${webview.asWebviewUri(vscode.Uri.joinPath(engine, 'viewer.js'))}" data-wasm="${webview.asWebviewUri(vscode.Uri.joinPath(engine, 'viewer_bg.wasm'))}">
 
 <aside id="csv-notice" hidden role="status" aria-live="polite" aria-label="Delimited text format limitations"><span id="csv-message"></span> <button id="csv-workbook" type="button">Save as XLSX…</button></aside>
+<aside id="md-notice" hidden role="status" aria-live="polite" aria-label="Markdown format limitations"><span id="md-message">Some Markdown source or document features cannot be safely preserved. Markdown autosave is paused. Save a DOCX copy to keep the imported document and edits; source features unsupported by WordCraft may already be absent from the copy.</span> <button id="md-document" type="button">Save as DOCX…</button></aside>
 <p id="status" role="status">Loading renderer…</p><main id="viewport"><canvas id="document" aria-label="${editable ? 'Document editor' : 'Read-only document preview'}"></canvas></main>
 <script type="module" nonce="${nonce}" src="${uri('viewer.js')}"></script></body></html>`;
 }

@@ -280,7 +280,10 @@ impl Document {
             doc.mark_saved_as(&snapshot.native.doc);
         }
     }
-    fn serialize(snapshot: &Snapshot) -> Result<std::borrow::Cow<'_, [u8]>, JsValue> {
+    fn serialize<'a>(
+        snapshot: &'a Snapshot,
+        _format: Option<&str>,
+    ) -> Result<std::borrow::Cow<'a, [u8]>, JsValue> {
         Ok(std::borrow::Cow::Owned(if snapshot.native_format {
             vectorcraft_format::save_file(&snapshot.native.doc)
         } else {

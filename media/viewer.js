@@ -71,11 +71,23 @@ function csvNotice() {
     : `${document.body.dataset.format.toUpperCase()} saves values only. Use XLSX to keep formulas, formatting, charts and multiple sheets.`;
 }
 document.getElementById('csv-workbook').addEventListener('click', () => hostCommand('file.saveCopyXlsx'));
+let markdownNoticeTimer;
+function markdownNotice() {
+  if (document.body.dataset.format !== 'md' || !viewer) return;
+  clearTimeout(markdownNoticeTimer);
+  // Conversion checks parse the full document; coalesce rapid typing. Saves
+  // still run the check synchronously before writing the file.
+  markdownNoticeTimer = setTimeout(() => {
+    document.getElementById('md-notice').hidden = viewer.markdown_safe();
+  }, 400);
+}
+document.getElementById('md-document').addEventListener('click', () => hostCommand('file.saveCopyDocx'));
+
 
 function hostCommand(command) {
   queueMicrotask(() => {
     try {
-      if (['file.save', 'file.saveAs', 'file.saveCopyXlsx', 'file.close', 'file.new', 'file.open'].includes(command)) viewer.commit();
+      if (['file.save', 'file.saveAs', 'file.saveCopyXlsx', 'file.saveCopyDocx', 'file.close', 'file.new', 'file.open'].includes(command)) viewer.commit();
       send('editor:command', { command });
     } catch {
       status.hidden = false;
@@ -92,7 +104,7 @@ window.addEventListener('message', async ({ data }) => {
       let result;
       switch (data.operation) {
         case 'agent:mcp': {
-          if (!['xlsx', 'csv', 'tsv', 'docx', 'pptx', 'svg', 'vectorcraft', 'pdf'].includes(document.body.dataset.format) || typeof viewer.mcp_message !== 'function' || typeof data.message !== 'string' || data.message.length > 1048576) throw new Error('Invalid document agent request.');
+          if (!['xlsx', 'csv', 'tsv', 'docx', 'md', 'pptx', 'svg', 'vectorcraft', 'pdf'].includes(document.body.dataset.format) || typeof viewer.mcp_message !== 'function' || typeof data.message !== 'string' || data.message.length > 1048576) throw new Error('Invalid document agent request.');
           result = viewer.mcp_message(data.message) ?? null;
           break;
         }
@@ -172,6 +184,10 @@ window.addEventListener('message', async ({ data }) => {
           if (!capture) throw new Error('Test operation unavailable.');
           result = { documentFocused: document.hasFocus(), active: document.activeElement?.tagName, native: JSON.parse(viewer.inspect()) }; break;
         }
+        case 'test:markdown-safe': {
+          if (!capture || document.body.dataset.format !== 'md') throw new Error('Test operation unavailable.');
+          result = viewer.markdown_safe(); break;
+        }
         case 'test:csv-status': {
           if (!capture) throw new Error('Test operation unavailable.');
           csvNotice(); result = { features: JSON.parse(viewer.csv_features()), message: document.getElementById('csv-message').textContent }; break;
@@ -226,7 +242,7 @@ window.addEventListener('message', async ({ data }) => {
         }
         default: throw new Error('Unsupported document operation.');
       }
-      csvNotice();
+      csvNotice(); markdownNotice();
       send('editor:response', { requestId: data.requestId, result });
     } catch (error) {
       send('editor:response', { requestId: data.requestId, error: error instanceof Error ? error.message : typeof error === 'string' ? error : 'Document operation failed.' });
@@ -235,7 +251,7 @@ window.addEventListener('message', async ({ data }) => {
   }
   if (data.type === 'render:timeout') { fail(); return; }
   if (data.type !== 'render:open' || opened || !(data.bytes instanceof ArrayBuffer) ||
-      !['xlsx', 'csv', 'tsv', 'pdf', 'docx', 'pptx', 'svg', 'vectorcraft'].includes(data.format)) return;
+      !['xlsx', 'csv', 'tsv', 'pdf', 'docx', 'md', 'pptx', 'svg', 'vectorcraft'].includes(data.format)) return;
   opened = true;
   capture = data.capture === true;
   document.body.dataset.format = data.format;
@@ -249,12 +265,12 @@ window.addEventListener('message', async ({ data }) => {
       viewer = await Viewer.start(canvas, bytes, (width, height, pixels) => {
         queueMicrotask(() => report(width, height, pixels, ['xlsx', 'csv', 'tsv'].includes(data.format) ? viewer.sheets().length || 1 : viewer.unit_count() || 1));
       }, event => {
-        if (event.kind === 'changed') { send('editor:changed', { before: event.before, after: event.after, label: event.label }); queueMicrotask(csvNotice); }
+        if (event.kind === 'changed') { send('editor:changed', { before: event.before, after: event.after, label: event.label }); queueMicrotask(() => { csvNotice(); markdownNotice(); }); }
         else if (event.kind === 'command') hostCommand(event.command);
-      }, data.format);
+      }, data.format, data.cacheFormat);
       syncTheme();
-      if (data.recovered || ['csv', 'tsv'].includes(data.format)) viewer.mark_original(new Uint8Array(data.originalBytes));
-      csvNotice();
+      if (data.recovered || ['csv', 'tsv', 'md'].includes(data.format)) viewer.mark_original(new Uint8Array(data.originalBytes));
+      csvNotice(); markdownNotice();
       engineReadyResolve();
     }
   } catch (error) { engineReadyReject(error); fail(error instanceof Error ? error.message : typeof error === 'string' ? error : 'Renderer startup failed.'); }

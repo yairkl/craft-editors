@@ -55,6 +55,16 @@
           }
         ],
         "priority": "option"
+      },
+      {
+        "viewType": "craft.word.markdown",
+        "displayName": "Craft Documents",
+        "selector": [
+          {
+            "filenamePattern": "*.md"
+          }
+        ],
+        "priority": "option"
       }
     ],
     "configuration": {
@@ -69,6 +79,39 @@
           "description": "Maximum document size in MiB for opening and saving. Large or complex documents may require substantially more memory."
         }
       }
+    },
+    "commands": [
+      {
+        "command": "craft.word.openMarkdownText",
+        "title": "Open Markdown as Text",
+        "icon": "$(code)"
+      },
+      {
+        "command": "craft.word.openMarkdownDocument",
+        "title": "Open Markdown in Craft Documents",
+        "icon": {
+          "light": "media/markdown-document-light.svg",
+          "dark": "media/markdown-document-dark.svg"
+        }
+      },
+      {
+        "command": "craft.word.saveMarkdownAsDocument",
+        "title": "Craft Documents: Save Markdown as Word Document"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "craft.word.openMarkdownText",
+          "when": "resourceExtname == .md && activeCustomEditorId == 'craft.word.markdown'",
+          "group": "navigation@10"
+        },
+        {
+          "command": "craft.word.openMarkdownDocument",
+          "when": "resourceExtname == .md && activeEditor == 'workbench.editors.files.textFileEditor'",
+          "group": "navigation@10"
+        }
+      ]
     }
   },
   "files": [

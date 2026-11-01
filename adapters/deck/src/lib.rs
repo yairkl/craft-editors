@@ -250,7 +250,10 @@ impl Document {
             doc.saved_doc = snapshot.native.doc.clone();
         }
     }
-    fn serialize(snapshot: &Snapshot) -> Result<std::borrow::Cow<'_, [u8]>, JsValue> {
+    fn serialize<'a>(
+        snapshot: &'a Snapshot,
+        _format: Option<&str>,
+    ) -> Result<std::borrow::Cow<'a, [u8]>, JsValue> {
         deckcraft_pptx::export(&snapshot.native.doc)
             .map(std::borrow::Cow::Owned)
             .map_err(|_| error("The presentation could not be serialized."))
