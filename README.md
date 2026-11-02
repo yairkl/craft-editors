@@ -1,21 +1,4 @@
-<p align="center">
-  <img src="assets/icons/suite.svg" alt="Craft Editors" width="96">
-</p>
-
-<h1 align="center">Craft Editors</h1>
-
-<p align="center">
-  Spreadsheets, documents, presentations, PDFs and vector drawings,<br>
-  edited right inside VS Code tabs.
-</p>
-
-<p align="center">
-  <img src="assets/icons/spreadsheets.svg" alt="Spreadsheets" width="56">&nbsp;
-  <img src="assets/icons/word.svg" alt="Documents" width="56">&nbsp;
-  <img src="assets/icons/powerpoint.svg" alt="Presentations" width="56">&nbsp;
-  <img src="assets/icons/pdf.svg" alt="PDF" width="56">&nbsp;
-  <img src="assets/icons/vector.svg" alt="Vector" width="56">
-</p>
+# Craft Editors
 
 Open and edit spreadsheets, documents, presentations, PDFs and vector drawings in VS Code or a compatible Cursor build. This independent community project embeds the open-source Craft applications in editor tabs. Document processing runs in the editor session, including a remote extension host when using Remote SSH.
 
@@ -28,21 +11,20 @@ Open and edit spreadsheets, documents, presentations, PDFs and vector drawings i
 - **Native editing in VS Code.** Standard Save, Save As, Undo, Redo and Revert, and the editors follow VS Code's light/dark theme.
 - **Works over Remote SSH.** Install the extension on the SSH host; documents are processed there, in the editor session.
 - **Agent-ready.** Each editor ships an MCP bridge so compatible agents can work with open and closed documents.
-- **Multilingual.** Hebrew text, including niqqud, is bundled and tested.
 
 ## Choose an editor
 
 Install only the editors you need; each includes its own engine and works without the others.
 
-| | Editor | Files | What you can do |
-| :---: | --- | --- | --- |
-| <img src="assets/icons/spreadsheets.svg" alt="" width="32"> | **Craft Spreadsheets** | `.xlsx`, `.csv`, `.tsv` | Edit cells and formulas, sort data, and use native worksheet tabs. |
-| <img src="assets/icons/word.svg" alt="" width="32"> | **Craft Documents** | `.docx`, `.md` | Read and edit documents; Markdown uses conservative save checks. |
-| <img src="assets/icons/powerpoint.svg" alt="" width="32"> | **Craft Presentations** | `.pptx` | Read and edit presentations. |
-| <img src="assets/icons/pdf.svg" alt="" width="32"> | **Craft PDF** | `.pdf` | Read PDFs and use supported editing tools. |
-| <img src="assets/icons/vector.svg" alt="" width="32"> | **Craft Vector** | `.svg`, `.vectorcraft` | View and edit vector drawings. |
+| Editor | Files | What you can do |
+| --- | --- | --- |
+| **Craft Spreadsheets** | `.xlsx`, `.csv`, `.tsv` | Edit cells and formulas, sort data, and use native worksheet tabs. |
+| **Craft Documents** | `.docx`, `.md` | Read and edit documents; Markdown uses conservative save checks. |
+| **Craft Presentations** | `.pptx` | Read and edit presentations. |
+| **Craft PDF** | `.pdf` | Read PDFs and use supported editing tools. |
+| **Craft Vector** | `.svg`, `.vectorcraft` | View and edit vector drawings. |
 
-An optional <img src="assets/icons/suite.svg" alt="" width="18"> **Craft Editors** pack groups the five extensions. Legacy `.doc` and `.ppt` and password-protected documents are not supported by this preview. Starting with beta 0.1.3, the editor limits files to 256 MiB by default; earlier previews use 32 MiB. For the newer preview, each app has a setting such as `craft.spreadsheets.maxFileSizeMiB` or `craft.pdf.maxFileSizeMiB` (up to 1024 MiB). Large or complex documents can consume substantially more memory than their file size.
+An optional **Craft Editors** pack groups the five extensions. Legacy `.doc` and `.ppt` and password-protected documents are not supported by this preview. Starting with beta 0.1.3, the editor limits files to 256 MiB by default; earlier previews use 32 MiB. For the newer preview, each app has a setting such as `craft.spreadsheets.maxFileSizeMiB` or `craft.pdf.maxFileSizeMiB` (up to 1024 MiB). Large or complex documents can consume substantially more memory than their file size.
 
 ## Install
 
@@ -58,13 +40,13 @@ Markdown opens in your usual editor by default; use **Reopen Editor With… → 
 
 Use VS Code Save, Save As, Undo, Redo and Revert. The editors follow VS Code's light/dark theme. Spreadsheet, Word and PowerPoint ribbons start collapsed; select a tab to show their tools.
 
-Use the editor title buttons to switch an open CSV or TSV between text and spreadsheet views. CSV and TSV store plain values, not workbook features such as formulas, formatting or extra worksheets. You can still use those features in the editor; when needed, **Save as XLSX** appears so you can keep them. Value edits and sorting can be saved to CSV or TSV. See the [spreadsheet guide](packages/spreadsheets/README.md) for details.
+Use the editor title buttons to switch an open CSV between text and spreadsheet views. CSV stores plain values, not workbook features such as formulas, formatting or extra worksheets. You can still use those features in the editor; when needed, **Save as XLSX** appears so you can keep them. Value edits and sorting can be saved to CSV. See the [spreadsheet guide](packages/spreadsheets/README.md) for details.
 
 PDF opens in reading mode, with editing tools available. PowerPoint Reading View works inside the editor; full-screen slideshow and Presenter View are not supported in this preview.
 
 ## Languages and accessibility
 
-Hebrew text support, including niqqud, is bundled and tested across the five editors. Font, input, shaping and accessibility coverage varies by script and application. See [language and font support](docs/languages.md) for the tested scope and how to request additional languages.
+Font, input, shaping and accessibility coverage varies by script and application. See [language and font support](docs/languages.md) for the tested scope and how to request additional languages.
 
 ## Agent tools
 
