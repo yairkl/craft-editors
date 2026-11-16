@@ -1,0 +1,43 @@
+diff --git a/crates/ui-egui/src/ribbon.rs b/crates/ui-egui/src/ribbon.rs
+index 7d2ab7a230bc39defafe2e21206c80cb457d505b..0bf97b2d8c3f765b798372d9d5789c871a37d320 100644
+--- a/crates/ui-egui/src/ribbon.rs
++++ b/crates/ui-egui/src/ribbon.rs
+@@ -134,5 +134,5 @@ pub fn show(app: &mut SlideApp, ui: &mut Ui) {
+         let mut x = rect.min.x + 12.0;
+         let y = rect.min.y + 2.0;
+-        {
++        if !app.services.embedded {
+             let w = ui.fonts_mut(|f| f.layout_no_wrap("File".to_string(), theme::font(13.0), t.text).size().x) + 18.0;
+             let r = Rect::from_min_size(pos2(x, y), vec2(w, 24.0));
+diff --git a/crates/ui-egui/src/ribbon/title_bar.rs b/crates/ui-egui/src/ribbon/title_bar.rs
+index 6c7e825e8c5579d380e5a6390f1963fe4a525e55..a3f8bad0c003358e0b4181fd8a4684951781718f 100644
+--- a/crates/ui-egui/src/ribbon/title_bar.rs
++++ b/crates/ui-egui/src/ribbon/title_bar.rs
+@@ -31,4 +31,5 @@ pub(super) fn title_geometry(integrated: bool) -> (f32, f32, f32) {
+ /// The window's title row: traffic-light space, quick access, centred title, actions.
+ pub fn title_bar(app: &mut SlideApp, ui: &mut Ui) {
++    if app.services.embedded { return; }
+     let t = Tokens::get(ui.ctx());
+     let (height, left, control_h) = title_geometry(app.integrated_titlebar);
+diff --git a/crates/ui-egui/src/services.rs b/crates/ui-egui/src/services.rs
+index 2ea5d92fb2ae3c31064da3d1c8354bfada687b59..f0a82fe405d24e956e59629ced23252387ee7c6f 100644
+--- a/crates/ui-egui/src/services.rs
++++ b/crates/ui-egui/src/services.rs
+@@ -46,4 +46,6 @@ pub struct Services {
+     /// Return true when the host accepts dispatch; it owns persistence and error reporting.
+     pub host_command: Option<Box<dyn Fn(&str) -> bool>>,
++    /// Omit standalone window chrome and presentation windows when embedded.
++    pub embedded: bool,
+     /// Open-file dialog for a purpose (`open`, `picture`, `audio`, `video`) → path.
+     pub pick_open: Option<PickFn>,
+diff --git a/crates/ui-egui/src/status.rs b/crates/ui-egui/src/status.rs
+index 0301af446b9ea75d9c917349c8de8e6485714ec7..592da39a9f1b284c2846a9beb86c7764756d5033 100644
+--- a/crates/ui-egui/src/status.rs
++++ b/crates/ui-egui/src/status.rs
+@@ -90,5 +90,5 @@ pub fn status_bar(app: &mut SlideApp, ui: &mut Ui) {
+         right.add_space(8.0);
+         let view = app.ui.view;
+-        if view_icon(&mut right, Icon::ViewShowSmall, "Slide Show", false).clicked() {
++        if !app.services.embedded && view_icon(&mut right, Icon::ViewShowSmall, "Slide Show", false).clicked() {
+             let i = app.session.active().map(|d| d.selection.slide).unwrap_or(0);
+             app.start_show(i, false);

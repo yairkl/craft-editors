@@ -1,59 +1,25 @@
 diff --git a/crates/ui-egui/src/app.rs b/crates/ui-egui/src/app.rs
-index 3a1d678d8347a07006fe4d4d50613bbb903c75e8..b2fcb2e0ab7bce7e170985a01c79537b55eafcdf 100644
+index 509ad79db2ef6618ad838298703a708ec9a84d7e..b2fcb2e0ab7bce7e170985a01c79537b55eafcdf 100644
 --- a/crates/ui-egui/src/app.rs
 +++ b/crates/ui-egui/src/app.rs
-@@ -199,6 +199,8 @@ impl PdfCraftApp {
-             unsaved_flag: Default::default(),
+@@ -200,4 +200,5 @@ impl PdfCraftApp {
              os_events: None,
              host_save: None,
 +            embedded: false,
-+            host_command: None,
+             host_command: None,
              host_dirty: None,
-             close_request: None,
-             save_prompt_button: Default::default(),
-@@ -867,7 +869,7 @@ impl PdfCraftApp {
-         if self.draws_window_frame() {
+@@ -869,5 +870,5 @@ impl PdfCraftApp {
              window_controls::resize_edges(&ctx);
          }
 -        chrome::tab_strip(self, ui);
 +        if !self.embedded { chrome::tab_strip(self, ui); }
          // A document can hide the toolbars, the menu and the panels around it in its tab (ISO
          // 32000-2 Table 147); the tab strip stays, and F8 brings the rest back (`viewer_prefs`).
-         let hidden = self.hidden_interface();
-diff --git a/crates/ui-egui/src/app/files.rs b/crates/ui-egui/src/app/files.rs
-index 81c65a2b030e35924c9e2c6cc5fbd3fc3fcff668..983210c5f0dfec78ba4f4173c9fd539c28e66a32 100644
---- a/crates/ui-egui/src/app/files.rs
-+++ b/crates/ui-egui/src/app/files.rs
-@@ -92,6 +92,7 @@ impl PdfCraftApp {
-         // Files opened before the first frame (the ones named at startup) are drawn once, in the
-         // interface language, rather than in English and again when the frame applies it.
-         self.apply_status_captions(i18n::Lang::from_pref(&self.language));
-+        if self.embedded && !self.views.is_empty() { return Err("Open additional documents in VS Code editor tabs.".into()); }
-         // Images and text files become new, unsaved PDFs (Create a PDF).
-         let active = self.active;
-         if let Some(r) = self.open_converted(name, &bytes) {
-@@ -1037,6 +1038,7 @@ impl PdfCraftApp {
-     }
- 
-     pub fn open_dialog(&mut self) {
-+        if self.host_command.as_mut().is_some_and(|host| host("file.open")) { return; }
-         self.startup_superseded = true;
-         #[cfg(not(target_arch = "wasm32"))]
-         self.pick(pickers::PickFor::Open, Self::open_picker(), true);
-@@ -1063,6 +1065,7 @@ impl PdfCraftApp {
-     }
- 
-     pub fn close_tab(&mut self, index: usize) {
-+        if self.embedded && self.host_command.as_mut().is_some_and(|host| host("file.close")) { return; }
-         if index >= self.views.len() {
-             return;
-         }
 diff --git a/crates/ui-egui/src/chrome.rs b/crates/ui-egui/src/chrome.rs
 index 4cc264e7dcd6b550b2ca65cf7d4fd2a6522f3195..8fd3a42aad2b06d027065696ef0144e96a255321 100644
 --- a/crates/ui-egui/src/chrome.rs
 +++ b/crates/ui-egui/src/chrome.rs
-@@ -652,10 +652,12 @@ pub fn mode_bar(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
-                         if print.clicked() {
+@@ -653,8 +653,10 @@ pub fn mode_bar(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
                              app.run_command("print.dialog");
                          }
 +                        if !app.embedded {
@@ -64,185 +30,13 @@ index 4cc264e7dcd6b550b2ca65cf7d4fd2a6522f3195..8fd3a42aad2b06d027065696ef0144e9
 +                        }
                          let tip = crate::commands::command_tip(ui.ctx(), tl!("Document properties ({key})"), "file.properties");
                          if icons::button(ui, "info", 32.0, false, &tip).clicked() {
-                             app.dialog = Some(Dialog::Properties(PropsTab::Description));
-diff --git a/crates/ui-egui/src/commands.rs b/crates/ui-egui/src/commands.rs
-index 3b422181a96f957bc6e7a9d1422b892a31fcdff8..e184554b463b956b607c9c3c25ebda4895f7abad 100644
---- a/crates/ui-egui/src/commands.rs
-+++ b/crates/ui-egui/src/commands.rs
-@@ -113,6 +113,9 @@ impl PdfCraftApp {
-     /// Last-resort guard (AGENTS.md §4): a command that panics is reported and the app, with its
-     /// open documents, keeps running. Edits are applied to a copy, so the document is unchanged.
-     pub fn execute(&mut self, id: &str) -> bool {
-+        if self.host_command.as_mut().is_some_and(|host| host(id)) {
-+            return true;
-+        }
-         let done = match pdfcraft_engine::guard(|| self.execute_unguarded(id)) {
-             Ok(done) => done,
-             Err(m) => {
-diff --git a/crates/ui-egui/src/editing.rs b/crates/ui-egui/src/editing.rs
-index f6144ec143a1aaab505ef8ce13e1a8f8cdcbf01a..2a4fc815a8a81c89eab60cadd5368385a8ebb7a9 100644
---- a/crates/ui-egui/src/editing.rs
-+++ b/crates/ui-egui/src/editing.rs
-@@ -298,8 +298,32 @@ impl PdfCraftApp {
-         }
-     }
- 
-+    pub fn host_draft(&self) -> Option<crate::HostDraftSnapshot> {
-+        let v = self.active.and_then(|i| self.views.get(i))?;
-+        Some(crate::HostDraftSnapshot {
-+            content: v.content.clone(), line: v.line_editor.clone(), form: v.forms.clone(),
-+            fill: v.fill_text.clone(), pending: v.pending_edit.clone(),
-+        })
-+    }
-+    pub fn host_restore_draft(&mut self, draft: &Option<crate::HostDraftSnapshot>) {
-+        if let (Some(v), Some(d)) = (self.active.and_then(|i| self.views.get_mut(i)), draft) {
-+            v.content = d.content.clone(); v.line_editor = d.line.clone(); v.forms = d.form.clone();
-+            v.fill_text = d.fill.clone(); v.pending_edit = d.pending.clone();
-+        }
-+    }
-+    pub fn host_pending(&self) -> bool {
-+        self.active.and_then(|i| self.views.get(i)).is_some_and(|v| {
-+            v.pending_edit.is_some() || v.forms.focus.is_some() || v.content.draft.is_some()
-+                || v.line_editor.as_ref().is_some_and(|ed| ed.has_changes())
-+                || v.fill_text.as_ref().is_some_and(|t| !t.text.trim().is_empty())
-+        })
-+    }
-+    pub fn host_flush(&mut self) -> bool {
-+        self.active_ids().is_none_or(|(_, id)| self.commit_typing_in(id))
-+    }
-     /// Undo the last change: to the Combine files list while its tab shows, else the document.
-     pub fn undo(&mut self) {
-+        if self.host_command.as_mut().is_some_and(|host| host("edit.undo")) { return; }
-         // While a polygon, cloud or run of connected lines is being drawn, Undo takes back its
-         // last point instead of the last finished edit.
-         if let Some((i, _)) = self.active_ids()
-@@ -342,6 +366,7 @@ impl PdfCraftApp {
-     }
- 
-     pub fn redo(&mut self) {
-+        if self.host_command.as_mut().is_some_and(|host| host("edit.redo")) { return; }
-         if self.combine_showing() {
-             self.combine_history_step(false);
-         } else if !self.redo_in_page_box() {
-diff --git a/crates/ui-egui/src/editing/save.rs b/crates/ui-egui/src/editing/save.rs
-index 77eb9c2b5889557dec475fbf7ee499ce25eae74a..135f478035747623538150c8fbe3dee14606f72f 100644
---- a/crates/ui-egui/src/editing/save.rs
-+++ b/crates/ui-egui/src/editing/save.rs
-@@ -33,6 +33,8 @@ pub enum SaveTarget {
- impl PdfCraftApp {
-     /// Save the active document. Returns `true` if it was written.
-     pub fn save_active(&mut self, target: SaveTarget) -> bool {
-+        let command = if matches!(target, SaveTarget::As) { "file.save_as" } else { "file.save" };
-+        if self.host_command.as_mut().is_some_and(|host| host(command)) { return false; }
-         match self.active {
-             Some(i) => self.save_view(i, target),
-             None => false,
 diff --git a/crates/ui-egui/src/lib.rs b/crates/ui-egui/src/lib.rs
-index 3153575ba19eda9de1a19d7e6f744a68b21565da..f69f5aef92d939f3ad5ac3d9c9c5ce9e4a9fa421 100644
+index 440d9f08787ddb5ec4fa8e2b0c1b80eaa5aee2bc..cf166e64b9fd9088434f815e84172d8f8222315a 100644
 --- a/crates/ui-egui/src/lib.rs
 +++ b/crates/ui-egui/src/lib.rs
-@@ -305,9 +305,31 @@ struct PendingDestination {
-     receiver: std::sync::mpsc::Receiver<Option<(usize, pdfcraft_render::DestView)>>,
- }
- 
-+/// Live text/form drafts retained alongside the host's committed model snapshots.
-+#[derive(Clone)]
-+pub struct HostDraftSnapshot {
-+    content: content_ui::ContentView,
-+    line: Option<edit_text_ui::LineEditor>,
-+    form: forms_ui::FormView,
-+    fill: Option<fill_sign::TypeBox>,
-+    pending: Option<pdfcraft_engine::Edit>,
-+}
-+impl HostDraftSnapshot {
-+    pub fn text(&self) -> String {
-+        [
-+            self.content.draft.as_ref().map(|d| d.text.as_str()).unwrap_or_default(),
-+            self.line.as_ref().filter(|d| d.has_changes()).map(|d| d.text.as_str()).unwrap_or_default(),
-+            self.form.focus.as_ref().map(|d| d.text.as_str()).unwrap_or_default(),
-+            self.fill.as_ref().map(|d| d.text.as_str()).unwrap_or_default(),
-+        ]
-+        .join("\u{0}")
-+    }
-+}
- pub struct PdfCraftApp {
+@@ -329,4 +329,5 @@ pub struct PdfCraftApp {
      /// Split view (`panes`); which pane shows each tab is its view's.
      pub panes: panes::Panes,
 +    pub embedded: bool,
-+    pub host_command: Option<Box<dyn FnMut(&str) -> bool>>,
-     /// Tools side and pane widths; which panes are open is `left_open` and `right`.
-     pub side_panels: side_panels::SidePanels,
-     pub session: Session,
-diff --git a/crates/ui-egui/src/tools/sign_ui.rs b/crates/ui-egui/src/tools/sign_ui.rs
-index 56410eeb33c814ea24c694e1f847fed2e6a36e0a..66fb5cadb8f7fedbe1b678861ac8e0f8363fb9dc 100644
---- a/crates/ui-egui/src/tools/sign_ui.rs
-+++ b/crates/ui-egui/src/tools/sign_ui.rs
-@@ -697,6 +697,7 @@ impl PdfCraftApp {
-     /// Open saved revision `n` (1 = the oldest) of the active document as a new document.
-     /// A repeat reuses the tab: every click used to open another identical one.
-     pub fn open_revision(&mut self, n: usize) {
-+        if self.embedded { self.notify("Open saved versions in separate VS Code tabs."); return; }
-         let Some((_, id)) = self.active_ids() else { return };
-         let Some(doc) = self.session.get(id) else { return };
-         // The revision's byte range, as `Session::open_revision` reads it. An unknown `n`
-@@ -753,6 +754,7 @@ impl PdfCraftApp {
-     /// Open the signed version of a signature as a new document (View signed version).
-     /// A repeat reuses the tab: every click used to open another identical one.
-     pub fn view_signed_version(&mut self, len: usize, revision: usize) {
-+        if self.embedded { self.notify("Open saved versions in separate VS Code tabs."); return; }
-         let Some((_, id)) = self.active_ids() else { return };
-         let Some(doc) = self.session.get(id) else { return };
-         let end = len.min(doc.bytes.len());
-diff --git a/crates/ui-egui/src/widgets.rs b/crates/ui-egui/src/widgets.rs
-index 4a45817744cb4a7ece32db6335b8b856b1eb929d..1228417ed602cf636f87b53d610928421fb059bd 100644
---- a/crates/ui-egui/src/widgets.rs
-+++ b/crates/ui-egui/src/widgets.rs
-@@ -636,19 +636,19 @@ pub fn progress_notice(app: &PdfCraftApp, ctx: &egui::Context) -> bool {
- pub fn artcraft_logo(ui: &mut egui::Ui, height: f32) -> Response {
-     let dark = ui.visuals().dark_mode;
-     let (uri, bytes): (&str, &'static [u8]) = if dark {
--        ("bytes://artcraft-logo-white.svg", include_bytes!("../../../docs/brand/artcraft-logo-white.svg"))
-+        ("bytes://craft-integration-logo-white.svg", b"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" fill=\"#418fd8\"/></svg>")
-     } else {
--        ("bytes://artcraft-logo.svg", include_bytes!("../../../docs/brand/artcraft-logo.svg"))
-+        ("bytes://craft-integration-logo.svg", b"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" fill=\"#418fd8\"/></svg>")
-     };
--    ui.add(egui::Image::from_bytes(uri, bytes).max_height(height).alt_text("ArtCraft"))
-+    ui.add(egui::Image::from_bytes(uri, bytes).max_height(height).alt_text("Craft integration"))
- }
- 
- /// The ArtCraft mark (brand blue, works on light and dark), `size` points square.
- pub fn artcraft_mark(ui: &mut egui::Ui, size: f32) -> Response {
-     ui.add(
--        egui::Image::from_bytes("bytes://artcraft-mark.svg", include_bytes!("../../../docs/brand/artcraft-mark.svg"))
-+        egui::Image::from_bytes("bytes://craft-integration-mark.svg", b"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" fill=\"#418fd8\"/></svg>")
-             .fit_to_exact_size(vec2(size, size))
--            .alt_text("ArtCraft"),
-+            .alt_text("Craft integration"),
-     )
- }
- 
-diff --git a/crates/ui-egui/src/workflows/create_ui.rs b/crates/ui-egui/src/workflows/create_ui.rs
-index 5d3d6f4cc6a3da1be10d63d8cbe5a334ac017e6f..0553d7c89e6921bf6654b1c47e0cd7631e2e30f4 100644
---- a/crates/ui-egui/src/workflows/create_ui.rs
-+++ b/crates/ui-egui/src/workflows/create_ui.rs
-@@ -122,6 +122,7 @@ impl PdfCraftApp {
-     }
- 
-     fn open_created_bytes(&mut self, name: &str, created: Result<Arc<Vec<u8>>, String>) -> Result<(), String> {
-+        if self.embedded { return Err("Create a separate PDF using the host or the standalone application.".into()); }
-         let bytes = created?;
-         let id = self.session.open_new(name, bytes).map_err(|e| e.to_string())?;
-         // The reading-colours preference is app-wide: the newly created document starts with it.
-diff --git a/crates/ui-egui/src/workflows/files.rs b/crates/ui-egui/src/workflows/files.rs
-index 82057ecc55fba0abe93cc1f3933dd114defa9765..10feed950dbc5ea795f820a28d50905728ca6ea4 100644
---- a/crates/ui-egui/src/workflows/files.rs
-+++ b/crates/ui-egui/src/workflows/files.rs
-@@ -906,6 +906,7 @@ impl PdfCraftApp {
-     }
- 
-     pub(crate) fn open_created(&mut self, name: &str, bytes: Arc<Vec<u8>>, message: &str) {
-+        if self.embedded { self.notify("Opening a generated second document is not supported in this beta. Use the standalone app for this workflow."); return; }
-         match self.session.open_new(name, bytes) {
-             Ok(id) => {
-                 // The reading-colours preference is app-wide: the newly created document starts with it.
+     /// Return true when the host accepts dispatch; it owns persistence and error reporting.
+     pub host_command: Option<Box<dyn FnMut(&str) -> bool>>,

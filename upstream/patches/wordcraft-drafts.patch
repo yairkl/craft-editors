@@ -1,0 +1,11 @@
+diff --git a/crates/ui-egui/src/app.rs b/crates/ui-egui/src/app.rs
+index b2533e5f1f0c722aa48e4d845f7255979217e434..3733f58bf97998f8718db2d357d41d4cf62c3718 100644
+--- a/crates/ui-egui/src/app.rs
++++ b/crates/ui-egui/src/app.rs
+@@ -26,4 +26,6 @@ pub(crate) use input::control_click_as_secondary;
+ 
+ impl WordApp {
++    /// Commit drafts before an embedding host serializes the document.
++    pub fn host_flush(&mut self) -> Result<(), String> { panes::flush_comment_drafts(self) }
+     /// Creates the app: adopts the system locale, then initializes the document session, UI state,
+     /// services, printing, canvas, dialogs, previews, control and screenshot state, font and theme

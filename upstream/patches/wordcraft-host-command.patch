@@ -1,0 +1,70 @@
+diff --git a/crates/ui-egui/src/app/commands.rs b/crates/ui-egui/src/app/commands.rs
+index 568c7ef8394ccf93160eac11e4724ebee012ed62..73f92f61e627e017466dfef5f3da00cb3904ab7a 100644
+--- a/crates/ui-egui/src/app/commands.rs
++++ b/crates/ui-egui/src/app/commands.rs
+@@ -29,4 +29,5 @@ impl WordApp {
+     /// Save / Don't Save / Cancel, and the command runs once that is answered (`ui.saveChanges`).
+     pub fn run(&mut self, id: &str, params: Value) -> Result<Value, String> {
++        if self.services.host_command.as_ref().is_some_and(|host| host(id)) { return Ok(Value::Null); }
+         // Comment text still being typed is written first, so a save or export has it and a
+         // close, New or Open counts it as a change (#1348). A draft the document refuses is not
+@@ -1153,2 +1154,31 @@ pub(crate) fn discards_document(id: &str, _params: &Value) -> bool {
+     id == "file.close"
+ }
++
++#[cfg(test)]
++mod host_command_tests {
++    use super::*;
++    use crate::services::Services;
++    use std::cell::Cell;
++    use std::rc::Rc;
++    use wordcraft_engine::Session;
++
++    #[test]
++    fn optional_host_dispatch_preserves_the_standalone_fallback() {
++        let make_session = || Session::new(wordcraft_doc::Document::new());
++        let mut standalone = WordApp::new(make_session(), Services::default());
++        assert!(standalone.run("host.test.unknown", Value::Null).is_err());
++        let calls = Rc::new(Cell::new(0));
++        let seen = Rc::clone(&calls);
++        let services = Services {
++            host_command: Some(Box::new(move |id| {
++                seen.set(seen.get() + 1);
++                id == "host.test.handled"
++            })),
++            ..Default::default()
++        };
++        let mut hosted = WordApp::new(make_session(), services);
++        assert_eq!(hosted.run("host.test.handled", Value::Null).unwrap(), Value::Null);
++        assert!(hosted.run("host.test.unknown", Value::Null).is_err());
++        assert_eq!(calls.get(), 2);
++    }
++}
+diff --git a/crates/ui-egui/src/file_dialogs.rs b/crates/ui-egui/src/file_dialogs.rs
+index a4399b6f005a75d2131a2a219395d9855ec95954..dce42407a9d83d05926895a54d93a5a3ea48744f 100644
+--- a/crates/ui-egui/src/file_dialogs.rs
++++ b/crates/ui-egui/src/file_dialogs.rs
+@@ -367,4 +367,5 @@ impl WordApp {
+     /// Ask where to save, then save there (File › Save As).
+     pub fn save_as_dialog(&mut self) {
++        if self.services.host_command.as_ref().is_some_and(|host| host("file.saveAs")) { return; }
+         let _ = self.save_as(AfterSave::Nothing);
+     }
+@@ -448,4 +449,5 @@ impl WordApp {
+ 
+     pub(crate) fn open_dialog(&mut self) {
++        if self.services.host_command.as_ref().is_some_and(|host| host("file.open")) { return; }
+         if let Some(f) = &self.services.open_async {
+             f("document");
+diff --git a/crates/ui-egui/src/services.rs b/crates/ui-egui/src/services.rs
+index d9359b973b7af28ec511eb07360edafe15e76319..cc9bd6535625d2cb717e9f1e7b420966fe1c8bab 100644
+--- a/crates/ui-egui/src/services.rs
++++ b/crates/ui-egui/src/services.rs
+@@ -5,4 +5,7 @@ use super::{FileDialogAnswer, FileDialogRequest, WordApp, async_saves, paste_pic
+ #[derive(Default)]
+ pub struct Services {
++    /// Embedded document host owns file lifecycle and committed undo/redo.
++    /// Return true when the host accepts dispatch; it owns persistence and error reporting.
++    pub host_command: Option<Box<dyn Fn(&str) -> bool>>,
+     /// Desktop: discover configured printers on a worker.
+     pub printers: Option<printing::Discover>,

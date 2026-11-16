@@ -35,7 +35,7 @@
       "patches": [
         {
           "path": "upstream/patches/gridcraft-host-commands.patch",
-          "sha256": "e40a8159d2532030457a4cbbc054ba8fffefe8a2f7e93281899f5793348e8de3",
+          "sha256": "632cd264ffafa220eb9961ac0ce6fc6fc39fc69dd3d3cfd93420f8c3bce8d510",
           "purpose": "Delegate native file lifecycle and committed undo/redo to an embedding host without acknowledging writes early.",
           "removalCondition": "Remove when upstream supplies host-owned file and committed-history callbacks with persistence acknowledgment and the adapter uses them."
         }
@@ -81,16 +81,40 @@
           "removalCondition": "Remove when upstream provides a suitable host-font registration and selection mechanism or the fallback is no longer needed."
         },
         {
-          "path": "upstream/patches/pdfcraft-ui-host.patch",
-          "sha256": "7a8528850ac7b8413638cb3561dd4c91f7d554b29a2ade426d559fcd05480f3a",
-          "purpose": "Provide embedded lifecycle, drafts and UI hooks.",
-          "removalCondition": "Remove when upstream supplies the required lifecycle, draft and optional UI capabilities and the adapter uses them."
-        },
-        {
           "path": "upstream/patches/pdfcraft-dependencies.patch",
           "sha256": "eb961275ca433a6970fe5aa5a3de4ce126c1ba0ffedf5e3d8fbaf16db499feec",
           "purpose": "Use the PDF renderer’s vendored Hayro dependencies alongside the other editors’ shared versions.",
           "removalCondition": "Remove when the editors can use a common compatible Hayro dependency set."
+        },
+        {
+          "path": "upstream/patches/pdfcraft-host-command.patch",
+          "sha256": "0336a686cee4f9517ea07193ca82a8808e5dd2ed092b9f344cdbfea3e684112d",
+          "purpose": "Expose optional host command dispatch for embedded lifecycle and history.",
+          "removalCondition": "Remove when upstream provides equivalent host-owned lifecycle and history callbacks."
+        },
+        {
+          "path": "upstream/patches/pdfcraft-drafts.patch",
+          "sha256": "4bd74672372b462c9d0e5375c802e030fc2406144e8d810bebf5e41b772b88e1",
+          "purpose": "Expose reusable snapshots and flush state for in-progress edits.",
+          "removalCondition": "Remove when upstream exposes draft snapshots and flush capabilities needed by the host."
+        },
+        {
+          "path": "upstream/patches/pdfcraft-ui-host.patch",
+          "sha256": "4e34934d3a538b5e582bbcfc0d9b49b990392a96925ab047f3b6644f1d9d4d1b",
+          "purpose": "Allow the host to omit standalone tab and save chrome.",
+          "removalCondition": "Remove when upstream provides optional host-controlled chrome."
+        },
+        {
+          "path": "upstream/patches/pdfcraft-host-policy.patch",
+          "sha256": "6592d1c5f50957a6c9a0e2851019aa8d928ad7f7d910ec82e4a3eedf0d736361",
+          "purpose": "Restrict multi-document workflows in this single-document host.",
+          "removalCondition": "Remove when the host can open generated documents and revisions safely."
+        },
+        {
+          "path": "upstream/patches/pdfcraft-branding.patch",
+          "sha256": "d1be92088794b2f7d0f78425610074234965a2f61aa97819d1d34b679415f79f",
+          "purpose": "Replace restricted branding in modified distributed builds.",
+          "removalCondition": "Remove when modified builds can omit restricted branding without a patch."
         }
       ]
     },
@@ -104,15 +128,27 @@
       "patches": [
         {
           "path": "upstream/patches/wordcraft-snapshots.patch",
-          "sha256": "ed690a938907686ea6782a91cc3b012efe6a7fa74544fbd413453e8b41d54c51",
+          "sha256": "28726eeee0e651796b4ac2c25227616e764d19165f5ec4c1970c2d06568de810",
           "purpose": "Expose reusable host document snapshots.",
           "removalCondition": "Remove when upstream exposes snapshots and restoration sufficient for host history and recovery and the adapter uses them."
         },
         {
+          "path": "upstream/patches/wordcraft-host-command.patch",
+          "sha256": "5f85964df3cbd26960e9a1124453e9cc8ca56070f2752e332d9db75e8954e56c",
+          "purpose": "Optional host command dispatch for file and history operations.",
+          "removalCondition": "Remove when upstream provides equivalent host command callbacks."
+        },
+        {
+          "path": "upstream/patches/wordcraft-drafts.patch",
+          "sha256": "403910e3f331263eea7444f2d72ce6e896bdecb491d8137362f6386d118ce8de",
+          "purpose": "Expose draft flushing before a host serializes the document.",
+          "removalCondition": "Remove when upstream exposes equivalent draft flushing."
+        },
+        {
           "path": "upstream/patches/wordcraft-ui-host.patch",
-          "sha256": "8186dc2e25add171339de6f695c943b6cf74e916b8d27bc37b3b3d9406386f90",
-          "purpose": "Provide embedded lifecycle and UI hooks.",
-          "removalCondition": "Remove when upstream supplies the required lifecycle, history, flush and optional UI hooks and the adapter uses them."
+          "sha256": "28736299be166d83e2f4ff2f68bd0660b7c4bc99b5a78bfe0e4526341f8cf921",
+          "purpose": "Allow standalone title and file chrome to be omitted.",
+          "removalCondition": "Remove when upstream supports optional host-controlled chrome."
         }
       ]
     },
@@ -125,16 +161,22 @@
       "license": "MIT OR Apache-2.0",
       "patches": [
         {
-          "path": "upstream/patches/deckcraft-host.patch",
-          "sha256": "e45b29418d6173b123ca76aad13ad05379083cb42d8b78f1c907dfe722c61f9e",
-          "purpose": "Provide embedded lifecycle and presentation behavior.",
-          "removalCondition": "Remove when upstream supplies the required lifecycle, history and presentation-host capabilities and the adapter uses them."
+          "path": "upstream/patches/deckcraft-host-command.patch",
+          "sha256": "07094cbe54be726221c443d0b86659c1f4a0c2177a8b27f2096da9659860178d",
+          "purpose": "Delegate host-owned file and history commands.",
+          "removalCondition": "Remove when upstream supplies equivalent host command callbacks."
         },
         {
-          "path": "upstream/patches/deckcraft-ui.patch",
-          "sha256": "6d5b53e11766be1a2a2a332f2451eed9b6e550ae36f93900f71a81fd50879b70",
-          "purpose": "Declare host services and adjust native chrome for embedding.",
-          "removalCondition": "Remove when upstream supports the required optional ribbon and status chrome or the embedding no longer requires those changes."
+          "path": "upstream/patches/deckcraft-ui-host.patch",
+          "sha256": "a1e75f16f5e8c06ffa05552a52cbb442490291e47ab3080088e0585ca11e2b92",
+          "purpose": "Declare optional host services and embedded chrome.",
+          "removalCondition": "Remove when upstream supports equivalent host services and optional chrome."
+        },
+        {
+          "path": "upstream/patches/deckcraft-presentation-policy.patch",
+          "sha256": "9fae4f340950fe758a7a84cfbd35dfec282b9b4edb6ef01f28423f74247a5957",
+          "purpose": "Restrict presentation modes unavailable in this host.",
+          "removalCondition": "Remove when the host supports the required presentation capabilities."
         }
       ]
     },
@@ -148,15 +190,9 @@
       "patches": [
         {
           "path": "upstream/patches/vectorcraft-mcp-wasm.patch",
-          "sha256": "c07cfae786d7ecd69bb84a156e2c2165d9dc185dfa7643e5f46deceeb2e05c22",
+          "sha256": "23a07f11f1fd315de5b5dbb466ab811411e28eaeb0cda0722c6434725c3690ff",
           "purpose": "Allow headless MCP to build for WebAssembly.",
           "removalCondition": "Remove when upstream supports the embedded WebAssembly MCP rendering path without filesystem writes or the adapter no longer needs it."
-        },
-        {
-          "path": "upstream/patches/vectorcraft-host-command.patch",
-          "sha256": "14bccbda2d62a5d229b65c02430e6851f14007b30533fea889c0c4840da73a89",
-          "purpose": "Delegate file lifecycle and committed undo/redo to the embedding host.",
-          "removalCondition": "Remove when upstream exposes an equivalent host-command callback and the adapter uses it."
         },
         {
           "path": "upstream/patches/vectorcraft-branding.patch",
@@ -165,10 +201,16 @@
           "removalCondition": "Remove when modified builds can omit restricted branding without this patch or applicable branding terms permit its use."
         },
         {
+          "path": "upstream/patches/vectorcraft-host-command.patch",
+          "sha256": "b6e50be77f961340f7506e911fd279424a533f492b95a27d527367a67b1c74f7",
+          "purpose": "Delegate file lifecycle and committed undo/redo to the embedding host.",
+          "removalCondition": "Remove when upstream exposes an equivalent host-command callback."
+        },
+        {
           "path": "upstream/patches/vectorcraft-ui-host.patch",
-          "sha256": "78f5830c6d0ed05c8521a69b04c2a57b0e109ef118bf65b6924842c383afd460",
-          "purpose": "Provide embedded lifecycle and UI hooks.",
-          "removalCondition": "Remove when upstream supplies the required lifecycle, history and optional UI capabilities and the adapter uses them."
+          "sha256": "c4155c81af1b3e60f2974324375b522354f7854c1ea9b55363a92fe72cdaacd7",
+          "purpose": "Provide optional embedded chrome.",
+          "removalCondition": "Remove when upstream supports equivalent optional chrome."
         }
       ]
     }

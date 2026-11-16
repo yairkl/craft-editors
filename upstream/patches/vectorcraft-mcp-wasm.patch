@@ -2,8 +2,7 @@ diff --git a/crates/mcp/src/headless.rs b/crates/mcp/src/headless.rs
 index 00e914ddba8e0b8a16dd49430a92727b3da8f278..fbe60ee4b1db47c21b4fb2408213785460c456fe 100644
 --- a/crates/mcp/src/headless.rs
 +++ b/crates/mcp/src/headless.rs
-@@ -313,12 +313,17 @@ impl Headless {
-         let mut out = json!({"width": img.width, "height": img.height});
+@@ -314,10 +314,15 @@ impl Headless {
          match s(p, "path") {
              Some(path) => {
 -                file_access::check_write(path)?;
@@ -25,4 +24,25 @@ index 00e914ddba8e0b8a16dd49430a92727b3da8f278..fbe60ee4b1db47c21b4fb24082137854
 +                    }
                  }
              }
-             None => out["pngBase64"] = json!(vectorcraft_format::base64_encode(&png)),
+diff --git a/crates/mcp/src/tests.rs b/crates/mcp/src/tests.rs
+index d7de8dd7fb064948eb7daeec26f96fcce3e76ed5..5b7dee4d2579c6fb4cfc9c3c9f18516729f0a68c 100644
+--- a/crates/mcp/src/tests.rs
++++ b/crates/mcp/src/tests.rs
+@@ -1990,2 +1990,17 @@ fn add_text_reports_overflow_and_takes_a_fit() {
+     assert!(point.get("overflow").is_none(), "{point}");
+ }
++
++#[test]
++fn headless_render_returns_data_and_writes_png_on_native_hosts() {
++    let mut h = Headless::new();
++    h.call("engine.execute", json!({"command": "file.new", "params": {"width": 20, "height": 20}})).unwrap();
++    let inline = h.call("ui.render", json!({})).unwrap();
++    let bytes = vectorcraft_format::base64_decode(inline["pngBase64"].as_str().unwrap()).unwrap();
++    assert!(bytes.starts_with(b"\x89PNG\r\n\x1a\n"));
++
++    let path = tmp("host-render-native.png");
++    let saved = h.call("ui.render", json!({"path": path.to_str().unwrap(), "data": true})).unwrap();
++    assert_eq!(std::fs::read(&path).unwrap(), bytes);
++    assert_eq!(vectorcraft_format::base64_decode(saved["pngBase64"].as_str().unwrap()).unwrap(), bytes);
++    std::fs::remove_file(path).unwrap();
++}

@@ -1,0 +1,104 @@
+diff --git a/crates/ui-egui/src/app.rs b/crates/ui-egui/src/app.rs
+index 3a1d678d8347a07006fe4d4d50613bbb903c75e8..509ad79db2ef6618ad838298703a708ec9a84d7e 100644
+--- a/crates/ui-egui/src/app.rs
++++ b/crates/ui-egui/src/app.rs
+@@ -200,4 +200,5 @@ impl PdfCraftApp {
+             os_events: None,
+             host_save: None,
++            host_command: None,
+             host_dirty: None,
+             close_request: None,
+diff --git a/crates/ui-egui/src/app/files.rs b/crates/ui-egui/src/app/files.rs
+index 81c65a2b030e35924c9e2c6cc5fbd3fc3fcff668..bdf3e62996f7547b96cb0e799b43744f7f0205bd 100644
+--- a/crates/ui-egui/src/app/files.rs
++++ b/crates/ui-egui/src/app/files.rs
+@@ -1038,4 +1038,5 @@ impl PdfCraftApp {
+ 
+     pub fn open_dialog(&mut self) {
++        if self.host_command.as_mut().is_some_and(|host| host("file.open")) { return; }
+         self.startup_superseded = true;
+         #[cfg(not(target_arch = "wasm32"))]
+@@ -1064,4 +1065,5 @@ impl PdfCraftApp {
+ 
+     pub fn close_tab(&mut self, index: usize) {
++        if self.host_command.as_mut().is_some_and(|host| host("file.close")) { return; }
+         if index >= self.views.len() {
+             return;
+diff --git a/crates/ui-egui/src/commands.rs b/crates/ui-egui/src/commands.rs
+index 3b422181a96f957bc6e7a9d1422b892a31fcdff8..e2f8b8880cb14b520f8af205c05676a8decd7b20 100644
+--- a/crates/ui-egui/src/commands.rs
++++ b/crates/ui-egui/src/commands.rs
+@@ -114,4 +114,7 @@ impl PdfCraftApp {
+     /// open documents, keeps running. Edits are applied to a copy, so the document is unchanged.
+     pub fn execute(&mut self, id: &str) -> bool {
++        if self.host_command.as_mut().is_some_and(|host| host(id)) {
++            return true;
++        }
+         let done = match pdfcraft_engine::guard(|| self.execute_unguarded(id)) {
+             Ok(done) => done,
+@@ -981,2 +984,27 @@ mod tests {
+     }
+ }
++
++#[cfg(test)]
++mod host_command_tests {
++    use super::*;
++    use std::cell::Cell;
++    use std::rc::Rc;
++
++    #[test]
++    fn optional_host_dispatch_preserves_the_standalone_fallback() {
++        let mut standalone = PdfCraftApp::new();
++        assert!(!standalone.execute("host.test.unknown"));
++        let calls = Rc::new(Cell::new(0));
++        let seen = Rc::clone(&calls);
++        let mut hosted = PdfCraftApp::new();
++        hosted.host_command = Some(Box::new(move |id| {
++            seen.set(seen.get() + 1);
++            matches!(id, "host.test.handled" | "file.close")
++        }));
++        assert!(hosted.execute("host.test.handled"));
++        assert!(!hosted.execute("host.test.unknown"));
++        // A host may own tab closure even when it uses standalone chrome.
++        hosted.close_tab(0);
++        assert_eq!(calls.get(), 3);
++    }
++}
+diff --git a/crates/ui-egui/src/editing.rs b/crates/ui-egui/src/editing.rs
+index f6144ec143a1aaab505ef8ce13e1a8f8cdcbf01a..b539997fa6a3bba89be4ec970ca64e5df64f3d07 100644
+--- a/crates/ui-egui/src/editing.rs
++++ b/crates/ui-egui/src/editing.rs
+@@ -301,4 +301,5 @@ impl PdfCraftApp {
+     /// Undo the last change: to the Combine files list while its tab shows, else the document.
+     pub fn undo(&mut self) {
++        if self.host_command.as_mut().is_some_and(|host| host("edit.undo")) { return; }
+         // While a polygon, cloud or run of connected lines is being drawn, Undo takes back its
+         // last point instead of the last finished edit.
+@@ -343,4 +344,5 @@ impl PdfCraftApp {
+ 
+     pub fn redo(&mut self) {
++        if self.host_command.as_mut().is_some_and(|host| host("edit.redo")) { return; }
+         if self.combine_showing() {
+             self.combine_history_step(false);
+diff --git a/crates/ui-egui/src/editing/save.rs b/crates/ui-egui/src/editing/save.rs
+index 77eb9c2b5889557dec475fbf7ee499ce25eae74a..135f478035747623538150c8fbe3dee14606f72f 100644
+--- a/crates/ui-egui/src/editing/save.rs
++++ b/crates/ui-egui/src/editing/save.rs
+@@ -34,4 +34,6 @@ impl PdfCraftApp {
+     /// Save the active document. Returns `true` if it was written.
+     pub fn save_active(&mut self, target: SaveTarget) -> bool {
++        let command = if matches!(target, SaveTarget::As) { "file.save_as" } else { "file.save" };
++        if self.host_command.as_mut().is_some_and(|host| host(command)) { return false; }
+         match self.active {
+             Some(i) => self.save_view(i, target),
+diff --git a/crates/ui-egui/src/lib.rs b/crates/ui-egui/src/lib.rs
+index 3153575ba19eda9de1a19d7e6f744a68b21565da..0004c7c693f0ae60510337e3717c509376e498c3 100644
+--- a/crates/ui-egui/src/lib.rs
++++ b/crates/ui-egui/src/lib.rs
+@@ -309,4 +309,6 @@ pub struct PdfCraftApp {
+     /// Split view (`panes`); which pane shows each tab is its view's.
+     pub panes: panes::Panes,
++    /// Return true when the host accepts dispatch; it owns persistence and error reporting.
++    pub host_command: Option<Box<dyn FnMut(&str) -> bool>>,
+     /// Tools side and pane widths; which panes are open is `left_open` and `right`.
+     pub side_panels: side_panels::SidePanels,

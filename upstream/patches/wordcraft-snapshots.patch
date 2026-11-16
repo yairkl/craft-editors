@@ -2,21 +2,18 @@ diff --git a/crates/engine/src/lib.rs b/crates/engine/src/lib.rs
 index e5795e534eaeac824c2d81510bf09945261c6ab6..8780c6fa906cb6311494e7dec9eb97dfbe84cae7 100644
 --- a/crates/engine/src/lib.rs
 +++ b/crates/engine/src/lib.rs
-@@ -36,7 +36,7 @@ pub use io::Password;
- pub use keymap::KeyMap;
+@@ -37,5 +37,5 @@ pub use keymap::KeyMap;
  pub use ribbon::RibbonLayout;
  pub use session::{
 -    CellRange, ColumnBlock, DocInfo, DocState, EditSnapshot, FindState, MathEdit, Prefs, Selection, Session, StylesPaneDock, UNDO_LIST_MAX,
 +    CellRange, ColumnBlock, DocInfo, DocState, EditSnapshot, FindState, HostSnapshot, MathEdit, Prefs, Selection, Session, StylesPaneDock, UNDO_LIST_MAX,
      ViewState, WindowView, blank_document, next_math_session, set_system_locale,
  };
- /// The outcome a command reports for IME receipt classification.
 diff --git a/crates/engine/src/session.rs b/crates/engine/src/session.rs
 index f1a839006fc1838a61068cf7534f5e28d65a0a1c..c82dfb0a7cbb7a77b9ee0a5089bd62ea1ffdf483 100644
 --- a/crates/engine/src/session.rs
 +++ b/crates/engine/src/session.rs
-@@ -41,6 +41,32 @@ pub use snapshot_types::EditSnapshot;
- use snapshot_types::{LayoutSlots, RunSnapshot};
+@@ -42,4 +42,30 @@ use snapshot_types::{LayoutSlots, RunSnapshot};
  pub use view::{StylesPaneDock, ViewState};
  
 +/// Exact, reusable snapshots for an embedding host's undo/redo callbacks.
@@ -47,4 +44,34 @@ index f1a839006fc1838a61068cf7534f5e28d65a0a1c..c82dfb0a7cbb7a77b9ee0a5089bd62ea
 +
  /// An editing session: the app-wide state (clipboard, preferences, macros, the command registry…)
  /// and the open documents. The active document's state is in the session's own fields, which
- /// every command works on; the other open documents wait in [`DocState`] values and are swapped
+diff --git a/crates/engine/src/tests/typing.rs b/crates/engine/src/tests/typing.rs
+index 350f8872d65192a9ad8e4c24363d21e8c5883346..a726535943f05ed973047b0a326ce2cec43de783 100644
+--- a/crates/engine/src/tests/typing.rs
++++ b/crates/engine/src/tests/typing.rs
+@@ -4037,2 +4037,26 @@ fn issues_1281_1045_english_dialects_proof_typed_text() {
+     assert_eq!(words, ["21th"]);
+ }
++
++#[test]
++fn host_snapshots_restore_document_and_history_repeatedly() {
++    let mut s = Session::new(wordcraft_doc::Document::new());
++    run(&mut s, "text.insert", json!({"text": "first"}));
++    let first = s.doc.clone();
++    let snapshot = s.host_snapshot();
++    let first_depth = s.undo_depth();
++
++    run(&mut s, "text.insert", json!({"text": " second"}));
++    assert_ne!(s.doc, first);
++    s.restore_host_snapshot(snapshot.clone());
++    assert_eq!(s.doc, first);
++    assert_eq!(s.undo_depth(), first_depth);
++    run(&mut s, "edit.undo", json!({}));
++    assert_ne!(s.doc, first);
++    run(&mut s, "edit.redo", json!({}));
++    assert_eq!(s.doc, first);
++
++    run(&mut s, "text.insert", json!({"text": " changed"}));
++    s.restore_host_snapshot(snapshot);
++    assert_eq!(s.doc, first);
++    assert_eq!(s.undo_depth(), first_depth);
++}
