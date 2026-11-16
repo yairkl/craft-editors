@@ -1,8 +1,8 @@
 diff --git a/crates/engine/src/lib.rs b/crates/engine/src/lib.rs
-index 889b83936837923b58dddf7c0e3e79145fce291d..383f569350e0720a2f4ccecfd86a88db8e329172 100644
+index adb69cec4638000490a8e38220c454b9c40f057a..05146fc3937f969b189d93b7fe42bd52456239d2 100644
 --- a/crates/engine/src/lib.rs
 +++ b/crates/engine/src/lib.rs
-@@ -60,6 +60,13 @@ mod xfa_form;
+@@ -71,6 +71,13 @@ mod xfa_form;
  
  use std::sync::Arc;
  
@@ -17,11 +17,11 @@ index 889b83936837923b58dddf7c0e3e79145fce291d..383f569350e0720a2f4ccecfd86a88db
      MAX_REMOTE_DOCUMENT_BYTES, RemoteDocumentPathError, read_remote_document, remote_document_path_is_absolute, resolve_remote_document_path,
  };
 diff --git a/crates/engine/src/session/editing.rs b/crates/engine/src/session/editing.rs
-index f8d5648a2d62f8fbcbe1ce1884d7a8e2cce06118..cfcd332c261a8f7c926449e77a93c735f4c47e91 100644
+index a039f56798f29deaf7570247de67e75c62a58df1..b36c90a8b752b1129a4dec260f9b9377178c735b 100644
 --- a/crates/engine/src/session/editing.rs
 +++ b/crates/engine/src/session/editing.rs
-@@ -222,6 +222,30 @@ impl Session {
-         Ok(())
+@@ -383,6 +383,30 @@ impl Session {
+         Ok(cx.prepared)
      }
  
 +    pub fn host_snapshot(&self, id: DocId) -> crate::HostSnapshot {
@@ -48,6 +48,6 @@ index f8d5648a2d62f8fbcbe1ce1884d7a8e2cce06118..cfcd332c261a8f7c926449e77a93c735
 +        doc.generation = doc.generation.saturating_add(1);
 +        Ok(())
 +    }
+     /// Undo the last edit of document `id`, keeping it for [`Session::redo`]. Returns its label.
      pub fn undo(&mut self, id: DocId) -> Result<Label, EditError> {
          let doc = self.doc_mut(id)?;
-         let editor = doc.editor.as_mut().ok_or(EditError::NothingToUndo)?;

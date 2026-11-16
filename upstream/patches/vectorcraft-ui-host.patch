@@ -1,8 +1,8 @@
 diff --git a/crates/ui-egui/src/chrome.rs b/crates/ui-egui/src/chrome.rs
-index 2000aaacba6a63b0513a42f95bf280ddfee4a48a..3adbb8000628f1e335419ce493479b8fed1e885f 100644
+index 1765c58e174af623dc09edb33c974112c26ea43a..0e6120b611520d7b16d7f0cfaece94566383b72b 100644
 --- a/crates/ui-egui/src/chrome.rs
 +++ b/crates/ui-egui/src/chrome.rs
-@@ -58,13 +58,13 @@ pub fn app_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
+@@ -59,13 +59,13 @@ pub fn app_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
          }
          ui.horizontal_centered(|ui| {
              // With the system title bar the OS draws its own icon: no in-app brand mark.
@@ -19,22 +19,22 @@ index 2000aaacba6a63b0513a42f95bf280ddfee4a48a..3adbb8000628f1e335419ce493479b8f
              }
              ui.add_space(2.0);
 diff --git a/crates/ui-egui/src/chrome/tabs.rs b/crates/ui-egui/src/chrome/tabs.rs
-index 64903017239db478fe305bd4ef5b24ea2114f6bc..e3b1f6b6eca95046d8c9a2f3d95ddd13cccdb08d 100644
+index 506b149fee296dd74296212d54788d725ddf3eda..9cd360aa7f7d860d4ab3a7ec2299bb659718be6a 100644
 --- a/crates/ui-egui/src/chrome/tabs.rs
 +++ b/crates/ui-egui/src/chrome/tabs.rs
-@@ -31,6 +31,7 @@ pub(super) fn first_tab_shown(widths: &[f32], active: Option<usize>, room: f32)
- /// taller, with larger titles. Tabs that don't fit are reached from a » button at the strip's
- /// right end, which lists every open document, and the active tab is always in view (#746).
+@@ -138,6 +138,7 @@ pub(super) fn first_tab_shown(widths: &[f32], active: Option<usize>, room: f32)
+ /// strip moves its document among the others (`document.move`, #5663), a line marking where it
+ /// will go. A middle-click on a tab closes it, as its × does (#6506).
  pub fn doc_tabs(app: &mut VectorcraftApp, ui: &mut Ui) {
 +    if app.services.embedded { return; }
      /// The width of the » button.
      const MORE: f32 = 30.0;
      let t = Tokens::get(ui.ctx());
 diff --git a/crates/ui-egui/src/menus/bar.rs b/crates/ui-egui/src/menus/bar.rs
-index b00d500d92b50672c50a5a5b3e5732e4ced5b871..37905bfd820dfe2b054a0145ea5333d182b8d552 100644
+index 3f34af13a35b552857b8bc1dc6e039c44091997b..4fd06950cb4ee1b573ade52e47d510d8c5e58025 100644
 --- a/crates/ui-egui/src/menus/bar.rs
 +++ b/crates/ui-egui/src/menus/bar.rs
-@@ -26,7 +26,7 @@ pub fn menu_bar(app: &mut VectorcraftApp, ui: &mut egui::Ui) -> f32 {
+@@ -27,7 +27,7 @@ pub fn menu_bar(app: &mut VectorcraftApp, ui: &mut egui::Ui) -> f32 {
      let tree = menu_tree_named(app.session.prefs.font_names_in_english);
      // No application menu in the window (as in Illustrator): the bar starts at File on every
      // platform. The VectorCraft menu stays in the tree: the native Mac bar takes it from there.
@@ -44,10 +44,10 @@ index b00d500d92b50672c50a5a5b3e5732e4ced5b871..37905bfd820dfe2b054a0145ea5333d1
      // egui 0.37's `MenuButton` opens the title under a resting pointer while another menu is open,
      // and the app switches titles on movement only (`switch_on_hover`, the native behaviour).
 diff --git a/crates/ui-egui/src/services.rs b/crates/ui-egui/src/services.rs
-index 1b0488754143463553e35238f20a7b87ce2f546f..0aebc645072b1af5cc12e2356e1febc60831e022 100644
+index 901c0a34098167550157612aca50a021e58f459e..22a3fa2db8c7dc96ad06d87b43f9cf6e93665787 100644
 --- a/crates/ui-egui/src/services.rs
 +++ b/crates/ui-egui/src/services.rs
-@@ -68,6 +68,8 @@ pub type RevealFn = Box<dyn FnMut(&str) -> Result<(), String>>;
+@@ -75,6 +75,8 @@ pub type OpenInFn = Box<dyn FnMut(&str) -> Result<bool, String>>;
  /// Platform services injected by the host app (desktop or web).
  #[derive(Default)]
  pub struct Services {

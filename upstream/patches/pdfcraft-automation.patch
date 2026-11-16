@@ -1,8 +1,8 @@
 diff --git a/crates/automation/src/lib.rs b/crates/automation/src/lib.rs
-index e1ae0141c42e7f943e96fc43a754efcf5684ee48..6bc0928283fa4e92b027572de20aefc4a73d88a8 100644
+index 7fa63d1a1d7eb85012c4de34eb6197ab1be2ad04..4334a02dd8ca5edaf43711832dfca87a0b8054ea 100644
 --- a/crates/automation/src/lib.rs
 +++ b/crates/automation/src/lib.rs
-@@ -149,6 +149,11 @@ impl Automation {
+@@ -167,6 +167,11 @@ impl Automation {
          &self.session
      }
  
@@ -15,7 +15,7 @@ index e1ae0141c42e7f943e96fc43a754efcf5684ee48..6bc0928283fa4e92b027572de20aefc4
      /// saving a rendered page. With a root, it is confined like a tool's own output (a relative
      /// path resolves inside it). Written atomically either way (#2166), except to something
 diff --git a/crates/automation/src/mcp.rs b/crates/automation/src/mcp.rs
-index 84cc21b258f22bb258bb1e61395e230bb2186e36..9ed7755574e78023906053610bbb81c57e035dd3 100644
+index b033871867d0e188e608294342211f12de5d79ae..a8a0632010512b0e38c810ffd9cce3ddba92994d 100644
 --- a/crates/automation/src/mcp.rs
 +++ b/crates/automation/src/mcp.rs
 @@ -86,6 +86,11 @@ impl McpServer {

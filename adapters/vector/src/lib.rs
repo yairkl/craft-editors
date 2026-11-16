@@ -157,6 +157,8 @@ impl VectorMcpHeadless {
             return Err(error("Unsupported vector format."));
         };
         let mut session = Session::new();
+        // Keep VS Code’s established Ctrl+wheel zoom behavior for new views.
+        session.prefs.ctrl_wheel_scrolls_sideways = false;
         session.add_document(doc, None);
         self.backend
             .try_borrow_mut()
@@ -240,6 +242,8 @@ impl Document {
             }
         };
         let mut session = Session::new();
+        // Keep VS Code’s established Ctrl+wheel zoom behavior for new views.
+        session.prefs.ctrl_wheel_scrolls_sideways = false;
         session.add_document(doc, None);
         let services = Services {
             embedded: true,

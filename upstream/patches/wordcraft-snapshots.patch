@@ -1,8 +1,8 @@
 diff --git a/crates/engine/src/lib.rs b/crates/engine/src/lib.rs
-index 529ce064857185cb8c1517e25fc6e7ce60087db6..5210de75afe90b7fa6fb33a2d3a9f85c9f9f7747 100644
+index e5795e534eaeac824c2d81510bf09945261c6ab6..8780c6fa906cb6311494e7dec9eb97dfbe84cae7 100644
 --- a/crates/engine/src/lib.rs
 +++ b/crates/engine/src/lib.rs
-@@ -34,7 +34,7 @@ pub use io::Password;
+@@ -36,7 +36,7 @@ pub use io::Password;
  pub use keymap::KeyMap;
  pub use ribbon::RibbonLayout;
  pub use session::{
@@ -12,7 +12,7 @@ index 529ce064857185cb8c1517e25fc6e7ce60087db6..5210de75afe90b7fa6fb33a2d3a9f85c
  };
  /// The outcome a command reports for IME receipt classification.
 diff --git a/crates/engine/src/session.rs b/crates/engine/src/session.rs
-index 86898641d4984a1a625f95faf1a5a9ef1c37e7c0..72f5866600478a2b0aa8bd7b1f835d9c89f6bf4d 100644
+index f1a839006fc1838a61068cf7534f5e28d65a0a1c..c82dfb0a7cbb7a77b9ee0a5089bd62ea1ffdf483 100644
 --- a/crates/engine/src/session.rs
 +++ b/crates/engine/src/session.rs
 @@ -41,6 +41,32 @@ pub use snapshot_types::EditSnapshot;
