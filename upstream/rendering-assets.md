@@ -5,9 +5,9 @@ This records sources inspected for the adapters. GridCraft now supplies its nati
 | Input | Version/source | License and handling |
 | --- | --- | --- |
 | GridCraft engine, model, XLSX and grid UI | `manifest.json` GridCraft pin | MIT OR Apache-2.0; preserve upstream license texts with any distributed bundle |
-| GridCraft shared UI helpers | `craft-libs` revision `d27646a5f7c8b4fc85d9dd3213b8c88b58e0088d`, adapter lockfile | Preserve that dependency's license texts |
+| GridCraft shared UI helpers | pinned `craft-libs` revisions in the adapter lockfile | Preserve that dependency's license texts |
 | PdfCraft rendering, COS, filters and font helpers | `manifest.json` PdfCraft pin | MIT OR Apache-2.0; preserve upstream license texts |
-| PdfCraft renderer patches | shared `craft-libs` revision `a0916808f7d78bed8c7b90cdf937176015454a7f` (Hayro/Krilla), plus PdfCraft vendored lopdf/vello_common | Preserve each vendored crate's license/NOTICE files; upstream `vendor/README.md` records patches |
+| PdfCraft renderer patches | PdfCraft vendored Hayro, lopdf and vello; other editors use the pinned `craft-libs` Hayro and Krilla revisions | Preserve each vendored crate's license/NOTICE files; upstream `vendor/README.md` records patches |
 | egui/eframe/epaint | 0.36.2 and pinned 0.37 fork, adapter lockfile | MIT OR Apache-2.0; collect package notices |
 | egui default fonts | `epaint_default_fonts` 0.36.2 `fonts/` | Ubuntu Light: Ubuntu Font Licence; Hack: bundled Hack license; Noto Emoji: OFL; emoji icon font: bundled MIT notice. Preserve all shipped font license files |
 | PdfCraft Latin/signature font helpers | `assets/fonts/Inter-*.ttf`, `DancingScript.ttf` | OFL-1.1; source attribution and OFL files are recorded in pinned PdfCraft `ATTRIBUTION.md` and `assets/fonts/` |

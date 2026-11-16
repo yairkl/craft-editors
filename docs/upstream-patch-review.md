@@ -26,7 +26,7 @@ The [manifest](../upstream/manifest.json) is the source of truth for each reposi
 | `pdfcraft-automation.patch` | Exposes the automation session used by the MCP bridge. Review its public API independently of VS Code. | `npm run test:graphics` |
 | `pdfcraft-snapshots.patch` | Exposes document snapshots for history and recovery. Review snapshot ownership and restoration independently. | `npm run test:graphics` |
 | `pdfcraft-fonts.patch` | Registers host fonts, currently consumed only by Hebrew selection. Generalize coverage and preserve existing fallback behavior before an upstream proposal. | `npm run test:languages` |
-| `pdfcraft-rendering.patch` | Removes a warning match arm for the pinned rendering dependency. This is a dependency compatibility adjustment, not an embedding feature; reassess it against current upstream and dependency versions before proposing it. | `npm run renderers:build`, `npm run test:graphics` |
+| `pdfcraft-dependencies.patch` | Uses PdfCraft’s vendored Hayro crates directly so its renderer can coexist with the other editors’ shared Hayro version. | `npm run renderers:build`, `npm run test:graphics` |
 | `pdfcraft-ui-host.patch` | Combines host lifecycle, drafts and UI changes. Embedded mode also refuses opening saved revisions as a second internal document. Split lifecycle, draft and UI behavior before proposing upstream. | `npm run test:graphics`, `npm run test:theme` |
 | `vectorcraft-mcp-wasm.patch` | Rejects writing rendered images to a path on WebAssembly while allowing image data to be returned. A portable MCP change should preserve native behavior. | `npm run renderers:build`, `npm run test:graphics` (closed-file agent returns a PNG and rejects a path without creating a file) |
 | `vectorcraft-host-command.patch` | Delegates file and committed-history commands to the host. Review the callback separately from embedded chrome. | `npm run test:graphics` |
@@ -51,7 +51,7 @@ To inspect the standalone VectorCraft candidate without altering the integration
 ```sh
 review_dir=$(mktemp -d)
 git clone --no-hardlinks upstream/checkouts/vectorcraft "$review_dir"
-git -C "$review_dir" checkout --detach 68b68a30acad9b3d8a72802b35f43b82e2bd7d3a
+git -C "$review_dir" checkout --detach f4922aa7ac99a4f6d56fc68a83a44945207ec610
 git -C "$review_dir" apply --check "$PWD/upstream/patches/vectorcraft-mcp-wasm.patch"
 git -C "$review_dir" apply "$PWD/upstream/patches/vectorcraft-mcp-wasm.patch"
 git -C "$review_dir" diff --check

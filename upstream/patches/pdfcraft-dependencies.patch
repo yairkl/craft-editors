@@ -1,0 +1,65 @@
+diff --git a/Cargo.toml b/Cargo.toml
+index 752f580475fd11bbc42d8576d4d8c73badbaddc9..8ea451ae5f230b06c75ddf203bf63b2295df61cb 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -70,6 +70,6 @@ pdfcraft-prc-render = { path = "crates/prc-render", version = "0.21.0" }
+ 
+ # pdf
+-hayro = "0.7.1"
+-hayro-syntax = "0.7.2"
++hayro = { path = "vendor/hayro" }
++hayro-syntax = { path = "vendor/hayro-syntax" }
+ lopdf = "0.45"
+ # zlib-rs: miniz_oxide took about 1.7 µs for every fixed-Huffman block, empty or not
+@@ -83,5 +83,5 @@ fax = "0.2.7"
+ # Independent CCITT and JBIG2 codecs, already in the tree through hayro.
+ hayro-ccitt = "0.3"
+-hayro-jbig2 = "0.3"
++hayro-jbig2 = { path = "vendor/hayro-jbig2" }
+ 
+ # foundation
+diff --git a/vendor/hayro-cmap/Cargo.toml b/vendor/hayro-cmap/Cargo.toml
+index 3818d177b6dcc5c0d754bc3ecf1a3422476c7e2f..a54e941f8472042d93fd4e556789e51b00be095a 100644
+--- a/vendor/hayro-cmap/Cargo.toml
++++ b/vendor/hayro-cmap/Cargo.toml
+@@ -49,4 +49,5 @@ default-features = false
+ 
+ [dependencies.hayro-postscript]
++path = "../hayro-postscript"
+ version = "0.1.0"
+ default-features = false
+diff --git a/vendor/hayro-interpret/Cargo.toml b/vendor/hayro-interpret/Cargo.toml
+index 8141e63df329caeebd66392643848cdbdae5fb4e..20bc26dd29e6d0c396067c5e47ae6bbec3f7022e 100644
+--- a/vendor/hayro-interpret/Cargo.toml
++++ b/vendor/hayro-interpret/Cargo.toml
+@@ -56,8 +56,10 @@ version = "2.10"
+ 
+ [dependencies.hayro-cmap]
++path = "../hayro-cmap"
+ version = "0.1.0"
+ default-features = false
+ 
+ [dependencies.hayro-syntax]
++path = "../hayro-syntax"
+ version = "0.7.0"
+ features = [
+diff --git a/vendor/hayro-syntax/Cargo.toml b/vendor/hayro-syntax/Cargo.toml
+index cc34e45f8745780a781c2bb2328fa79669998abf..d9de9d29910b354ed5b35241b0890e3273769f6c 100644
+--- a/vendor/hayro-syntax/Cargo.toml
++++ b/vendor/hayro-syntax/Cargo.toml
+@@ -78,4 +78,5 @@ default-features = false
+ 
+ [dependencies.hayro-jbig2]
++path = "../hayro-jbig2"
+ version = "0.3.0"
+ optional = true
+diff --git a/vendor/hayro/Cargo.toml b/vendor/hayro/Cargo.toml
+index 87ab46a239665a340310707f03bf0e16f0e80e31..ddba06537623618d5398585c6d7502e966fed0ba 100644
+--- a/vendor/hayro/Cargo.toml
++++ b/vendor/hayro/Cargo.toml
+@@ -50,4 +50,5 @@ features = ["bytemuck_derive"]
+ 
+ [dependencies.hayro-interpret]
++path = "../hayro-interpret"
+ version = "0.7.0"
+ default-features = false

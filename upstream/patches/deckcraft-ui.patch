@@ -1,5 +1,5 @@
 diff --git a/crates/ui-egui/src/ribbon.rs b/crates/ui-egui/src/ribbon.rs
-index 51c46b6c72dbc7685b482b4550205fed612708b3..40fc9fbb12b6c6dcbcbbc81bde915b8d868d578a 100644
+index 7d2ab7a230bc39defafe2e21206c80cb457d505b..0bf97b2d8c3f765b798372d9d5789c871a37d320 100644
 --- a/crates/ui-egui/src/ribbon.rs
 +++ b/crates/ui-egui/src/ribbon.rs
 @@ -133,7 +133,7 @@ pub fn show(app: &mut SlideApp, ui: &mut Ui) {
@@ -50,13 +50,13 @@ index 6c7e825e8c5579d380e5a6390f1963fe4a525e55..a3f8bad0c003358e0b4181fd8a468495
      let (height, left, control_h) = title_geometry(app.integrated_titlebar);
      egui::Panel::top("title_bar").exact_size(height).frame(egui::Frame::NONE.fill(t.chrome)).show(ui, |ui| {
 diff --git a/crates/ui-egui/src/services.rs b/crates/ui-egui/src/services.rs
-index 88f03ac2cf10274f5d7879bce60eaec3ac2c1eb3..630ce1784863c91ed35da1c4cbd2adf958673bb9 100644
+index 0ca335a84792f30c57f5aafcc4abcd55d265edf8..3c45a337e94765ebdc16afc1d619252738c84940 100644
 --- a/crates/ui-egui/src/services.rs
 +++ b/crates/ui-egui/src/services.rs
-@@ -36,6 +36,10 @@ pub type Inbox = std::sync::Arc<std::sync::Mutex<Vec<InboxEvent>>>;
- /// Platform services injected by the host (desktop or web).
- #[derive(Default)]
+@@ -42,6 +42,10 @@ pub type Inbox = std::sync::Arc<std::sync::Mutex<Vec<InboxEvent>>>;
  pub struct Services {
+     /// Browser-owned presenter popup; absent on native hosts.
+     pub presenter: Option<Box<dyn crate::presenter::Host>>,
 +    /// Embedded host owns file lifecycle and committed history.
 +    pub host_command: Option<Box<dyn Fn(&str) -> bool>>,
 +    /// Omit standalone window chrome and presentation windows when embedded.

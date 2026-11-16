@@ -28,10 +28,10 @@ index dff96762aa1d22a501f0b593f470c43e77497488..c7be36bb5ae3fdb7cf1320b3ff47a281
  
  fn hebrew_face(faces: &[CraftFont], bold: bool) -> Option<&CraftFont> {
 diff --git a/crates/fonts/src/lib.rs b/crates/fonts/src/lib.rs
-index 61061f550972a51cbaf483ca88fd042ae22ecd49..b864aeb6bfe97a895716ce2a1839ae18b47cade4 100644
+index 38292245ccc991ad71d557eea5258be990cbfde0..48b7e0cd661e41f48e78be24015213a0adbd7d63 100644
 --- a/crates/fonts/src/lib.rs
 +++ b/crates/fonts/src/lib.rs
-@@ -20,7 +20,7 @@ pub mod source_shaping;
+@@ -22,7 +22,7 @@ pub mod source_shaping;
  mod std14;
  mod std14_metrics;
  pub use craft::{

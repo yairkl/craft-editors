@@ -1,5 +1,5 @@
 diff --git a/crates/ui-egui/src/app/commands.rs b/crates/ui-egui/src/app/commands.rs
-index 216dd30d3ede2dbeb9dd416943d981002397de5b..827de784e06916b3f121fe7248d264de7cd2aeb2 100644
+index 718b95acea8abb89d432c69b08700a8939e50e50..046ca60737dd04952f7d26162c3f7be4042e8b6e 100644
 --- a/crates/ui-egui/src/app/commands.rs
 +++ b/crates/ui-egui/src/app/commands.rs
 @@ -18,6 +18,7 @@ impl SlideApp {
@@ -9,27 +9,23 @@ index 216dd30d3ede2dbeb9dd416943d981002397de5b..827de784e06916b3f121fe7248d264de
 +        if self.services.host_command.as_ref().is_some_and(|host| host(id)) { return Ok(Value::Null); }
          let r = if UI_COMMANDS.iter().any(|c| c.0 == id) {
              self.run_ui(id, &params)
-         } else {
-@@ -164,7 +165,13 @@ impl SlideApp {
-                     self.start_show(from, false);
+         } else if id == "file.save" && self.services.host_save.is_some() && params.get("path").is_none() {
+@@ -170,6 +171,10 @@ impl SlideApp {
                  }
              }
--            "show.presenter" => self.ui.presenter_view = self.flag(p, self.ui.presenter_view),
-+            "show.presenter" => {
+             "show.presenter" => {
 +                if self.services.embedded {
 +                    self.set_status("Presenter View needs a separate audience window and is unavailable in this host.");
-+                } else {
-+                    self.ui.presenter_view = self.flag(p, self.ui.presenter_view);
++                    return Ok(json!({"on": false, "window": false}));
 +                }
-+            },
-             "show.end" => {
-                 self.show = None;
-                 self.media.stop_owned(media::Owner::Show);
+                 self.ui.presenter_view = self.flag(p, self.ui.presenter_view);
+                 // The browser build has one viewport: presenter view is drawn inside the page.
+                 return Ok(json!({"on": self.ui.presenter_view, "window": !cfg!(target_arch = "wasm32")}));
 diff --git a/crates/ui-egui/src/app/files.rs b/crates/ui-egui/src/app/files.rs
-index 0f3c944f7ab48240664e64bd1dbc088ed181a3d8..20c0ef8501cb0fe79e55e4b259a441262b14c176 100644
+index 3ec59202ede916732018494ce94725b51406cda5..94445501218dc76d8886ec1e99c18b35491c8648 100644
 --- a/crates/ui-egui/src/app/files.rs
 +++ b/crates/ui-egui/src/app/files.rs
-@@ -379,6 +379,7 @@ impl SlideApp {
+@@ -448,6 +448,7 @@ impl SlideApp {
      }
  
      pub fn save_as_dialog(&mut self, format: &str) {
@@ -37,16 +33,16 @@ index 0f3c944f7ab48240664e64bd1dbc088ed181a3d8..20c0ef8501cb0fe79e55e4b259a44126
          let name = self.session.active().map(|d| d.title()).unwrap_or_else(|| "Presentation".into());
          let ext = if format == "pptx" { "pptx" } else { "deckcraft" };
          let suggested = format!("{name}.{ext}");
-@@ -418,6 +419,7 @@ impl SlideApp {
-     }
- 
-     pub fn save(&mut self) {
+@@ -493,6 +494,7 @@ impl SlideApp {
+             let _ = self.save_to_host(None);
+             return;
+         }
 +        if self.services.host_command.as_ref().is_some_and(|host| host("file.save")) { return; }
          if self.session.active().and_then(|d| d.path.clone()).is_some() {
              match self.session.execute("file.save", &json!({})) {
                  Ok(_) => self.set_status("Saved"),
 diff --git a/crates/ui-egui/src/app/playback.rs b/crates/ui-egui/src/app/playback.rs
-index 1b4f1d25eb51fde7e6eaca1468282404baf89c49..4641923b9d78e2ee02d66a1b1f9e1e599322fbb1 100644
+index c4628680749ea326df9012385cfe011d8e4719c8..b0e32f87627f0fbf3398b11ea7caf56a35ad382f 100644
 --- a/crates/ui-egui/src/app/playback.rs
 +++ b/crates/ui-egui/src/app/playback.rs
 @@ -30,6 +30,10 @@ impl SlideApp {
@@ -59,8 +55,8 @@ index 1b4f1d25eb51fde7e6eaca1468282404baf89c49..4641923b9d78e2ee02d66a1b1f9e1e59
 +        }
          self.anim_preview = None;
          self.media.stop_owned(media::Owner::Editor);
-         if let Some(d) = self.session.active() {
-@@ -42,6 +46,10 @@ impl SlideApp {
+         let presenter = self.ui.presenter_view && !reading && self.second_display();
+@@ -52,6 +56,10 @@ impl SlideApp {
  
      /// Play custom show `name` from its first slide. Set Up Slide Show is left as it was.
      pub fn start_custom_show(&mut self, name: &str, reading: bool) {

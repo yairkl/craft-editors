@@ -1,5 +1,5 @@
 diff --git a/crates/ui-egui/src/app/commands.rs b/crates/ui-egui/src/app/commands.rs
-index 969b6faac64a7739895a87b6c51e6c5ef5de7a79..ae72bec7bc1531825dbe0628ff6b315383748511 100644
+index 6dff45cb2b2841421a99e7b57400819e635cdaa4..ea5b3bf4350a1706605dc55cc036c5d6caaa7fe9 100644
 --- a/crates/ui-egui/src/app/commands.rs
 +++ b/crates/ui-egui/src/app/commands.rs
 @@ -17,6 +17,9 @@ impl SheetApp {
@@ -12,7 +12,7 @@ index 969b6faac64a7739895a87b6c51e6c5ef5de7a79..ae72bec7bc1531825dbe0628ff6b3153
          let switches_window = id.starts_with("window.")
              || matches!(id, "view.newWindow" | "view.hideWindow" | "view.unhideWindow")
              || (id == "view.switchWindows" && ["window", "doc"].iter().any(|k| params.get(*k).is_some_and(|d| !d.is_null())));
-@@ -280,6 +283,10 @@ impl SheetApp {
+@@ -338,6 +341,10 @@ impl SheetApp {
      }
  
      pub fn open_dialog(&mut self, name: &str, params: Json) {
@@ -37,7 +37,7 @@ index 0cbde92a8f089b3daee387454d9d35d5036cdd00..8c537b37d14944c438f8c36e277c5d22
              // Keep checking even when no input arrives while the window is hidden.
              ctx.request_repaint_after(std::time::Duration::from_secs(2));
 diff --git a/crates/ui-egui/src/services.rs b/crates/ui-egui/src/services.rs
-index 748e23ab3d87c8ab1f1c577177d8a1586ab34b95..3c782fd38f959f067235e08dc527a8ba6dbd2504 100644
+index 20b8da851e530b833f3975f5dc7a67e435f19aec..6d8d1f91386ae53d5f8545454772e12de432d80f 100644
 --- a/crates/ui-egui/src/services.rs
 +++ b/crates/ui-egui/src/services.rs
 @@ -9,6 +9,8 @@ type PrintPdf = Box<dyn Fn(&[u8])>;

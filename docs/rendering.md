@@ -15,7 +15,7 @@ npm run renderers:build
 npm run compile
 ```
 
-Source preparation applies hash-verified integration patches before Rust checks. The build accepts only exact source revisions and declared patches. `adapters/Cargo.lock` pins dependencies, including shared Hayro/Krilla from `craft-libs` revision `a0916808…`, PdfCraft's remaining vendored patches, and DeckCraft/VectorCraft's egui/winit fork. Patches in dependency workspaces are not inherited, so the adapter workspace repeats them. Optional unpinned `CRAFT_FONTS_DIR` input is rejected. Trunk and wasm-opt are not used.
+Source preparation applies hash-verified integration patches before Rust checks. The build accepts only exact source revisions and declared patches. `adapters/Cargo.lock` pins dependencies, including Hayro from `craft-libs` revision `9be9a637…`, Krilla from revision `6e03f65b…`, PdfCraft’s separate vendored Hayro and vello dependencies, and the egui/winit fork. Patches in dependency workspaces are not inherited, so the adapter workspace repeats them. Optional unpinned `CRAFT_FONTS_DIR` input is rejected. Trunk and wasm-opt are not used.
 
 Generated JavaScript/WASM stays in ignored `media/engines/`. `build.json` records input pins, lock hash, tools, output sizes and SHA-256 hashes. `upstream/rendering-build.json` records a verified local baseline; identical bytes across build hosts are not promised.
 
