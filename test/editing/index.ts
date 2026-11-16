@@ -164,6 +164,26 @@ export async function run(): Promise<void> {
   assert.equal(closedDocument.dirty, false);
   closedDocument.dispose(); closedToken.dispose();
 
+  const watchedUri = vscode.Uri.joinPath(directory, 'watched.xlsx');
+  await vscode.workspace.fs.writeFile(watchedUri, original);
+  const watched = await open(api, watchedUri);
+  const externalBytes = Buffer.from(saved.base64, 'base64');
+  await vscode.workspace.fs.writeFile(watchedUri, externalBytes);
+  await waitFor(() => Buffer.from(watched.diskBytes).equals(externalBytes));
+  assert.equal(await watched.request('test:cell', { sheet: 0, row: 5, col: 0 }), 'headless edit');
+  assert.equal(watched.dirty, false);
+  await edit(watched, 'local edit');
+  await waitFor(() => watched.dirty);
+  await vscode.workspace.fs.writeFile(watchedUri, original);
+  await new Promise(resolve => setTimeout(resolve, 500));
+  assert.equal(await cell(watched), 'local edit', 'External writes preserve unsaved editor changes');
+  assert.equal(watched.dirty, true);
+  const watchedToken = new vscode.CancellationTokenSource();
+  await assert.rejects(api.editing.saveCustomDocument(watched, watchedToken.token), /changed on disk/);
+  await api.editing.revertCustomDocument(watched, watchedToken.token);
+  watchedToken.dispose();
+  await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+
   const uri = vscode.Uri.joinPath(directory, 'roundtrip.xlsx');
   await vscode.workspace.fs.writeFile(uri, original);
   let doc = await open(api, uri);
