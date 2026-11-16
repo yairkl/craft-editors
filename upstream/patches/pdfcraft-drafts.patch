@@ -1,0 +1,61 @@
+diff --git a/crates/ui-egui/src/editing.rs b/crates/ui-egui/src/editing.rs
+index b539997fa6a3bba89be4ec970ca64e5df64f3d07..2a4fc815a8a81c89eab60cadd5368385a8ebb7a9 100644
+--- a/crates/ui-egui/src/editing.rs
++++ b/crates/ui-egui/src/editing.rs
+@@ -299,4 +299,27 @@ impl PdfCraftApp {
+     }
+ 
++    pub fn host_draft(&self) -> Option<crate::HostDraftSnapshot> {
++        let v = self.active.and_then(|i| self.views.get(i))?;
++        Some(crate::HostDraftSnapshot {
++            content: v.content.clone(), line: v.line_editor.clone(), form: v.forms.clone(),
++            fill: v.fill_text.clone(), pending: v.pending_edit.clone(),
++        })
++    }
++    pub fn host_restore_draft(&mut self, draft: &Option<crate::HostDraftSnapshot>) {
++        if let (Some(v), Some(d)) = (self.active.and_then(|i| self.views.get_mut(i)), draft) {
++            v.content = d.content.clone(); v.line_editor = d.line.clone(); v.forms = d.form.clone();
++            v.fill_text = d.fill.clone(); v.pending_edit = d.pending.clone();
++        }
++    }
++    pub fn host_pending(&self) -> bool {
++        self.active.and_then(|i| self.views.get(i)).is_some_and(|v| {
++            v.pending_edit.is_some() || v.forms.focus.is_some() || v.content.draft.is_some()
++                || v.line_editor.as_ref().is_some_and(|ed| ed.has_changes())
++                || v.fill_text.as_ref().is_some_and(|t| !t.text.trim().is_empty())
++        })
++    }
++    pub fn host_flush(&mut self) -> bool {
++        self.active_ids().is_none_or(|(_, id)| self.commit_typing_in(id))
++    }
+     /// Undo the last change: to the Combine files list while its tab shows, else the document.
+     pub fn undo(&mut self) {
+diff --git a/crates/ui-egui/src/lib.rs b/crates/ui-egui/src/lib.rs
+index 0004c7c693f0ae60510337e3717c509376e498c3..440d9f08787ddb5ec4fa8e2b0c1b80eaa5aee2bc 100644
+--- a/crates/ui-egui/src/lib.rs
++++ b/crates/ui-egui/src/lib.rs
+@@ -306,4 +306,24 @@ struct PendingDestination {
+ }
+ 
++/// Live text/form drafts retained alongside the host's committed model snapshots.
++#[derive(Clone)]
++pub struct HostDraftSnapshot {
++    content: content_ui::ContentView,
++    line: Option<edit_text_ui::LineEditor>,
++    form: forms_ui::FormView,
++    fill: Option<fill_sign::TypeBox>,
++    pending: Option<pdfcraft_engine::Edit>,
++}
++impl HostDraftSnapshot {
++    pub fn text(&self) -> String {
++        [
++            self.content.draft.as_ref().map(|d| d.text.as_str()).unwrap_or_default(),
++            self.line.as_ref().filter(|d| d.has_changes()).map(|d| d.text.as_str()).unwrap_or_default(),
++            self.form.focus.as_ref().map(|d| d.text.as_str()).unwrap_or_default(),
++            self.fill.as_ref().map(|d| d.text.as_str()).unwrap_or_default(),
++        ]
++        .join("\u{0}")
++    }
++}
+ pub struct PdfCraftApp {
+     /// Split view (`panes`); which pane shows each tab is its view's.

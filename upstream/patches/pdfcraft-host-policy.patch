@@ -1,0 +1,46 @@
+diff --git a/crates/ui-egui/src/app/files.rs b/crates/ui-egui/src/app/files.rs
+index bdf3e62996f7547b96cb0e799b43744f7f0205bd..68c022f630452ac416332d3d3ea82df42ef5c432 100644
+--- a/crates/ui-egui/src/app/files.rs
++++ b/crates/ui-egui/src/app/files.rs
+@@ -93,4 +93,5 @@ impl PdfCraftApp {
+         // interface language, rather than in English and again when the frame applies it.
+         self.apply_status_captions(i18n::Lang::from_pref(&self.language));
++        if self.embedded && !self.views.is_empty() { return Err("Open additional documents in the host.".into()); }
+         // Images and text files become new, unsaved PDFs (Create a PDF).
+         let active = self.active;
+diff --git a/crates/ui-egui/src/tools/sign_ui.rs b/crates/ui-egui/src/tools/sign_ui.rs
+index 56410eeb33c814ea24c694e1f847fed2e6a36e0a..66c7af97dd0ec6ac672c82d97612e000377447e9 100644
+--- a/crates/ui-egui/src/tools/sign_ui.rs
++++ b/crates/ui-egui/src/tools/sign_ui.rs
+@@ -698,4 +698,5 @@ impl PdfCraftApp {
+     /// A repeat reuses the tab: every click used to open another identical one.
+     pub fn open_revision(&mut self, n: usize) {
++        if self.embedded { self.notify("Open saved versions in the host."); return; }
+         let Some((_, id)) = self.active_ids() else { return };
+         let Some(doc) = self.session.get(id) else { return };
+@@ -754,4 +755,5 @@ impl PdfCraftApp {
+     /// A repeat reuses the tab: every click used to open another identical one.
+     pub fn view_signed_version(&mut self, len: usize, revision: usize) {
++        if self.embedded { self.notify("Open saved versions in the host."); return; }
+         let Some((_, id)) = self.active_ids() else { return };
+         let Some(doc) = self.session.get(id) else { return };
+diff --git a/crates/ui-egui/src/workflows/create_ui.rs b/crates/ui-egui/src/workflows/create_ui.rs
+index 5d3d6f4cc6a3da1be10d63d8cbe5a334ac017e6f..0553d7c89e6921bf6654b1c47e0cd7631e2e30f4 100644
+--- a/crates/ui-egui/src/workflows/create_ui.rs
++++ b/crates/ui-egui/src/workflows/create_ui.rs
+@@ -123,4 +123,5 @@ impl PdfCraftApp {
+ 
+     fn open_created_bytes(&mut self, name: &str, created: Result<Arc<Vec<u8>>, String>) -> Result<(), String> {
++        if self.embedded { return Err("Create a separate PDF using the host or the standalone application.".into()); }
+         let bytes = created?;
+         let id = self.session.open_new(name, bytes).map_err(|e| e.to_string())?;
+diff --git a/crates/ui-egui/src/workflows/files.rs b/crates/ui-egui/src/workflows/files.rs
+index 82057ecc55fba0abe93cc1f3933dd114defa9765..10feed950dbc5ea795f820a28d50905728ca6ea4 100644
+--- a/crates/ui-egui/src/workflows/files.rs
++++ b/crates/ui-egui/src/workflows/files.rs
+@@ -907,4 +907,5 @@ impl PdfCraftApp {
+ 
+     pub(crate) fn open_created(&mut self, name: &str, bytes: Arc<Vec<u8>>, message: &str) {
++        if self.embedded { self.notify("Opening a generated second document is not supported in this beta. Use the standalone app for this workflow."); return; }
+         match self.session.open_new(name, bytes) {
+             Ok(id) => {

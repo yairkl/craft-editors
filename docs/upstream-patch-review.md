@@ -10,7 +10,7 @@ This integration keeps pinned upstream source and temporary patches in [the mani
 | PdfCraft | Automation/session access, host snapshots and drafts, lifecycle callbacks, UI changes and a host font registration hook. | Review automation, snapshots, font registration and host callbacks as separate changes. The font hook accepts general font metadata; only Hebrew selection is currently connected to the host fonts. | VS Code file actions, reading default and excluded native chrome stay here. |
 | VectorCraft | Embedded lifecycle and UI, branding suppression, and WebAssembly-safe MCP behavior. | Generic callbacks and portable MCP changes can be separate proposals. | Restricted-brand removal and editor UI defaults remain downstream unless agreed otherwise. |
 
-Some UI-host patches still bundle multiple concerns and are not suitable to submit wholesale. Presentation and PDF messages use host-neutral wording, but their policy still needs review as a host capability. Before proposing a patch, isolate one concern against the pinned upstream revision, replace host-specific policy with a generic capability where appropriate, add upstream-native tests, and preserve standalone defaults. Assess each change against current upstream source before sending it; upstream acceptance is not assumed.
+The host command, draft, chrome, presentation policy, branding and PDF dependency changes are maintained as separate patches. The policy and branding patches are integration-only; they are not candidates for upstream submission. Host-facing messages use generic wording, but upstreamable host interfaces still need maintainer review. Before proposing a patch, isolate one concern against the pinned upstream revision, replace host-specific policy with a generic capability where appropriate, add upstream-native tests, and preserve standalone defaults. Assess each change against current upstream source before sending it; upstream acceptance is not assumed.
 
 ## Patch-by-patch review
 
@@ -20,14 +20,21 @@ The [manifest](../upstream/manifest.json) is the source of truth for each reposi
 | --- | --- | --- |
 | `gridcraft-host-commands.patch` | Delegates file actions and committed undo/redo to the host through the services and command modules; routes native autosave through the same callback. Extract a general host callback with standalone defaults. Zoom-step changes live in the adapter, not this patch. | `npm run test:editing`, `npm run test:rendering` |
 | `wordcraft-snapshots.patch` | Exposes document snapshots for host history and recovery. Restoration also advances the upstream body-replacement epoch so an IME composition cannot survive an undo/redo body swap. Propose snapshot and restore separately from UI policy. | `npm run test:office`, `npm run test:languages` |
-| `wordcraft-ui-host.patch` | Adds host lifecycle and chrome hooks. Split lifecycle, history and UI concerns before proposing. | `npm run test:office` |
-| `deckcraft-host.patch` | Adds host file/history handling and presentation behavior. Separate lifecycle callbacks from presentation-host capabilities. | `npm run test:office` |
-| `deckcraft-ui.patch` | Declares host services and adjusts ribbon and status chrome for embedding. Split the host API and optional chrome capability for upstream review. | `npm run test:office`, `npm run test:theme` |
+| `wordcraft-host-command.patch` | Adds optional host dispatch for file and history commands. | `npm run test:office` |
+| `wordcraft-drafts.patch` | Exposes a draft flush operation before serialization. | `npm run test:office` |
+| `wordcraft-ui-host.patch` | Makes standalone title and file chrome optional. | `npm run test:office` |
+| `deckcraft-host-command.patch` | Delegates file/history commands to an optional host. | `npm run test:office` |
+| `deckcraft-ui-host.patch` | Declares host services and makes standalone chrome optional. | `npm run test:office`, `npm run test:theme` |
+| `deckcraft-presentation-policy.patch` | Disables unsupported presentation workflows in this host; integration-only. | `npm run test:office`, `npm run test:theme` |
 | `pdfcraft-automation.patch` | Exposes the automation session used by the MCP bridge. Review its public API independently of VS Code. | `npm run test:graphics` |
 | `pdfcraft-snapshots.patch` | Exposes document snapshots for history and recovery. Review snapshot ownership and restoration independently. | `npm run test:graphics` |
 | `pdfcraft-fonts.patch` | Registers host fonts, currently consumed only by Hebrew selection. Generalize coverage and preserve existing fallback behavior before an upstream proposal. | `npm run test:languages` |
 | `pdfcraft-dependencies.patch` | Uses PdfCraft’s vendored Hayro crates directly so its renderer can coexist with the other editors’ shared Hayro version. | `npm run renderers:build`, `npm run test:graphics` |
-| `pdfcraft-ui-host.patch` | Combines host lifecycle, drafts and UI changes. Embedded mode also refuses opening saved revisions as a second internal document. Split lifecycle, draft and UI behavior before proposing upstream. | `npm run test:graphics`, `npm run test:theme` |
+| `pdfcraft-host-command.patch` | Adds optional lifecycle and history command interception. | `npm run test:graphics` |
+| `pdfcraft-drafts.patch` | Exposes draft snapshot, restore and flush operations. | `npm run test:graphics` |
+| `pdfcraft-ui-host.patch` | Makes standalone tab and save chrome optional. | `npm run test:graphics`, `npm run test:theme` |
+| `pdfcraft-host-policy.patch` | Restricts second-document workflows for this host; integration-only. | `npm run test:graphics` |
+| `pdfcraft-branding.patch` | Replaces restricted marks in modified distributions; integration-only. | package and notice review |
 | `vectorcraft-mcp-wasm.patch` | Rejects writing rendered images to a path on WebAssembly while allowing image data to be returned. A portable MCP change should preserve native behavior. | `npm run renderers:build`, `npm run test:graphics` (closed-file agent returns a PNG and rejects a path without creating a file) |
 | `vectorcraft-host-command.patch` | Delegates file and committed-history commands to the host. Review the callback separately from embedded chrome. | `npm run test:graphics` |
 | `vectorcraft-branding.patch` | Removes restricted branding from modified builds. This is a downstream distribution decision, not an assumed upstream proposal. | `npm run test:graphics`, package and notice review |

@@ -2,57 +2,48 @@ diff --git a/crates/ui-egui/src/chrome.rs b/crates/ui-egui/src/chrome.rs
 index 1765c58e174af623dc09edb33c974112c26ea43a..0e6120b611520d7b16d7f0cfaece94566383b72b 100644
 --- a/crates/ui-egui/src/chrome.rs
 +++ b/crates/ui-egui/src/chrome.rs
-@@ -59,13 +59,13 @@ pub fn app_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
-         }
+@@ -60,5 +60,5 @@ pub fn app_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
          ui.horizontal_centered(|ui| {
              // With the system title bar the OS draws its own icon: no in-app brand mark.
 -            if !system {
 +            if !system && !app.services.embedded {
                  let (r, _) = ui.allocate_exact_size(vec2(MARK, MARK), Sense::hover());
                  crate::brand::paint_mark(ui, r);
-                 ui.add_space(6.0);
+@@ -66,5 +66,5 @@ pub fn app_bar(app: &mut VectorcraftApp, ui: &mut Ui) {
              }
              let on_home = menus::home_showing(app);
 -            if widgets::icon_button(ui, "house", tl!("Home"), on_home, 20.0).clicked() {
 +            if !app.services.embedded && widgets::icon_button(ui, "house", tl!("Home"), on_home, 20.0).clicked() {
                  app.run("app.home", json!({})).ok();
              }
-             ui.add_space(2.0);
 diff --git a/crates/ui-egui/src/chrome/tabs.rs b/crates/ui-egui/src/chrome/tabs.rs
 index 506b149fee296dd74296212d54788d725ddf3eda..9cd360aa7f7d860d4ab3a7ec2299bb659718be6a 100644
 --- a/crates/ui-egui/src/chrome/tabs.rs
 +++ b/crates/ui-egui/src/chrome/tabs.rs
-@@ -138,6 +138,7 @@ pub(super) fn first_tab_shown(widths: &[f32], active: Option<usize>, room: f32)
- /// strip moves its document among the others (`document.move`, #5663), a line marking where it
+@@ -139,4 +139,5 @@ pub(super) fn first_tab_shown(widths: &[f32], active: Option<usize>, room: f32)
  /// will go. A middle-click on a tab closes it, as its × does (#6506).
  pub fn doc_tabs(app: &mut VectorcraftApp, ui: &mut Ui) {
 +    if app.services.embedded { return; }
      /// The width of the » button.
      const MORE: f32 = 30.0;
-     let t = Tokens::get(ui.ctx());
 diff --git a/crates/ui-egui/src/menus/bar.rs b/crates/ui-egui/src/menus/bar.rs
 index 3f34af13a35b552857b8bc1dc6e039c44091997b..4fd06950cb4ee1b573ade52e47d510d8c5e58025 100644
 --- a/crates/ui-egui/src/menus/bar.rs
 +++ b/crates/ui-egui/src/menus/bar.rs
-@@ -27,7 +27,7 @@ pub fn menu_bar(app: &mut VectorcraftApp, ui: &mut egui::Ui) -> f32 {
-     let tree = menu_tree_named(app.session.prefs.font_names_in_english);
+@@ -28,5 +28,5 @@ pub fn menu_bar(app: &mut VectorcraftApp, ui: &mut egui::Ui) -> f32 {
      // No application menu in the window (as in Illustrator): the bar starts at File on every
      // platform. The VectorCraft menu stays in the tree: the native Mac bar takes it from there.
 -    let tree: Vec<(&str, Vec<Item>)> = tree.into_iter().filter(|(title, _)| *title != "VectorCraft").collect();
 +    let tree: Vec<(&str, Vec<Item>)> = tree.into_iter().filter(|(title, _)| *title != "VectorCraft" && !(app.services.embedded && *title == "File")).collect();
      // A menu bar for its layout and menu-button style, but the titles use `Popup::menu` directly:
      // egui 0.37's `MenuButton` opens the title under a resting pointer while another menu is open,
-     // and the app switches titles on movement only (`switch_on_hover`, the native behaviour).
 diff --git a/crates/ui-egui/src/services.rs b/crates/ui-egui/src/services.rs
-index 901c0a34098167550157612aca50a021e58f459e..22a3fa2db8c7dc96ad06d87b43f9cf6e93665787 100644
+index f6698e1caff63938379c52842b558e90eb21db17..c2187eb5ee7308535eef5ff26a3ec59c0693badc 100644
 --- a/crates/ui-egui/src/services.rs
 +++ b/crates/ui-egui/src/services.rs
-@@ -75,6 +75,8 @@ pub type OpenInFn = Box<dyn FnMut(&str) -> Result<bool, String>>;
- /// Platform services injected by the host app (desktop or web).
+@@ -76,4 +76,5 @@ pub type OpenInFn = Box<dyn FnMut(&str) -> Result<bool, String>>;
  #[derive(Default)]
  pub struct Services {
 +    pub embedded: bool,
-+    pub host_command: Option<Box<dyn FnMut(&str) -> bool>>,
-     /// Show an open dialog; returns a path.
-     pub pick_open: Option<PickOpen>,
-     /// Show a save dialog (suggested name, folder, file types); returns a path.
+     /// Return true when the host accepts dispatch; it owns persistence and error reporting.
+     pub host_command: Option<Box<dyn FnMut(&str) -> bool>>,

@@ -1,9 +1,8 @@
 diff --git a/crates/ui-egui/src/app/commands.rs b/crates/ui-egui/src/app/commands.rs
-index 04c6ecb13aa5ec0a20a5b85f835f7eeec589b57c..8da0de1b4984f68b8b969ccfbdcc5c3a3f6f1fa9 100644
+index 04c6ecb13aa5ec0a20a5b85f835f7eeec589b57c..e7f7dd4ed59362a9b4b08310e11660189694208b 100644
 --- a/crates/ui-egui/src/app/commands.rs
 +++ b/crates/ui-egui/src/app/commands.rs
-@@ -73,6 +73,9 @@ fn substitute_warnings_follow_current_font_inventory() {
- impl VectorcraftApp {
+@@ -74,4 +74,7 @@ impl VectorcraftApp {
      /// Run a UI or engine command by id. The single entry point for every frontend path.
      pub fn run(&mut self, id: &str, params: Value) -> Result<Value, String> {
 +        if self.services.host_command.as_mut().is_some_and(|host| host(id)) {
@@ -11,4 +10,45 @@ index 04c6ecb13aa5ec0a20a5b85f835f7eeec589b57c..8da0de1b4984f68b8b969ccfbdcc5c3a
 +        }
          let touch_workspace = self.session.prefs.touch_workspace;
          // A file dialog it shows off the UI thread runs it again with the path picked.
-         let result = if self.picks.is_entry_free() {
+@@ -447,2 +450,30 @@ impl VectorcraftApp {
+     }
+ }
++
++#[cfg(test)]
++mod host_command_tests {
++    use super::*;
++    use crate::Services;
++    use std::cell::Cell;
++    use std::rc::Rc;
++    use vectorcraft_engine::Session;
++
++    #[test]
++    fn optional_host_dispatch_preserves_the_standalone_fallback() {
++        let mut standalone = VectorcraftApp::new(Session::new(), Services::default());
++        assert!(standalone.run("host.test.unknown", Value::Null).is_err());
++        let calls = Rc::new(Cell::new(0));
++        let seen = Rc::clone(&calls);
++        let services = Services {
++            host_command: Some(Box::new(move |id| {
++                seen.set(seen.get() + 1);
++                id == "host.test.handled"
++            })),
++            ..Default::default()
++        };
++        let mut hosted = VectorcraftApp::new(Session::new(), services);
++        assert_eq!(hosted.run("host.test.handled", Value::Null).unwrap(), Value::Null);
++        assert!(hosted.run("host.test.unknown", Value::Null).is_err());
++        assert_eq!(calls.get(), 2);
++    }
++}
+diff --git a/crates/ui-egui/src/services.rs b/crates/ui-egui/src/services.rs
+index 901c0a34098167550157612aca50a021e58f459e..f6698e1caff63938379c52842b558e90eb21db17 100644
+--- a/crates/ui-egui/src/services.rs
++++ b/crates/ui-egui/src/services.rs
+@@ -76,4 +76,6 @@ pub type OpenInFn = Box<dyn FnMut(&str) -> Result<bool, String>>;
+ #[derive(Default)]
+ pub struct Services {
++    /// Return true when the host accepts dispatch; it owns persistence and error reporting.
++    pub host_command: Option<Box<dyn FnMut(&str) -> bool>>,
+     /// Show an open dialog; returns a path.
+     pub pick_open: Option<PickOpen>,

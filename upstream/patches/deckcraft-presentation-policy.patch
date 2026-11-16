@@ -1,0 +1,57 @@
+diff --git a/crates/ui-egui/src/app/commands.rs b/crates/ui-egui/src/app/commands.rs
+index 8b569fa8eb119d8db3eed0682330bb0bade47b48..b216391b72f0b0ce1eceeae164e034e36bc6501a 100644
+--- a/crates/ui-egui/src/app/commands.rs
++++ b/crates/ui-egui/src/app/commands.rs
+@@ -172,4 +172,8 @@ impl SlideApp {
+             }
+             "show.presenter" => {
++                if self.services.embedded {
++                    self.set_status("Presenter View needs a separate audience window and is unavailable in this host.");
++                    return Ok(json!({"on": false, "window": false}));
++                }
+                 self.ui.presenter_view = self.flag(p, self.ui.presenter_view);
+                 // The browser build has one viewport: presenter view is drawn inside the page.
+diff --git a/crates/ui-egui/src/app/playback.rs b/crates/ui-egui/src/app/playback.rs
+index c4628680749ea326df9012385cfe011d8e4719c8..b0e32f87627f0fbf3398b11ea7caf56a35ad382f 100644
+--- a/crates/ui-egui/src/app/playback.rs
++++ b/crates/ui-egui/src/app/playback.rs
+@@ -31,4 +31,8 @@ impl SlideApp {
+     /// with the current reading/presenter configuration; an out-of-range slide starts an ended show.
+     pub fn start_show(&mut self, from: usize, reading: bool) {
++        if self.services.embedded && !reading {
++            self.set_status("Presenting is unavailable in this host. Use Reading View here, or present with a standalone application.");
++            return;
++        }
+         self.anim_preview = None;
+         self.media.stop_owned(media::Owner::Editor);
+@@ -53,4 +57,8 @@ impl SlideApp {
+     /// Play custom show `name` from its first slide. Set Up Slide Show is left as it was.
+     pub fn start_custom_show(&mut self, name: &str, reading: bool) {
++        if self.services.embedded && !reading {
++            self.set_status("Presenting is unavailable in this host. Use Reading View here, or present with a standalone application.");
++            return;
++        }
+         let state = self.session.active().and_then(|d| deckcraft_anim::ShowState::play_custom(&d.doc, name));
+         let Some(state) = state else { return };
+diff --git a/crates/ui-egui/src/ribbon/slide_show.rs b/crates/ui-egui/src/ribbon/slide_show.rs
+index 89c78c11b0fe95ce2e6e81831fc105b8b537b59e..0c0cf8597880bb0507785bfeec3a570a763a1085 100644
+--- a/crates/ui-egui/src/ribbon/slide_show.rs
++++ b/crates/ui-egui/src/ribbon/slide_show.rs
+@@ -4,4 +4,8 @@ use super::{Icon, SlideApp, Ui, big, big_button, big_button_ex, group, json, row
+ 
+ pub(super) fn slide_show(app: &mut SlideApp, ui: &mut Ui) {
++    if app.services.embedded {
++        ui.label("Presenting is unavailable in this host. Use View > Reading View to preview slides, or present with a standalone application.");
++        return;
++    }
+     group(ui, |ui| {
+         if big_button(ui, Icon::PlayFromStart, "Play from\nStart", true).clicked() {
+@@ -54,4 +58,8 @@ pub(super) fn slide_show(app: &mut SlideApp, ui: &mut Ui) {
+ 
+ pub(super) fn record(app: &mut SlideApp, ui: &mut Ui) {
++    if app.services.embedded {
++        ui.label("Presenting is unavailable in this host. Use View > Reading View to preview slides, or present with a standalone application.");
++        return;
++    }
+     group(ui, |ui| {
+         let r = big_button(ui, Icon::Cameo, "Cameo", false);

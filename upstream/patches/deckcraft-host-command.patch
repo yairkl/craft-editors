@@ -1,0 +1,69 @@
+diff --git a/crates/ui-egui/src/app/commands.rs b/crates/ui-egui/src/app/commands.rs
+index 718b95acea8abb89d432c69b08700a8939e50e50..8b569fa8eb119d8db3eed0682330bb0bade47b48 100644
+--- a/crates/ui-egui/src/app/commands.rs
++++ b/crates/ui-egui/src/app/commands.rs
+@@ -19,4 +19,5 @@ impl SlideApp {
+     /// status bar and are returned.
+     pub fn run(&mut self, id: &str, params: Value) -> Result<Value, String> {
++        if self.services.host_command.as_ref().is_some_and(|host| host(id)) { return Ok(Value::Null); }
+         let r = if UI_COMMANDS.iter().any(|c| c.0 == id) {
+             self.run_ui(id, &params)
+@@ -292,2 +293,30 @@ impl SlideApp {
+     }
+ }
++
++#[cfg(test)]
++mod host_command_tests {
++    use super::*;
++    use crate::services::Services;
++    use deckcraft_engine::Session;
++    use std::cell::Cell;
++    use std::rc::Rc;
++
++    #[test]
++    fn optional_host_dispatch_preserves_the_standalone_fallback() {
++        let mut standalone = SlideApp::new(Session::new(), Services::default());
++        assert!(standalone.run("host.test.unknown", Value::Null).is_err());
++        let calls = Rc::new(Cell::new(0));
++        let seen = Rc::clone(&calls);
++        let services = Services {
++            host_command: Some(Box::new(move |id| {
++                seen.set(seen.get() + 1);
++                id == "host.test.handled"
++            })),
++            ..Default::default()
++        };
++        let mut hosted = SlideApp::new(Session::new(), services);
++        assert_eq!(hosted.run("host.test.handled", Value::Null).unwrap(), Value::Null);
++        assert!(hosted.run("host.test.unknown", Value::Null).is_err());
++        assert_eq!(calls.get(), 2);
++    }
++}
+diff --git a/crates/ui-egui/src/app/files.rs b/crates/ui-egui/src/app/files.rs
+index 3ec59202ede916732018494ce94725b51406cda5..94445501218dc76d8886ec1e99c18b35491c8648 100644
+--- a/crates/ui-egui/src/app/files.rs
++++ b/crates/ui-egui/src/app/files.rs
+@@ -449,4 +449,5 @@ impl SlideApp {
+ 
+     pub fn save_as_dialog(&mut self, format: &str) {
++        if self.services.host_command.as_ref().is_some_and(|host| host("file.saveAs")) { return; }
+         let name = self.session.active().map(|d| d.title()).unwrap_or_else(|| "Presentation".into());
+         let ext = if format == "pptx" { "pptx" } else { "deckcraft" };
+@@ -494,4 +495,5 @@ impl SlideApp {
+             return;
+         }
++        if self.services.host_command.as_ref().is_some_and(|host| host("file.save")) { return; }
+         if self.session.active().and_then(|d| d.path.clone()).is_some() {
+             match self.session.execute("file.save", &json!({})) {
+diff --git a/crates/ui-egui/src/services.rs b/crates/ui-egui/src/services.rs
+index 0ca335a84792f30c57f5aafcc4abcd55d265edf8..2ea5d92fb2ae3c31064da3d1c8354bfada687b59 100644
+--- a/crates/ui-egui/src/services.rs
++++ b/crates/ui-egui/src/services.rs
+@@ -43,4 +43,7 @@ pub struct Services {
+     /// Browser-owned presenter popup; absent on native hosts.
+     pub presenter: Option<Box<dyn crate::presenter::Host>>,
++    /// Embedded host owns file lifecycle and committed history.
++    /// Return true when the host accepts dispatch; it owns persistence and error reporting.
++    pub host_command: Option<Box<dyn Fn(&str) -> bool>>,
+     /// Open-file dialog for a purpose (`open`, `picture`, `audio`, `video`) → path.
+     pub pick_open: Option<PickFn>,

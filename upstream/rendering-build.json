@@ -38,20 +38,20 @@
   },
   "artifacts": {
     "grid/viewer.js": {
-      "bytes": 168175,
-      "sha256": "b992c81cefea7a60c83b1a4f42e9a77449a957bd0ae8a5c5f4078bd94e79fdd7"
+      "bytes": 167631,
+      "sha256": "4f66ad90e28101d7330c8efef46fe52d78ae54ad262c376e78d80ef0ccc9772d"
     },
     "grid/viewer_bg.wasm": {
-      "bytes": 27810621,
-      "sha256": "3f7fd5b4629b9f5e56ea6fce745f2796ce694c5811eea3f09938d99bc3a49f54"
+      "bytes": 27869352,
+      "sha256": "d2ded16557a5a882ab7e58b176e4415cfd3b84cd74934d52607f753a6e92c1f0"
     },
     "grid/node/viewer.js": {
-      "bytes": 164678,
-      "sha256": "be88d7afbd791b6c96d4a42104efa86db2b56c5e4b8ec0a0b3f9d5b22df1501e"
+      "bytes": 164134,
+      "sha256": "f5456af32a1c4e11e3fb9c22a6c715a4d90f17287ee854fc2ba5be4d6d59f4bb"
     },
     "grid/node/viewer_bg.wasm": {
-      "bytes": 27810621,
-      "sha256": "3f7fd5b4629b9f5e56ea6fce745f2796ce694c5811eea3f09938d99bc3a49f54"
+      "bytes": 27869352,
+      "sha256": "d2ded16557a5a882ab7e58b176e4415cfd3b84cd74934d52607f753a6e92c1f0"
     },
     "grid/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
@@ -62,20 +62,20 @@
       "sha256": "22a98f9d0c5a0532d291bdc9a3050439420b3d11143b4568fcfd3c66fff36995"
     },
     "pdf/viewer.js": {
-      "bytes": 178117,
-      "sha256": "278ed4594e54b9e9534e8a6237ce10f7bef01519bc55271a841664afbbb605e8"
+      "bytes": 177566,
+      "sha256": "a8ea11043573b969e178d84140137d570707690c87b5fdbef4e521d8993d4148"
     },
     "pdf/viewer_bg.wasm": {
-      "bytes": 53946051,
-      "sha256": "23151460c3a59b0e3a0e59cf5affe33b1f529fd7b7c1a398a60a27285d2d2209"
+      "bytes": 54087958,
+      "sha256": "f72c11af9f3798f14951a0995498f98d15734e023312e28287565f4e95be2b3a"
     },
     "pdf/node/viewer.js": {
-      "bytes": 174630,
-      "sha256": "6a8c9d2caeca9e1b87fd5592d77c4f7a35844fb4a44e93d9012ad614a72ad646"
+      "bytes": 174079,
+      "sha256": "b05d737df5235ef2da0b50fd155e4fbd52828e2f8a58d616fb7b6e3866b40cfc"
     },
     "pdf/node/viewer_bg.wasm": {
-      "bytes": 53946051,
-      "sha256": "23151460c3a59b0e3a0e59cf5affe33b1f529fd7b7c1a398a60a27285d2d2209"
+      "bytes": 54087958,
+      "sha256": "f72c11af9f3798f14951a0995498f98d15734e023312e28287565f4e95be2b3a"
     },
     "pdf/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
@@ -86,20 +86,20 @@
       "sha256": "22a98f9d0c5a0532d291bdc9a3050439420b3d11143b4568fcfd3c66fff36995"
     },
     "word/viewer.js": {
-      "bytes": 166267,
-      "sha256": "ff01aba772328aed419d1a28d8be414de04b499e7ae3904d23fcdd81fe586ac2"
+      "bytes": 165716,
+      "sha256": "b5343ad3b41bdacea6f672949d6ec4520dd6c5b1e5c77e2b708e35b2685c09f7"
     },
     "word/viewer_bg.wasm": {
-      "bytes": 47894714,
-      "sha256": "6b533147dcdd35924f089050984e7199723e5b6f599d8677672e8946adc7c761"
+      "bytes": 48008543,
+      "sha256": "7b76421a2afcbf0f578922ea5d96bde4dadfba155025e2c170a8b511f88f0e71"
     },
     "word/node/viewer.js": {
-      "bytes": 162782,
-      "sha256": "a044e695b68c46f80b088d638d61440adc5adb47dc3136fcaf5b8b4e3c0930be"
+      "bytes": 162231,
+      "sha256": "181ca1073c301c962c3d3cc27bcc8ae4e9931ca79fb07405638e24689957f19d"
     },
     "word/node/viewer_bg.wasm": {
-      "bytes": 47894714,
-      "sha256": "6b533147dcdd35924f089050984e7199723e5b6f599d8677672e8946adc7c761"
+      "bytes": 48008543,
+      "sha256": "7b76421a2afcbf0f578922ea5d96bde4dadfba155025e2c170a8b511f88f0e71"
     },
     "word/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
@@ -110,20 +110,20 @@
       "sha256": "22a98f9d0c5a0532d291bdc9a3050439420b3d11143b4568fcfd3c66fff36995"
     },
     "deck/viewer.js": {
-      "bytes": 163779,
-      "sha256": "7d7bc1290ad3369d0af20c34d93a0360df57e59468cc0ffcad319b74f2f3fdfa"
+      "bytes": 163228,
+      "sha256": "b2d05a2b14b36e64c00e71d23cf81cc5aabe6ff5ed3b245a9210ffc8c8c3667d"
     },
     "deck/viewer_bg.wasm": {
-      "bytes": 32198515,
-      "sha256": "2f3fd5f237f35265f7e3a7042638ff13ac982e29499a0e8abc1f4634a63f6d6f"
+      "bytes": 32292781,
+      "sha256": "f79454fc8223f63b772523b7881c038addbaf397f4a13d85bfc2f3b9ec6e5cb8"
     },
     "deck/node/viewer.js": {
-      "bytes": 160294,
-      "sha256": "99f671b7c735c56588b830ec3149ed4d7baac0e5e66f735d5b83c7b2150fea74"
+      "bytes": 159743,
+      "sha256": "7df838d3d180055f80ea5cf4ab4dd9528e118c0660b043e1ad002204f8bb6cad"
     },
     "deck/node/viewer_bg.wasm": {
-      "bytes": 32198515,
-      "sha256": "2f3fd5f237f35265f7e3a7042638ff13ac982e29499a0e8abc1f4634a63f6d6f"
+      "bytes": 32292781,
+      "sha256": "f79454fc8223f63b772523b7881c038addbaf397f4a13d85bfc2f3b9ec6e5cb8"
     },
     "deck/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
@@ -134,20 +134,20 @@
       "sha256": "22a98f9d0c5a0532d291bdc9a3050439420b3d11143b4568fcfd3c66fff36995"
     },
     "vector/viewer.js": {
-      "bytes": 164621,
-      "sha256": "9e9f8d32339f11015f79b584cdc938ee60ae891b74f8ae02ac8dde19bc2254dc"
+      "bytes": 164070,
+      "sha256": "a12e6adc7f4f0a486a089324fb29619b8d4d28c62c0c368ef5a371e56550a3c4"
     },
     "vector/viewer_bg.wasm": {
-      "bytes": 93029624,
-      "sha256": "9dfad9ad4358278fde45e1ba02b449b9263b4bfe3f7f1b424acf68180e9d31d2"
+      "bytes": 93416596,
+      "sha256": "a4a59cca8e06ce7ad50ae6fb286ed4fc4d2946e504310d78deb42aae2065cf6a"
     },
     "vector/node/viewer.js": {
-      "bytes": 161140,
-      "sha256": "fa877f444795d3c27b1a194d354161d631180b1012e0a7ee4cb6d7699f659d90"
+      "bytes": 160589,
+      "sha256": "3b5a50c8740c1826c6d484b6789fb24c2f89a85cc9a900d869aaa2d52ccf657a"
     },
     "vector/node/viewer_bg.wasm": {
-      "bytes": 93029624,
-      "sha256": "9dfad9ad4358278fde45e1ba02b449b9263b4bfe3f7f1b424acf68180e9d31d2"
+      "bytes": 93416596,
+      "sha256": "a4a59cca8e06ce7ad50ae6fb286ed4fc4d2946e504310d78deb42aae2065cf6a"
     },
     "vector/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
@@ -162,7 +162,7 @@
     "gridcraft": [
       {
         "path": "upstream/patches/gridcraft-host-commands.patch",
-        "sha256": "e40a8159d2532030457a4cbbc054ba8fffefe8a2f7e93281899f5793348e8de3",
+        "sha256": "632cd264ffafa220eb9961ac0ce6fc6fc39fc69dd3d3cfd93420f8c3bce8d510",
         "purpose": "Delegate native file lifecycle and committed undo/redo to an embedding host without acknowledging writes early.",
         "removalCondition": "Remove when upstream supplies host-owned file and committed-history callbacks with persistence acknowledgment and the adapter uses them."
       }
@@ -187,58 +187,94 @@
         "removalCondition": "Remove when upstream provides a suitable host-font registration and selection mechanism or the fallback is no longer needed."
       },
       {
-        "path": "upstream/patches/pdfcraft-ui-host.patch",
-        "sha256": "7a8528850ac7b8413638cb3561dd4c91f7d554b29a2ade426d559fcd05480f3a",
-        "purpose": "Provide embedded lifecycle, drafts and UI hooks.",
-        "removalCondition": "Remove when upstream supplies the required lifecycle, draft and optional UI capabilities and the adapter uses them."
-      },
-      {
         "path": "upstream/patches/pdfcraft-dependencies.patch",
         "sha256": "eb961275ca433a6970fe5aa5a3de4ce126c1ba0ffedf5e3d8fbaf16db499feec",
         "purpose": "Use the PDF renderer’s vendored Hayro dependencies alongside the other editors’ shared versions.",
         "removalCondition": "Remove when the editors can use a common compatible Hayro dependency set."
+      },
+      {
+        "path": "upstream/patches/pdfcraft-host-command.patch",
+        "sha256": "0336a686cee4f9517ea07193ca82a8808e5dd2ed092b9f344cdbfea3e684112d",
+        "purpose": "Expose optional host command dispatch for embedded lifecycle and history.",
+        "removalCondition": "Remove when upstream provides equivalent host-owned lifecycle and history callbacks."
+      },
+      {
+        "path": "upstream/patches/pdfcraft-drafts.patch",
+        "sha256": "4bd74672372b462c9d0e5375c802e030fc2406144e8d810bebf5e41b772b88e1",
+        "purpose": "Expose reusable snapshots and flush state for in-progress edits.",
+        "removalCondition": "Remove when upstream exposes draft snapshots and flush capabilities needed by the host."
+      },
+      {
+        "path": "upstream/patches/pdfcraft-ui-host.patch",
+        "sha256": "4e34934d3a538b5e582bbcfc0d9b49b990392a96925ab047f3b6644f1d9d4d1b",
+        "purpose": "Allow the host to omit standalone tab and save chrome.",
+        "removalCondition": "Remove when upstream provides optional host-controlled chrome."
+      },
+      {
+        "path": "upstream/patches/pdfcraft-host-policy.patch",
+        "sha256": "6592d1c5f50957a6c9a0e2851019aa8d928ad7f7d910ec82e4a3eedf0d736361",
+        "purpose": "Restrict multi-document workflows in this single-document host.",
+        "removalCondition": "Remove when the host can open generated documents and revisions safely."
+      },
+      {
+        "path": "upstream/patches/pdfcraft-branding.patch",
+        "sha256": "d1be92088794b2f7d0f78425610074234965a2f61aa97819d1d34b679415f79f",
+        "purpose": "Replace restricted branding in modified distributed builds.",
+        "removalCondition": "Remove when modified builds can omit restricted branding without a patch."
       }
     ],
     "wordcraft": [
       {
         "path": "upstream/patches/wordcraft-snapshots.patch",
-        "sha256": "ed690a938907686ea6782a91cc3b012efe6a7fa74544fbd413453e8b41d54c51",
+        "sha256": "28726eeee0e651796b4ac2c25227616e764d19165f5ec4c1970c2d06568de810",
         "purpose": "Expose reusable host document snapshots.",
         "removalCondition": "Remove when upstream exposes snapshots and restoration sufficient for host history and recovery and the adapter uses them."
       },
       {
+        "path": "upstream/patches/wordcraft-host-command.patch",
+        "sha256": "5f85964df3cbd26960e9a1124453e9cc8ca56070f2752e332d9db75e8954e56c",
+        "purpose": "Optional host command dispatch for file and history operations.",
+        "removalCondition": "Remove when upstream provides equivalent host command callbacks."
+      },
+      {
+        "path": "upstream/patches/wordcraft-drafts.patch",
+        "sha256": "403910e3f331263eea7444f2d72ce6e896bdecb491d8137362f6386d118ce8de",
+        "purpose": "Expose draft flushing before a host serializes the document.",
+        "removalCondition": "Remove when upstream exposes equivalent draft flushing."
+      },
+      {
         "path": "upstream/patches/wordcraft-ui-host.patch",
-        "sha256": "8186dc2e25add171339de6f695c943b6cf74e916b8d27bc37b3b3d9406386f90",
-        "purpose": "Provide embedded lifecycle and UI hooks.",
-        "removalCondition": "Remove when upstream supplies the required lifecycle, history, flush and optional UI hooks and the adapter uses them."
+        "sha256": "28736299be166d83e2f4ff2f68bd0660b7c4bc99b5a78bfe0e4526341f8cf921",
+        "purpose": "Allow standalone title and file chrome to be omitted.",
+        "removalCondition": "Remove when upstream supports optional host-controlled chrome."
       }
     ],
     "deckcraft": [
       {
-        "path": "upstream/patches/deckcraft-host.patch",
-        "sha256": "e45b29418d6173b123ca76aad13ad05379083cb42d8b78f1c907dfe722c61f9e",
-        "purpose": "Provide embedded lifecycle and presentation behavior.",
-        "removalCondition": "Remove when upstream supplies the required lifecycle, history and presentation-host capabilities and the adapter uses them."
+        "path": "upstream/patches/deckcraft-host-command.patch",
+        "sha256": "07094cbe54be726221c443d0b86659c1f4a0c2177a8b27f2096da9659860178d",
+        "purpose": "Delegate host-owned file and history commands.",
+        "removalCondition": "Remove when upstream supplies equivalent host command callbacks."
       },
       {
-        "path": "upstream/patches/deckcraft-ui.patch",
-        "sha256": "6d5b53e11766be1a2a2a332f2451eed9b6e550ae36f93900f71a81fd50879b70",
-        "purpose": "Declare host services and adjust native chrome for embedding.",
-        "removalCondition": "Remove when upstream supports the required optional ribbon and status chrome or the embedding no longer requires those changes."
+        "path": "upstream/patches/deckcraft-ui-host.patch",
+        "sha256": "a1e75f16f5e8c06ffa05552a52cbb442490291e47ab3080088e0585ca11e2b92",
+        "purpose": "Declare optional host services and embedded chrome.",
+        "removalCondition": "Remove when upstream supports equivalent host services and optional chrome."
+      },
+      {
+        "path": "upstream/patches/deckcraft-presentation-policy.patch",
+        "sha256": "9fae4f340950fe758a7a84cfbd35dfec282b9b4edb6ef01f28423f74247a5957",
+        "purpose": "Restrict presentation modes unavailable in this host.",
+        "removalCondition": "Remove when the host supports the required presentation capabilities."
       }
     ],
     "vectorcraft": [
       {
         "path": "upstream/patches/vectorcraft-mcp-wasm.patch",
-        "sha256": "c07cfae786d7ecd69bb84a156e2c2165d9dc185dfa7643e5f46deceeb2e05c22",
+        "sha256": "23a07f11f1fd315de5b5dbb466ab811411e28eaeb0cda0722c6434725c3690ff",
         "purpose": "Allow headless MCP to build for WebAssembly.",
         "removalCondition": "Remove when upstream supports the embedded WebAssembly MCP rendering path without filesystem writes or the adapter no longer needs it."
-      },
-      {
-        "path": "upstream/patches/vectorcraft-host-command.patch",
-        "sha256": "14bccbda2d62a5d229b65c02430e6851f14007b30533fea889c0c4840da73a89",
-        "purpose": "Delegate file lifecycle and committed undo/redo to the embedding host.",
-        "removalCondition": "Remove when upstream exposes an equivalent host-command callback and the adapter uses it."
       },
       {
         "path": "upstream/patches/vectorcraft-branding.patch",
@@ -247,10 +283,16 @@
         "removalCondition": "Remove when modified builds can omit restricted branding without this patch or applicable branding terms permit its use."
       },
       {
+        "path": "upstream/patches/vectorcraft-host-command.patch",
+        "sha256": "b6e50be77f961340f7506e911fd279424a533f492b95a27d527367a67b1c74f7",
+        "purpose": "Delegate file lifecycle and committed undo/redo to the embedding host.",
+        "removalCondition": "Remove when upstream exposes an equivalent host-command callback."
+      },
+      {
         "path": "upstream/patches/vectorcraft-ui-host.patch",
-        "sha256": "78f5830c6d0ed05c8521a69b04c2a57b0e109ef118bf65b6924842c383afd460",
-        "purpose": "Provide embedded lifecycle and UI hooks.",
-        "removalCondition": "Remove when upstream supplies the required lifecycle, history and optional UI capabilities and the adapter uses them."
+        "sha256": "c4155c81af1b3e60f2974324375b522354f7854c1ea9b55363a92fe72cdaacd7",
+        "purpose": "Provide optional embedded chrome.",
+        "removalCondition": "Remove when upstream supports equivalent optional chrome."
       }
     ]
   }
