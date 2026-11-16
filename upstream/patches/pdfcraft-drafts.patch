@@ -1,5 +1,5 @@
 diff --git a/crates/ui-egui/src/editing.rs b/crates/ui-egui/src/editing.rs
-index b539997fa6a3bba89be4ec970ca64e5df64f3d07..2a4fc815a8a81c89eab60cadd5368385a8ebb7a9 100644
+index b539997fa6a3bba89be4ec970ca64e5df64f3d07..d493a894fb31a80031752c53d458f81c817b7a4e 100644
 --- a/crates/ui-egui/src/editing.rs
 +++ b/crates/ui-egui/src/editing.rs
 @@ -299,4 +299,27 @@ impl PdfCraftApp {
@@ -30,6 +30,28 @@ index b539997fa6a3bba89be4ec970ca64e5df64f3d07..2a4fc815a8a81c89eab60cadd5368385
 +    }
      /// Undo the last change: to the Combine files list while its tab shows, else the document.
      pub fn undo(&mut self) {
+@@ -1784,2 +1807,21 @@ mod attention_tests {
+     }
+ }
++
++#[cfg(test)]
++mod host_draft_snapshot_tests {
++    #[test]
++    fn host_draft_snapshot_restores_pending_edit() {
++        let mut app = crate::PdfCraftApp::new();
++        app.open_bytes("draft.pdf", None, include_bytes!("../tests/data/form.pdf").to_vec()).unwrap();
++        assert!(!app.host_pending());
++        assert!(app.host_flush());
++        app.views[0].pending_edit = Some(pdfcraft_engine::Edit::RotatePages { pages: vec![0], degrees: 90 });
++        assert!(app.host_pending());
++        let draft = app.host_draft();
++        app.views[0].pending_edit = None;
++        assert!(!app.host_pending());
++        app.host_restore_draft(&draft);
++        assert!(matches!(app.views[0].pending_edit, Some(pdfcraft_engine::Edit::RotatePages { degrees: 90, .. })));
++        assert!(app.host_pending());
++    }
++}
 diff --git a/crates/ui-egui/src/lib.rs b/crates/ui-egui/src/lib.rs
 index 0004c7c693f0ae60510337e3717c509376e498c3..440d9f08787ddb5ec4fa8e2b0c1b80eaa5aee2bc 100644
 --- a/crates/ui-egui/src/lib.rs

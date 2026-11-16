@@ -19,4 +19,14 @@ cargo +1.95.0 test --manifest-path upstream/checkouts/deckcraft/Cargo.toml -p de
 cargo +1.95.0 test --manifest-path upstream/checkouts/pdfcraft/Cargo.toml -p pdfcraft-ui-egui --lib optional_host_dispatch_preserves_the_standalone_fallback
 cargo +1.95.0 test --manifest-path upstream/checkouts/vectorcraft/Cargo.toml -p vectorcraft-ui-egui --lib optional_host_dispatch_preserves_the_standalone_fallback
 cargo +1.95.0 test --manifest-path upstream/checkouts/vectorcraft/Cargo.toml -p vectorcraft-mcp --lib headless_render_returns_data_and_writes_png_on_native_hosts
+cargo +1.95.0 test --manifest-path upstream/checkouts/wordcraft/Cargo.toml -p wordcraft-ui-egui --lib host_flush_commits_a_comment_draft_and_preserves_undo
+cargo +1.95.0 test --manifest-path upstream/checkouts/wordcraft/Cargo.toml -p wordcraft-ui-egui --lib standalone_title_controls_are_omitted_only_when_embedded
+cargo +1.95.0 test --manifest-path upstream/checkouts/deckcraft/Cargo.toml -p deckcraft-ui-egui --lib standalone_title_bar_is_omitted_only_when_embedded
+cargo +1.95.0 test --manifest-path upstream/checkouts/vectorcraft/Cargo.toml -p vectorcraft-ui-egui --lib embedded_chrome_hides_the_mark_but_standalone_keeps_it
+cargo +1.95.0 test --manifest-path upstream/checkouts/pdfcraft/Cargo.toml -p pdfcraft-engine --lib host_snapshots_restore_revisions_repeatedly
+cargo +1.95.0 test --manifest-path upstream/checkouts/pdfcraft/Cargo.toml -p pdfcraft-fonts --test host_fallback
+cargo +1.95.0 test --manifest-path upstream/checkouts/pdfcraft/Cargo.toml -p pdfcraft-ui-egui --lib host_draft_snapshot_restores_pending_edit
+cargo +1.95.0 test --manifest-path upstream/checkouts/pdfcraft/Cargo.toml -p pdfcraft-ui-egui --lib host_commands_do_not_redirect_a_standalone_background_tab_close
+cargo +1.95.0 test --manifest-path upstream/checkouts/pdfcraft/Cargo.toml -p pdfcraft-ui-egui --lib single_document_host_only_receives_valid_close_requests
+cargo +1.95.0 test --manifest-path upstream/checkouts/pdfcraft/Cargo.toml -p pdfcraft-ui-egui --lib standalone_document_tab_is_omitted_when_embedded
 ```

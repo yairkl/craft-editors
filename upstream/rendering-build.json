@@ -63,19 +63,19 @@
     },
     "pdf/viewer.js": {
       "bytes": 177566,
-      "sha256": "a8ea11043573b969e178d84140137d570707690c87b5fdbef4e521d8993d4148"
+      "sha256": "0180011b81b432f72a1e0b95b14d9709731e3c34ef31b362dc17b78b472d9042"
     },
     "pdf/viewer_bg.wasm": {
-      "bytes": 54087958,
-      "sha256": "f72c11af9f3798f14951a0995498f98d15734e023312e28287565f4e95be2b3a"
+      "bytes": 54086527,
+      "sha256": "d1fb5383e411ee9200055b47e86359b22ba095ce417adad0c52a797b884ad948"
     },
     "pdf/node/viewer.js": {
       "bytes": 174079,
-      "sha256": "b05d737df5235ef2da0b50fd155e4fbd52828e2f8a58d616fb7b6e3866b40cfc"
+      "sha256": "a372417b8ef420e02e0b448429ec4e9a22892aeb54899da873fbcfc238bf1594"
     },
     "pdf/node/viewer_bg.wasm": {
-      "bytes": 54087958,
-      "sha256": "f72c11af9f3798f14951a0995498f98d15734e023312e28287565f4e95be2b3a"
+      "bytes": 54086527,
+      "sha256": "d1fb5383e411ee9200055b47e86359b22ba095ce417adad0c52a797b884ad948"
     },
     "pdf/snippets/eframe-d31a8450ea12dfc1/inline0.js": {
       "bytes": 280,
@@ -176,13 +176,13 @@
       },
       {
         "path": "upstream/patches/pdfcraft-snapshots.patch",
-        "sha256": "87f550eeba068a0f2ded638a91bc4c2134fc3a2a530a1eb6a83000a3dff79005",
+        "sha256": "7ff71a68b7ddc176b5f0aa0e9b03acb05557abe536c124c6e252bd18e4f92a23",
         "purpose": "Expose host-owned document snapshots.",
         "removalCondition": "Remove when upstream exposes snapshots and restoration sufficient for host history and drafts and the adapter uses them."
       },
       {
         "path": "upstream/patches/pdfcraft-fonts.patch",
-        "sha256": "bf8dffe03cf2524423ed29e20cde4217426358dab6a9147ed247acd4e12831f6",
+        "sha256": "5bb418cc3ae3c370568ec383b02877b08e5f9d3f880a66c705e59bad19842871",
         "purpose": "Register host-provided font data for the Hebrew font selection path.",
         "removalCondition": "Remove when upstream provides a suitable host-font registration and selection mechanism or the fallback is no longer needed."
       },
@@ -194,25 +194,25 @@
       },
       {
         "path": "upstream/patches/pdfcraft-host-command.patch",
-        "sha256": "0336a686cee4f9517ea07193ca82a8808e5dd2ed092b9f344cdbfea3e684112d",
+        "sha256": "56dafd99dd8cb4d6a511036dd900143ae574ca9a0c6a0766ace24a057a475397",
         "purpose": "Expose optional host command dispatch for embedded lifecycle and history.",
         "removalCondition": "Remove when upstream provides equivalent host-owned lifecycle and history callbacks."
       },
       {
         "path": "upstream/patches/pdfcraft-drafts.patch",
-        "sha256": "4bd74672372b462c9d0e5375c802e030fc2406144e8d810bebf5e41b772b88e1",
+        "sha256": "b3cbafc93f751c9bfc0f18819285ee26dd9dde68042a1ec7c3b9ef7c0e418ba2",
         "purpose": "Expose reusable snapshots and flush state for in-progress edits.",
         "removalCondition": "Remove when upstream exposes draft snapshots and flush capabilities needed by the host."
       },
       {
         "path": "upstream/patches/pdfcraft-ui-host.patch",
-        "sha256": "4e34934d3a538b5e582bbcfc0d9b49b990392a96925ab047f3b6644f1d9d4d1b",
+        "sha256": "a81d7741b9a1584f8b02aa794e63675ebda6620f70ef6e0f3ff36b4af30086a6",
         "purpose": "Allow the host to omit standalone tab and save chrome.",
         "removalCondition": "Remove when upstream provides optional host-controlled chrome."
       },
       {
         "path": "upstream/patches/pdfcraft-host-policy.patch",
-        "sha256": "6592d1c5f50957a6c9a0e2851019aa8d928ad7f7d910ec82e4a3eedf0d736361",
+        "sha256": "a1b2820fcd13f6e964e75f14d73966b23be60f3d7079dc047b9c75a4e509548b",
         "purpose": "Restrict multi-document workflows in this single-document host.",
         "removalCondition": "Remove when the host can open generated documents and revisions safely."
       },
@@ -238,13 +238,13 @@
       },
       {
         "path": "upstream/patches/wordcraft-drafts.patch",
-        "sha256": "403910e3f331263eea7444f2d72ce6e896bdecb491d8137362f6386d118ce8de",
+        "sha256": "b2004ca6585f5cb4b7adcb25040f1e82a923ac30576ad06accdaea7b3e3911e8",
         "purpose": "Expose draft flushing before a host serializes the document.",
         "removalCondition": "Remove when upstream exposes equivalent draft flushing."
       },
       {
         "path": "upstream/patches/wordcraft-ui-host.patch",
-        "sha256": "28736299be166d83e2f4ff2f68bd0660b7c4bc99b5a78bfe0e4526341f8cf921",
+        "sha256": "3b3588c6626dfc4e359e10d07c362e640cab99a5f181ad4bd049a1bfbcd3de43",
         "purpose": "Allow standalone title and file chrome to be omitted.",
         "removalCondition": "Remove when upstream supports optional host-controlled chrome."
       }
@@ -258,7 +258,7 @@
       },
       {
         "path": "upstream/patches/deckcraft-ui-host.patch",
-        "sha256": "a1e75f16f5e8c06ffa05552a52cbb442490291e47ab3080088e0585ca11e2b92",
+        "sha256": "da4770a8160478f4787797ec6618d16903e2b52d0ed92ef42431c148c81127b7",
         "purpose": "Declare optional host services and embedded chrome.",
         "removalCondition": "Remove when upstream supports equivalent host services and optional chrome."
       },
@@ -290,7 +290,7 @@
       },
       {
         "path": "upstream/patches/vectorcraft-ui-host.patch",
-        "sha256": "c4155c81af1b3e60f2974324375b522354f7854c1ea9b55363a92fe72cdaacd7",
+        "sha256": "3e467bea4f4173fa523572c1fbb5382f6887ee0b005891d4d84e2131e0205d0a",
         "purpose": "Provide optional embedded chrome.",
         "removalCondition": "Remove when upstream supports equivalent optional chrome."
       }

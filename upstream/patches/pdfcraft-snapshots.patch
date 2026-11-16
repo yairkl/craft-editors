@@ -2,8 +2,7 @@ diff --git a/crates/engine/src/lib.rs b/crates/engine/src/lib.rs
 index adb69cec4638000490a8e38220c454b9c40f057a..05146fc3937f969b189d93b7fe42bd52456239d2 100644
 --- a/crates/engine/src/lib.rs
 +++ b/crates/engine/src/lib.rs
-@@ -71,6 +71,13 @@ mod xfa_form;
- 
+@@ -72,4 +72,11 @@ mod xfa_form;
  use std::sync::Arc;
  
 +/// Exact in-memory state for an embedding host's revision history.
@@ -15,13 +14,11 @@ index adb69cec4638000490a8e38220c454b9c40f057a..05146fc3937f969b189d93b7fe42bd52
 +
  pub use links::{
      MAX_REMOTE_DOCUMENT_BYTES, RemoteDocumentPathError, read_remote_document, remote_document_path_is_absolute, resolve_remote_document_path,
- };
 diff --git a/crates/engine/src/session/editing.rs b/crates/engine/src/session/editing.rs
-index a039f56798f29deaf7570247de67e75c62a58df1..b36c90a8b752b1129a4dec260f9b9377178c735b 100644
+index a039f56798f29deaf7570247de67e75c62a58df1..0996cb578d5056c9a2cf2f9fe6de459f86dd4693 100644
 --- a/crates/engine/src/session/editing.rs
 +++ b/crates/engine/src/session/editing.rs
-@@ -383,6 +383,30 @@ impl Session {
-         Ok(cx.prepared)
+@@ -384,4 +384,28 @@ impl Session {
      }
  
 +    pub fn host_snapshot(&self, id: DocId) -> crate::HostSnapshot {
@@ -50,4 +47,30 @@ index a039f56798f29deaf7570247de67e75c62a58df1..b36c90a8b752b1129a4dec260f9b9377
 +    }
      /// Undo the last edit of document `id`, keeping it for [`Session::redo`]. Returns its label.
      pub fn undo(&mut self, id: DocId) -> Result<Label, EditError> {
-         let doc = self.doc_mut(id)?;
+@@ -758,2 +782,26 @@ fn edit_notices(edit: &Edit, prev: &pdfcraft_cos::Document, next: &pdfcraft_cos:
+     notices
+ }
++
++#[cfg(test)]
++mod host_snapshot_tests {
++    use super::*;
++
++    #[test]
++    fn host_snapshots_restore_revisions_repeatedly() {
++        let mut session = Session::new();
++        let bytes = session.create_blank(200.0, 300.0, 1).unwrap();
++        let id = session.open_new("snapshot.pdf", bytes).unwrap();
++        let original = session.host_snapshot(id);
++        session.apply(id, Edit::RotatePages { pages: vec![0], degrees: 90 }).unwrap();
++        let rotated = session.host_snapshot(id);
++        assert_eq!(session.get(id).unwrap().info.pages[0].rotation, 90);
++        session.host_restore(id, &original).unwrap();
++        assert_eq!(session.get(id).unwrap().info.pages[0].rotation, 0);
++        assert!(session.host_matches(id, &original));
++        session.host_restore(id, &rotated).unwrap();
++        assert_eq!(session.get(id).unwrap().info.pages[0].rotation, 90);
++        assert!(session.host_matches(id, &rotated));
++        session.host_restore(id, &original).unwrap();
++        assert_eq!(session.get(id).unwrap().info.pages[0].rotation, 0);
++    }
++}

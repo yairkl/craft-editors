@@ -30,10 +30,10 @@ The [manifest](../upstream/manifest.json) is the source of truth for each reposi
 | `pdfcraft-snapshots.patch` | Exposes document snapshots for history and recovery. Review snapshot ownership and restoration independently. | `npm run test:graphics` |
 | `pdfcraft-fonts.patch` | Registers host fonts, currently consumed only by Hebrew selection. Generalize coverage and preserve existing fallback behavior before an upstream proposal. | `npm run test:languages` |
 | `pdfcraft-dependencies.patch` | Uses PdfCraft’s vendored Hayro crates directly so its renderer can coexist with the other editors’ shared Hayro version. | `npm run renderers:build`, `npm run test:graphics` |
-| `pdfcraft-host-command.patch` | Adds optional lifecycle and history command interception. | `npm run test:graphics` |
+| `pdfcraft-host-command.patch` | Adds optional lifecycle and history command interception; standalone tab closing remains owned by the application. | `npm run test:graphics` |
 | `pdfcraft-drafts.patch` | Exposes draft snapshot, restore and flush operations. | `npm run test:graphics` |
 | `pdfcraft-ui-host.patch` | Makes standalone tab and save chrome optional. | `npm run test:graphics`, `npm run test:theme` |
-| `pdfcraft-host-policy.patch` | Restricts second-document workflows for this host; integration-only. | `npm run test:graphics` |
+| `pdfcraft-host-policy.patch` | Restricts second-document workflows and delegates valid single-document tab closure to this host; integration-only. | `npm run test:graphics` |
 | `pdfcraft-branding.patch` | Replaces restricted marks in modified distributions; integration-only. | package and notice review |
 | `vectorcraft-mcp-wasm.patch` | Rejects writing rendered images to a path on WebAssembly while allowing image data to be returned. A portable MCP change should preserve native behavior. | `npm run renderers:build`, `npm run test:graphics` (closed-file agent returns a PNG and rejects a path without creating a file) |
 | `vectorcraft-host-command.patch` | Delegates file and committed-history commands to the host. Review the callback separately from embedded chrome. | `npm run test:graphics` |

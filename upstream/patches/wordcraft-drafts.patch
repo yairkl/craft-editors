@@ -9,3 +9,30 @@ index b2533e5f1f0c722aa48e4d845f7255979217e434..3733f58bf97998f8718db2d357d41d4c
 +    pub fn host_flush(&mut self) -> Result<(), String> { panes::flush_comment_drafts(self) }
      /// Creates the app: adopts the system locale, then initializes the document session, UI state,
      /// services, printing, canvas, dialogs, previews, control and screenshot state, font and theme
+diff --git a/crates/ui-egui/src/panes/comments.rs b/crates/ui-egui/src/panes/comments.rs
+index c43e016d501f79ffc62020107022229c6a6f88d6..9cce0946dddb98afc73b24bb702f2d0b2beccb61 100644
+--- a/crates/ui-egui/src/panes/comments.rs
++++ b/crates/ui-egui/src/panes/comments.rs
+@@ -257,2 +257,22 @@ pub(crate) fn flush_comment_drafts(app: &mut WordApp) -> Result<(), String> {
+     first
+ }
++
++#[cfg(test)]
++mod host_flush_tests {
++    use super::*;
++
++    #[test]
++    fn host_flush_commits_a_comment_draft_and_preserves_undo() {
++        let mut app = WordApp::new(wordcraft_engine::Session::new(wordcraft_doc::Document::from_text("Hello")), Default::default());
++        app.run("select.text", json!({"text": "Hello"})).unwrap();
++        let id = app.run("review.newComment", json!({"text": "before"})).unwrap()["id"].as_u64().unwrap() as u32;
++        drafts(&mut app).edits.insert(id, "after".into());
++        assert!(has_comment_drafts(&app));
++        app.host_flush().unwrap();
++        assert!(!has_comment_drafts(&app));
++        let part = app.session.doc.comments[&id].part;
++        assert_eq!(app.session.doc.plain_text(StoryRef::Part(part)), "after");
++        app.run("edit.undo", json!({})).unwrap();
++        assert_eq!(app.session.doc.plain_text(StoryRef::Part(part)), "before");
++    }
++}
