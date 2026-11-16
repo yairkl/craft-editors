@@ -26,6 +26,21 @@ index 506b149fee296dd74296212d54788d725ddf3eda..9cd360aa7f7d860d4ab3a7ec2299bb65
 +    if app.services.embedded { return; }
      /// The width of the » button.
      const MORE: f32 = 30.0;
+diff --git a/crates/ui-egui/src/chrome/tests.rs b/crates/ui-egui/src/chrome/tests.rs
+index a87b00045563656ffd4791e272825d7828124753..e593980ca6b36f41d91c548ba3505cad604b80b7 100644
+--- a/crates/ui-egui/src/chrome/tests.rs
++++ b/crates/ui-egui/src/chrome/tests.rs
+@@ -2847,2 +2847,10 @@ fn the_control_bar_shows_the_inline_transform_fields_only_when_they_fit() {
+     }
+ }
++
++#[test]
++fn embedded_chrome_hides_the_mark_but_standalone_keeps_it() {
++    let mut app = crate::VectorcraftApp::new(Session::new(), Default::default());
++    assert_eq!(brand_marks(&mut app), 1);
++    app.services.embedded = true;
++    assert_eq!(brand_marks(&mut app), 0);
++}
 diff --git a/crates/ui-egui/src/menus/bar.rs b/crates/ui-egui/src/menus/bar.rs
 index 3f34af13a35b552857b8bc1dc6e039c44091997b..4fd06950cb4ee1b573ade52e47d510d8c5e58025 100644
 --- a/crates/ui-egui/src/menus/bar.rs

@@ -9,7 +9,7 @@ index 3a1d678d8347a07006fe4d4d50613bbb903c75e8..509ad79db2ef6618ad838298703a708e
              host_dirty: None,
              close_request: None,
 diff --git a/crates/ui-egui/src/app/files.rs b/crates/ui-egui/src/app/files.rs
-index 81c65a2b030e35924c9e2c6cc5fbd3fc3fcff668..bdf3e62996f7547b96cb0e799b43744f7f0205bd 100644
+index 81c65a2b030e35924c9e2c6cc5fbd3fc3fcff668..6a27b62ec606e4cce663d69b919a020b8a20571a 100644
 --- a/crates/ui-egui/src/app/files.rs
 +++ b/crates/ui-egui/src/app/files.rs
 @@ -1038,4 +1038,5 @@ impl PdfCraftApp {
@@ -18,14 +18,8 @@ index 81c65a2b030e35924c9e2c6cc5fbd3fc3fcff668..bdf3e62996f7547b96cb0e799b43744f
 +        if self.host_command.as_mut().is_some_and(|host| host("file.open")) { return; }
          self.startup_superseded = true;
          #[cfg(not(target_arch = "wasm32"))]
-@@ -1064,4 +1065,5 @@ impl PdfCraftApp {
- 
-     pub fn close_tab(&mut self, index: usize) {
-+        if self.host_command.as_mut().is_some_and(|host| host("file.close")) { return; }
-         if index >= self.views.len() {
-             return;
 diff --git a/crates/ui-egui/src/commands.rs b/crates/ui-egui/src/commands.rs
-index 3b422181a96f957bc6e7a9d1422b892a31fcdff8..e2f8b8880cb14b520f8af205c05676a8decd7b20 100644
+index 3b422181a96f957bc6e7a9d1422b892a31fcdff8..03e55f5cf2ae0a8f7a7e9814bc6ee65b08994d5c 100644
 --- a/crates/ui-egui/src/commands.rs
 +++ b/crates/ui-egui/src/commands.rs
 @@ -114,4 +114,7 @@ impl PdfCraftApp {
@@ -36,7 +30,7 @@ index 3b422181a96f957bc6e7a9d1422b892a31fcdff8..e2f8b8880cb14b520f8af205c05676a8
 +        }
          let done = match pdfcraft_engine::guard(|| self.execute_unguarded(id)) {
              Ok(done) => done,
-@@ -981,2 +984,27 @@ mod tests {
+@@ -981,2 +984,44 @@ mod tests {
      }
  }
 +
@@ -45,6 +39,25 @@ index 3b422181a96f957bc6e7a9d1422b892a31fcdff8..e2f8b8880cb14b520f8af205c05676a8
 +    use super::*;
 +    use std::cell::Cell;
 +    use std::rc::Rc;
++
++    #[test]
++    fn host_commands_do_not_redirect_a_standalone_background_tab_close() {
++        let mut app = PdfCraftApp::new();
++        let bytes = include_bytes!("../tests/data/form.pdf").to_vec();
++        app.open_bytes("first.pdf", None, bytes.clone()).unwrap();
++        app.open_bytes("second.pdf", None, bytes).unwrap();
++        let second = app.views[1].view_key();
++        let calls = Rc::new(Cell::new(0));
++        let seen = Rc::clone(&calls);
++        app.host_command = Some(Box::new(move |id| {
++            if id == "file.close" { seen.set(seen.get() + 1); return true; }
++            false
++        }));
++        app.close_tab(0);
++        assert_eq!(calls.get(), 0, "a generic host command cannot identify the requested tab");
++        assert_eq!(app.views.len(), 1);
++        assert_eq!(app.views[0].view_key(), second);
++    }
 +
 +    #[test]
 +    fn optional_host_dispatch_preserves_the_standalone_fallback() {
@@ -59,9 +72,7 @@ index 3b422181a96f957bc6e7a9d1422b892a31fcdff8..e2f8b8880cb14b520f8af205c05676a8
 +        }));
 +        assert!(hosted.execute("host.test.handled"));
 +        assert!(!hosted.execute("host.test.unknown"));
-+        // A host may own tab closure even when it uses standalone chrome.
-+        hosted.close_tab(0);
-+        assert_eq!(calls.get(), 3);
++        assert_eq!(calls.get(), 2);
 +    }
 +}
 diff --git a/crates/ui-egui/src/editing.rs b/crates/ui-egui/src/editing.rs

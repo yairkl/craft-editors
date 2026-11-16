@@ -1,5 +1,5 @@
 diff --git a/crates/ui-egui/src/app.rs b/crates/ui-egui/src/app.rs
-index 509ad79db2ef6618ad838298703a708ec9a84d7e..b2fcb2e0ab7bce7e170985a01c79537b55eafcdf 100644
+index 509ad79db2ef6618ad838298703a708ec9a84d7e..108530af0228ab9c5041bc5b1e5a5cf72b96e193 100644
 --- a/crates/ui-egui/src/app.rs
 +++ b/crates/ui-egui/src/app.rs
 @@ -200,4 +200,5 @@ impl PdfCraftApp {
@@ -15,6 +15,30 @@ index 509ad79db2ef6618ad838298703a708ec9a84d7e..b2fcb2e0ab7bce7e170985a01c79537b
 +        if !self.embedded { chrome::tab_strip(self, ui); }
          // A document can hide the toolbars, the menu and the panels around it in its tab (ISO
          // 32000-2 Table 147); the tab strip stays, and F8 brings the rest back (`viewer_prefs`).
+@@ -928,2 +929,23 @@ impl PdfCraftApp {
+     }
+ }
++
++#[cfg(test)]
++mod host_chrome_tests {
++    use egui_kittest::{Harness, kittest::Queryable};
++
++    #[test]
++    fn standalone_document_tab_is_omitted_when_embedded() {
++        fn tabs(embedded: bool) -> usize {
++            let mut h = Harness::builder().with_size(egui::vec2(1200.0, 800.0)).build_eframe(move |_| {
++                let mut app = crate::PdfCraftApp::new();
++                app.embedded = embedded;
++                app.open_bytes("seam-chrome-test.pdf", None, include_bytes!("../tests/data/form.pdf").to_vec()).unwrap();
++                app
++            });
++            h.run_steps(4);
++            h.query_all_by_label("seam-chrome-test.pdf").count()
++        }
++        assert!(tabs(false) > 0, "standalone document tab remains available");
++        assert_eq!(tabs(true), 0, "embedded host supplies the document tabs");
++    }
++}
 diff --git a/crates/ui-egui/src/chrome.rs b/crates/ui-egui/src/chrome.rs
 index 4cc264e7dcd6b550b2ca65cf7d4fd2a6522f3195..8fd3a42aad2b06d027065696ef0144e96a255321 100644
 --- a/crates/ui-egui/src/chrome.rs

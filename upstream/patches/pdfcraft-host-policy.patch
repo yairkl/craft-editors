@@ -1,5 +1,5 @@
 diff --git a/crates/ui-egui/src/app/files.rs b/crates/ui-egui/src/app/files.rs
-index bdf3e62996f7547b96cb0e799b43744f7f0205bd..68c022f630452ac416332d3d3ea82df42ef5c432 100644
+index 6a27b62ec606e4cce663d69b919a020b8a20571a..918f74fddacf14ccaa38a71192fea40b8a439924 100644
 --- a/crates/ui-egui/src/app/files.rs
 +++ b/crates/ui-egui/src/app/files.rs
 @@ -93,4 +93,5 @@ impl PdfCraftApp {
@@ -8,6 +8,40 @@ index bdf3e62996f7547b96cb0e799b43744f7f0205bd..68c022f630452ac416332d3d3ea82df4
 +        if self.embedded && !self.views.is_empty() { return Err("Open additional documents in the host.".into()); }
          // Images and text files become new, unsaved PDFs (Create a PDF).
          let active = self.active;
+@@ -1068,4 +1069,5 @@ impl PdfCraftApp {
+             return;
+         }
++        if self.embedded && self.host_command.as_mut().is_some_and(|host| host("file.close")) { return; }
+         self.remember_view(index);
+         let view = self.views.remove(index);
+@@ -1112,2 +1114,27 @@ fn looks_like_pdf(bytes: &[u8]) -> bool {
+     bytes.get(..1024).unwrap_or(bytes).windows(5).any(|w| w == b"%PDF-")
+ }
++
++#[cfg(test)]
++mod embedded_close_tests {
++    use crate::PdfCraftApp;
++    use std::cell::Cell;
++    use std::rc::Rc;
++
++    #[test]
++    fn single_document_host_only_receives_valid_close_requests() {
++        let mut app = PdfCraftApp::new();
++        app.embedded = true;
++        app.open_bytes("only.pdf", None, include_bytes!("../../tests/data/form.pdf").to_vec()).unwrap();
++        let calls = Rc::new(Cell::new(0));
++        let seen = Rc::clone(&calls);
++        app.host_command = Some(Box::new(move |id| {
++            if id == "file.close" { seen.set(seen.get() + 1); return true; }
++            false
++        }));
++        app.close_tab(9);
++        assert_eq!(calls.get(), 0);
++        app.close_tab(0);
++        assert_eq!(calls.get(), 1);
++        assert_eq!(app.views.len(), 1, "the host owns closing the embedded document");
++    }
++}
 diff --git a/crates/ui-egui/src/tools/sign_ui.rs b/crates/ui-egui/src/tools/sign_ui.rs
 index 56410eeb33c814ea24c694e1f847fed2e6a36e0a..66c7af97dd0ec6ac672c82d97612e000377447e9 100644
 --- a/crates/ui-egui/src/tools/sign_ui.rs
