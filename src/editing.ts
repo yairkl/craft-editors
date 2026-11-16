@@ -86,6 +86,12 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
     const doc = new EditableDocument(uri, cache, disk.bytes, baseline, Boolean(context.backupId), disk.format);
     this.documents.set(uri.toString(), doc);
     doc.add(new vscode.Disposable(() => this.documents.delete(uri.toString())));
+    const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(vscode.Uri.joinPath(uri, '..'), '*'));
+    const refresh = new CoalescedTask(() => this.refreshExternal(doc));
+    doc.add(watcher);
+    const changed = (changedUri: vscode.Uri): void => { if (changedUri.toString() === uri.toString()) refresh.request(); };
+    doc.add(watcher.onDidChange(changed));
+    doc.add(watcher.onDidCreate(changed));
     return doc;
   }
 
@@ -147,12 +153,41 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
           result.resizeVerified = m.resizeVerified === true;
         }
         this.renders.fire(result);
+        void this.refreshExternal(doc);
       }
     });
     const cleanup = (): void => { clearTimeout(renderTimer); rpc.dispose(); listener.dispose(); if (doc.rpc === rpc) doc.rpc = undefined; if (this.panels.get(doc) === panel) this.panels.delete(doc); };
     doc.add(token.onCancellationRequested(cleanup));
     panel.onDidDispose(cleanup);
     panel.webview.html = renderHtml(panel.webview, media, engine, sessionId, true);
+  }
+
+  private refreshExternal(doc: EditableDocument): Promise<void> {
+    return doc.enqueue(async () => {
+      if (doc.disposed) return;
+      const source = new vscode.CancellationTokenSource();
+      try {
+        const data = await readProbeDocument(doc.uri, source.token, doc.format);
+        const nextDigest = digest(data.bytes);
+        if (doc.disposed || nextDigest === doc.diskDigest) return;
+        if (doc.dirty || !doc.rpc) {
+          if (doc.dirty) void vscode.window.showWarningMessage('This document changed on disk. Use Save As to preserve your edits, or Revert to reload the file.');
+          return;
+        }
+        const expected = doc.token;
+        const revision = await doc.request('restore-if-clean', { bytes: exactArrayBuffer(data.bytes), token: expected });
+        if (revision === null) {
+          void vscode.window.showWarningMessage('This document changed on disk. Use Save As to preserve your edits, or Revert to reload the file.');
+          return;
+        }
+        if (!integer(revision)) throw new Error('Invalid restored revision.');
+        if (doc.disposed) return;
+        doc.cache = data.bytes; doc.diskBytes = data.bytes; doc.diskDigest = nextDigest;
+        if (doc.token === expected) { doc.token = revision; doc.savedToken = revision; }
+      } catch (error) {
+        if (!doc.disposed) void vscode.window.showWarningMessage(`Could not refresh the changed document: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      } finally { source.dispose(); }
+    });
   }
 
   private async history(doc: EditableDocument, target: number): Promise<void> {

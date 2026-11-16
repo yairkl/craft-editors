@@ -122,6 +122,11 @@ window.addEventListener('message', async ({ data }) => {
         case 'history': viewer.restore_history(data.token); result = data.token; break;
         case 'ack': viewer.mark_saved(data.token); result = data.token; break;
         case 'restore': result = viewer.replace(new Uint8Array(data.bytes)); syncTheme(); break;
+        case 'restore-if-clean': {
+          const current = viewer.serialize(true);
+          if (current.token !== data.token) { result = null; break; }
+          result = viewer.replace(new Uint8Array(data.bytes)); syncTheme(); break;
+        }
         case 'new': result = (Viewer.blank_document ? Viewer.blank_document() : Viewer.blank_workbook()).buffer; break;
         case 'test:edit': {
           if (!capture) throw new Error('Test operation unavailable.');
