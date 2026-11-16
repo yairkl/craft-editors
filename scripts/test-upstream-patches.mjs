@@ -59,3 +59,26 @@ test('accepts an unchanged patch applied at shifted lines while rejecting other 
     assert.throws(() => verifySource(root, app), /exactly/);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test('accepts declared new files but rejects unrelated untracked files', () => {
+  const root = mkdtempSync(join(tmpdir(), 'craft-patch-added-'));
+  const checkout = join(root, 'upstream/checkouts/testapp');
+  try {
+    mkdirSync(checkout, { recursive: true }); mkdirSync(join(root, 'upstream/patches'), { recursive: true });
+    const git = (...args) => execFileSync('git', args, { cwd: checkout, encoding: 'utf8' }).trim();
+    git('init', '-q'); writeFileSync(join(checkout, 'base'), 'base\n'); writeFileSync(join(checkout, '.gitignore'), 'added\nbase\n'); git('add', '.gitignore'); git('add', '-f', 'base');
+    git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'base');
+    writeFileSync(join(checkout, 'added'), 'declared\n'); git('add', '-f', '-N', 'added'); rmSync(join(checkout, 'base'));
+    const patch = Buffer.from(git('diff', '--binary', '--full-index') + '\n');
+    const path = 'upstream/patches/add.patch'; writeFileSync(join(root, path), patch);
+    git('restore', '--staged', 'added'); rmSync(join(checkout, 'added')); git('restore', 'base');
+    const app = { id: 'testapp', revision: git('rev-parse', 'HEAD'), patches: [{ path, sha256: hash(patch) }] };
+    verifySource(root, app, { apply: true });
+    assert.equal(readFileSync(join(checkout, 'added'), 'utf8'), 'declared\n');
+    writeFileSync(join(checkout, 'base'), 'base\n');
+    assert.throws(() => verifySource(root, app), /exactly/, 'A retained tracked file is detected even if ignored');
+    rmSync(join(checkout, 'base'));
+    writeFileSync(join(checkout, 'unrelated'), 'unexpected');
+    assert.throws(() => verifySource(root, app), /exactly/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
