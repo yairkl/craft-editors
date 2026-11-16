@@ -2,6 +2,12 @@
 
 Inspected 2026-10-25. The initial research below describes the full upstream application shells. A subsequent implementation built separate read-only adapters from these pins and verified actual rendering in VS Code; see [rendering](rendering.md). Subsequent work embeds GridCraft native UI with a tracked host-command hook and explicit serialize/ack lifecycle; see [editing](editing.md). The original observations below remain historical source analysis. Rust 1.95.0 was installed in an isolated build directory. Machine-readable pins and outstanding gates are in [the manifest](../upstream/manifest.json).
 
+## Release review, 2026-11-16
+
+The integration update reviewed the latest stable releases and their immutable source pins: GridCraft 0.19.1 (`476448d7d9f3a5f8e93fcf7d98b47fd52293fe7f`), WordCraft 0.18.1 (`079f478bd85df7bcc567e3bafa7d7219096f9c3c`), DeckCraft 0.18.1 (`7cc73ab1895ed2e30c8afbcada20c70b9ea0a440`), PdfCraft 0.21.1 (`b503b2e62dfeec5598f344e4e287d9c9cbdb34fa`) and VectorCraft 0.24.1 (`f4922aa7ac99a4f6d56fc68a83a44945207ec610`). Each workspace declares Rust 1.95. The pin changes required host patch rebasing; PdfCraft uses its own vendored Hayro dependencies to coexist with the other editors’ versions. The updated adapters were built and exercised in the editor and package suites; see [rendering](rendering.md) and [the patch review](upstream-patch-review.md). Standalone upstream coverage and compatibility beyond the tested workflows remain open.
+
+The table and observations below describe the earlier inspection, not the current pins.
+
 ## Pinned inputs
 
 | Application | Source revision | Workspace version | Declared minimum Rust |
