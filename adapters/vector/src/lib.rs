@@ -218,6 +218,12 @@ struct Document {
     native_format: bool,
 }
 impl Document {
+    fn reload_pending(&self) -> bool {
+        self.app.session.in_interaction()
+            || self.app.session.tool_busy()
+            || self.app.session.tool_editing()
+            || self.app.session.tool_composing()
+    }
     fn open(bytes: Vec<u8>, commands: Commands, _format: &str) -> Result<Self, JsValue> {
         static FONT: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
         FONT.get_or_init(|| {

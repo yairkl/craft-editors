@@ -33,6 +33,9 @@ export class EditableDocument implements vscode.CustomDocument {
   savedToken = 0;
   cacheFormat: DocumentFormat;
   disposed = false;
+  externalWarning = false;
+  notifyExternalChange: (() => void) | undefined;
+  requestExternalRefresh: (() => void) | undefined;
   private tail: Promise<unknown> = Promise.resolve();
   private readonly disposables: vscode.Disposable[] = [];
   readonly cacheRefresh = new CoalescedTask(async () => {
@@ -88,10 +91,19 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
     doc.add(new vscode.Disposable(() => this.documents.delete(uri.toString())));
     const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(vscode.Uri.joinPath(uri, '..'), '*'));
     const refresh = new CoalescedTask(() => this.refreshExternal(doc));
+    doc.requestExternalRefresh = () => refresh.request();
+    let timer: ReturnType<typeof setTimeout> | undefined;
     doc.add(watcher);
-    const changed = (changedUri: vscode.Uri): void => { if (changedUri.toString() === uri.toString()) refresh.request(); };
+    const changed = (changedUri: vscode.Uri): void => {
+      if (changedUri.toString() !== uri.toString()) return;
+      clearTimeout(timer);
+      timer = setTimeout(() => refresh.request(), 200);
+    };
     doc.add(watcher.onDidChange(changed));
     doc.add(watcher.onDidCreate(changed));
+    doc.add(watcher.onDidDelete(changed));
+    doc.add(vscode.window.onDidChangeWindowState(state => { if (state.focused) refresh.request(); }));
+    doc.add(new vscode.Disposable(() => clearTimeout(timer)));
     return doc;
   }
 
@@ -101,6 +113,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
     await vscode.workspace.fs.stat(vscode.Uri.joinPath(engine, 'viewer_bg.wasm'));
     cancelled(token);
     const sessionId = randomUUID();
+    doc.notifyExternalChange = () => { void panel.webview.postMessage({ type: 'editor:external-change', version: 1, sessionId, changed: doc.externalWarning }); };
     const rpc = new WebviewRpc(sessionId, value => panel.webview.postMessage(value));
     doc.rpc?.dispose(); doc.rpc = rpc;
     this.panels.set(doc, panel);
@@ -127,6 +140,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
           bytes: exactArrayBuffer(doc.cache), cacheFormat: doc.cacheFormat,
           ...(doc.dirty || snapshotFormat(doc.format) !== doc.format ? { originalBytes: exactArrayBuffer(doc.diskBytes) } : {}),
           recovered: doc.dirty, capture });
+        doc.notifyExternalChange?.();
       } else if (m.type === 'editor:changed' && ready && integer(m.before) && integer(m.after) && m.before !== m.after) {
         const before = m.before, after = m.after;
         doc.token = after;
@@ -156,7 +170,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
         void this.refreshExternal(doc);
       }
     });
-    const cleanup = (): void => { clearTimeout(renderTimer); rpc.dispose(); listener.dispose(); if (doc.rpc === rpc) doc.rpc = undefined; if (this.panels.get(doc) === panel) this.panels.delete(doc); };
+    const cleanup = (): void => { clearTimeout(renderTimer); rpc.dispose(); listener.dispose(); if (doc.rpc === rpc) { doc.rpc = undefined; doc.notifyExternalChange = undefined; } if (this.panels.get(doc) === panel) this.panels.delete(doc); };
     doc.add(token.onCancellationRequested(cleanup));
     panel.onDidDispose(cleanup);
     panel.webview.html = renderHtml(panel.webview, media, engine, sessionId, true);
@@ -166,26 +180,32 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
     return doc.enqueue(async () => {
       if (doc.disposed) return;
       const source = new vscode.CancellationTokenSource();
+      const warn = (message: string): void => {
+        if (!doc.externalWarning) { doc.externalWarning = true; doc.notifyExternalChange?.(); void vscode.window.showWarningMessage(message); }
+      };
       try {
         const data = await readProbeDocument(doc.uri, source.token, doc.format);
         const nextDigest = digest(data.bytes);
-        if (doc.disposed || nextDigest === doc.diskDigest) return;
+        if (doc.disposed) return;
+        if (nextDigest === doc.diskDigest) { doc.externalWarning = false; doc.notifyExternalChange?.(); return; }
         if (doc.dirty || !doc.rpc) {
-          if (doc.dirty) void vscode.window.showWarningMessage('This document changed on disk. Use Save As to preserve your edits, or Revert to reload the file.');
+          if (doc.dirty) warn('This document changed on disk. Use Save As to preserve your edits, or Revert to reload the file.');
           return;
         }
         const expected = doc.token;
         const revision = await doc.request('restore-if-clean', { bytes: exactArrayBuffer(data.bytes), token: expected });
         if (revision === null) {
-          void vscode.window.showWarningMessage('This document changed on disk. Use Save As to preserve your edits, or Revert to reload the file.');
+          warn('This document changed on disk. Use Save As to preserve your edits, or Revert to reload the file.');
           return;
         }
         if (!integer(revision)) throw new Error('Invalid restored revision.');
         if (doc.disposed) return;
-        doc.cache = data.bytes; doc.diskBytes = data.bytes; doc.diskDigest = nextDigest;
+        doc.cache = data.bytes; doc.cacheFormat = doc.format; doc.diskBytes = data.bytes; doc.diskDigest = nextDigest;
+        doc.externalWarning = false;
+        doc.notifyExternalChange?.();
         if (doc.token === expected) { doc.token = revision; doc.savedToken = revision; }
       } catch (error) {
-        if (!doc.disposed) void vscode.window.showWarningMessage(`Could not refresh the changed document: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        if (!doc.disposed) warn(`Could not refresh the changed document: ${error instanceof Error ? error.message : 'Unknown error'}`);
       } finally { source.dispose(); }
     });
   }
@@ -194,6 +214,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
     await doc.request('history', { token: target }); doc.token = target;
     const cached = snapshot(await doc.request('serialize', { flush: false }), doc.limit);
     if (cached.token === doc.token) { doc.cache = cached.bytes; doc.cacheFormat = snapshotFormat(doc.format); }
+    if (!doc.dirty && doc.externalWarning) doc.requestExternalRefresh?.();
   }
   async saveCustomDocument(doc: EditableDocument, token: vscode.CancellationToken): Promise<void> {
     return this.write(doc, doc.uri, token);
@@ -250,6 +271,7 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
       if (!integer(revision)) throw new Error('Invalid restored revision.');
       doc.cache = data.bytes; doc.cacheFormat = doc.format; doc.diskBytes = data.bytes; doc.diskDigest = digest(data.bytes);
       doc.token = revision; doc.savedToken = revision;
+      doc.externalWarning = false; doc.notifyExternalChange?.();
     });
   }
   async backupCustomDocument(doc: EditableDocument, context: vscode.CustomDocumentBackupContext, token: vscode.CancellationToken): Promise<vscode.CustomDocumentBackup> {
@@ -302,6 +324,11 @@ export class EditingProvider implements vscode.CustomEditorProvider<EditableDocu
       case 'file.save': await vscode.workspace.save(doc.uri); break;
       case 'file.saveAs': await vscode.workspace.saveAs(doc.uri); break;
       case 'file.revert': await vscode.commands.executeCommand('workbench.action.files.revert'); break;
+      case 'file.revertExternal': {
+        const choice = await vscode.window.showWarningMessage('Reloading discards any unsaved changes in this editor.', { modal: true }, 'Reload from Disk');
+        if (choice === 'Reload from Disk') { panel.reveal(panel.viewColumn); await vscode.commands.executeCommand('workbench.action.files.revert'); }
+        break;
+      }
       case 'file.open': await vscode.commands.executeCommand('workbench.action.files.openFile'); break;
       case 'file.new': {
         const target = await vscode.window.showSaveDialog({ filters: { [this.descriptor.label]: [this.descriptor.format] }, saveLabel: 'Create document' });

@@ -319,6 +319,23 @@ impl NativeViewer {
         state.context.request_repaint();
         Ok(token)
     }
+    /// Replace a clean model without invalidating VS Code's existing history tokens.
+    pub fn reload_if_clean(&self, expected: u32, bytes: Vec<u8>) -> Result<bool, JsValue> {
+        let mut state = self
+            .state
+            .try_borrow_mut()
+            .map_err(|_| error("Editor is busy."))?;
+        state.observe();
+        if state.token != expected || state.document.reload_pending() {
+            return Ok(false);
+        }
+        let mut document = Document::open(bytes, state.commands.clone(), &state.format)?;
+        document.set_theme(&state.context, state.dark);
+        state.snapshots.insert(expected, document.snapshot());
+        state.document = document;
+        state.context.request_repaint();
+        Ok(true)
+    }
     pub fn blank_document() -> Result<Vec<u8>, JsValue> {
         Document::blank()
     }

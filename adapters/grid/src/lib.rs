@@ -904,6 +904,40 @@ impl GridViewer {
         state.context.request_repaint();
         Ok(token)
     }
+    /// Refresh the saved boundary while retaining older host history snapshots.
+    pub fn reload_if_clean(&self, expected: u32, bytes: Vec<u8>) -> Result<bool, JsValue> {
+        let mut state = self
+            .state
+            .try_borrow_mut()
+            .map_err(|_| JsValue::from_str("Renderer is busy."))?;
+        state.observe();
+        if state.token != expected
+            || state.app.editor.is_some()
+            || state.app.text_box_editor.is_some()
+        {
+            return Ok(false);
+        }
+        let mut app = make_app(&bytes, &state.format, state.commands.clone())?;
+        app.ui.dark = state.app.ui.dark;
+        app.ui.system_theme = false;
+        let snapshot = Snapshot::capture(
+            app.session
+                .active()
+                .ok_or_else(|| JsValue::from_str("No workbook."))?,
+            &app,
+        );
+        state.csv_styles = app.session.active().map_or_else(Vec::new, |doc| {
+            doc.wb
+                .styles
+                .iter()
+                .map(|(_, style)| style.clone())
+                .collect()
+        });
+        state.snapshots.insert(expected, snapshot);
+        state.app = app;
+        state.context.request_repaint();
+        Ok(true)
+    }
     pub fn blank_workbook() -> Result<Vec<u8>, JsValue> {
         let mut session = Session::new();
         session.new_workbook();

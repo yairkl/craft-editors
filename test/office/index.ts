@@ -86,6 +86,18 @@ export async function run(): Promise<void> {
       await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
       await vscode.commands.executeCommand('vscode.openWith', uri, descriptor.preview);
     }
+    {
+      const changedBytes = await vscode.workspace.fs.readFile(vscode.Uri.joinPath(directory, `agent-closed.${descriptor.format}`));
+      const watchedUri = vscode.Uri.joinPath(directory, `external-watch.${descriptor.format}`);
+      await vscode.workspace.fs.writeFile(watchedUri, original);
+      const watched = await open(api, watchedUri);
+      await writeFile(watchedUri.fsPath, changedBytes);
+      await waitFor(() => Buffer.from(watched.diskBytes).equals(Buffer.from(changedBytes)));
+      assert.match(String(await watched.request('test:text')), /closed (?:slide )?agent/, 'The editor reflects the external version');
+      assert.equal(watched.dirty, false);
+      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+      await vscode.commands.executeCommand('vscode.openWith', uri, descriptor.preview);
+    }
     if (descriptor.format === 'pptx') {
       await doc.request('test:command', { command: 'show.start' });
       const state = await doc.request('test:inspect') as { show: unknown };

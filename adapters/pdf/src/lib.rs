@@ -150,6 +150,9 @@ struct Document {
     id: DocId,
 }
 impl Document {
+    fn reload_pending(&self) -> bool {
+        self.app.host_pending()
+    }
     fn open(bytes: Vec<u8>, commands: Commands, _format: &str) -> Result<Self, JsValue> {
         static PDF_FALLBACKS: &[pdfcraft_fonts::CraftFont] = &[pdfcraft_fonts::CraftFont {
             family: "Noto Sans Hebrew",
