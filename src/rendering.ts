@@ -25,6 +25,7 @@ export function renderHtml(webview: vscode.Webview, media: vscode.Uri, engine: v
 <link rel="stylesheet" href="${uri('viewer.css')}"><title>Craft document</title></head>
 <body data-session="${sessionId}" data-module="${webview.asWebviewUri(vscode.Uri.joinPath(engine, 'viewer.js'))}" data-wasm="${webview.asWebviewUri(vscode.Uri.joinPath(engine, 'viewer_bg.wasm'))}">
 
+<aside id="external-notice" hidden role="status" aria-live="polite"><span>The file changed on disk or is unavailable. Your open document has not been replaced.</span> <button id="external-save-copy" type="button">Save As…</button> <button id="external-reload" type="button">Revert…</button></aside>
 <aside id="csv-notice" hidden role="status" aria-live="polite" aria-label="Delimited text format limitations"><span id="csv-message"></span> <button id="csv-workbook" type="button">Save as XLSX…</button></aside>
 <aside id="md-notice" hidden role="status" aria-live="polite" aria-label="Markdown format limitations"><span id="md-message">Some Markdown source or document features cannot be safely preserved. Markdown autosave is paused. Save a DOCX copy to keep the imported document and edits; source features unsupported by WordCraft may already be absent from the copy.</span> <button id="md-document" type="button">Save as DOCX…</button></aside>
 <p id="status" role="status">Loading renderer…</p><main id="viewport"><canvas id="document" aria-label="${editable ? 'Document editor' : 'Read-only document preview'}"></canvas></main>

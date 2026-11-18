@@ -193,6 +193,7 @@ struct Document {
     saved: wordcraft_engine::doc::Document,
     observed: std::cell::Cell<u64>,
     markdown_source_safe: bool,
+    pending: Rc<std::cell::Cell<bool>>,
 }
 impl Document {
     fn open(bytes: Vec<u8>, commands: Commands, format: &str) -> Result<Self, JsValue> {
@@ -220,8 +221,11 @@ impl Document {
                 .map(|rendered| rendered == bytes)
                 .unwrap_or(false);
         let saved = doc.clone();
+        let pending = Rc::new(std::cell::Cell::new(false));
+        let pending_report = pending.clone();
         let services = Services {
             embedded: true,
+            on_dirty: Some(Box::new(move |dirty| pending_report.set(dirty))),
             host_command: Some(Box::new(move |id| host_command(&commands, id))),
             ..Default::default()
         };
@@ -234,7 +238,11 @@ impl Document {
             saved,
             observed,
             markdown_source_safe,
+            pending,
         })
+    }
+    fn reload_pending(&self) -> bool {
+        self.pending.get()
     }
     fn snapshot(&self) -> Snapshot {
         Snapshot {

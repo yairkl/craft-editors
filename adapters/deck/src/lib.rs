@@ -200,6 +200,12 @@ struct Document {
     app: SlideApp,
 }
 impl Document {
+    fn reload_pending(&self) -> bool {
+        self.app
+            .session
+            .active()
+            .is_some_and(|doc| doc.composition.is_some() || doc.interaction.is_some())
+    }
     fn open(bytes: Vec<u8>, commands: Commands, _format: &str) -> Result<Self, JsValue> {
         static FONT: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
         FONT.get_or_init(|| {

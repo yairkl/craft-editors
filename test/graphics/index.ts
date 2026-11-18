@@ -187,6 +187,19 @@ export async function run(): Promise<void> {
       await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
       await vscode.commands.executeCommand('vscode.openWith', uri, descriptor.preview);
     }
+    {
+      const changed = await vscode.workspace.fs.readFile(vscode.Uri.joinPath(directory, `agent-closed.${descriptor.format}`));
+      const watchedUri = vscode.Uri.joinPath(directory, `external-watch.${descriptor.format}`);
+      await vscode.workspace.fs.writeFile(watchedUri, original);
+      const watched = await open(watchedUri);
+      await writeFile(watchedUri.fsPath, changed);
+      await waitFor(() => Buffer.from(watched.diskBytes).equals(Buffer.from(changed)));
+      if (descriptor.format === 'pdf') assert.equal((await watched.request('test:inspect') as State).rotations?.[0], 90);
+      else assert.ok(String(await watched.request('test:text')).includes('closed vector agent'));
+      assert.equal(watched.dirty, false);
+      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+      await vscode.commands.executeCommand('vscode.openWith', uri, descriptor.preview);
+    }
     if (descriptor.format === 'pdf') {
       await doc.request('test:command', { command: 'create.blank' });
       assert.equal(doc.dirty, false, 'Unsupported multi-document workflows cannot replace the host document');

@@ -11,6 +11,9 @@ let viewer;
 let Viewer;
 let opened = false;
 let capture = false;
+let composing = false;
+document.addEventListener('compositionstart', () => { composing = true; }, true);
+document.addEventListener('compositionend', () => { composing = false; }, true);
 let firstResult = true;
 const send = (type, fields = {}) => vscode.postMessage({ type, version: 1, sessionId, ...fields });
 
@@ -82,6 +85,8 @@ function markdownNotice() {
   }, 400);
 }
 document.getElementById('md-document').addEventListener('click', () => hostCommand('file.saveCopyDocx'));
+document.getElementById('external-save-copy').addEventListener('click', () => send('editor:command', { command: 'file.saveAs' }));
+document.getElementById('external-reload').addEventListener('click', () => send('editor:command', { command: 'file.revertExternal' }));
 
 
 function hostCommand(command) {
@@ -98,6 +103,7 @@ function hostCommand(command) {
 
 window.addEventListener('message', async ({ data }) => {
   if (!data || data.version !== 1 || data.sessionId !== sessionId) return;
+  if (data.type === 'editor:external-change') { document.getElementById('external-notice').hidden = !data.changed; return; }
   if (data.type === 'editor:request') {
     try {
       await engineReady;
@@ -123,9 +129,8 @@ window.addEventListener('message', async ({ data }) => {
         case 'ack': viewer.mark_saved(data.token); result = data.token; break;
         case 'restore': result = viewer.replace(new Uint8Array(data.bytes)); syncTheme(); break;
         case 'restore-if-clean': {
-          const current = viewer.serialize(true);
-          if (current.token !== data.token) { result = null; break; }
-          result = viewer.replace(new Uint8Array(data.bytes)); syncTheme(); break;
+          if (composing || !viewer.reload_if_clean(data.token, new Uint8Array(data.bytes))) { result = null; break; }
+          syncTheme(); result = data.token; break;
         }
         case 'new': result = (Viewer.blank_document ? Viewer.blank_document() : Viewer.blank_workbook()).buffer; break;
         case 'test:edit': {
@@ -244,6 +249,10 @@ window.addEventListener('message', async ({ data }) => {
         case 'test:cell': {
           if (!capture) throw new Error('Test operation unavailable.');
           result = viewer.cell_text(data.sheet, data.row, data.col); break;
+        }
+        case 'test:external-notice': {
+          if (!capture) throw new Error('Test operation unavailable.');
+          result = !document.getElementById('external-notice').hidden; break;
         }
         default: throw new Error('Unsupported document operation.');
       }
