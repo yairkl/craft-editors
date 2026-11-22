@@ -1,5 +1,6 @@
 """Check installed archive contents and renderer isolation for every application."""
 import json
+import hashlib
 import re
 from pathlib import Path
 from zipfile import ZipFile
@@ -50,7 +51,19 @@ for name in [*PROGRAMS, 'suite']:
             if name in PROGRAMS:
                 assert 'extension/notices/fonts/NotoSansHebrew-OFL.txt' in files
             dependencies = json.loads(z.read('extension/notices/dependencies.json'))
+            provenance = json.loads(z.read('extension/notices/provenance.json'))
+            assert provenance['application'] == program
+            assert re.fullmatch(r'[a-f0-9]{40}', provenance['revision'])
+            for path, artifact in provenance['rendererArtifacts'].items():
+                assert hashlib.sha256(z.read('extension/media/engines/' + path)).hexdigest() == artifact['sha256'], f'{name}: renderer provenance mismatch'
+            for patch in provenance['patches']:
+                bundled = z.read('extension/notices/modifications/' + patch['path'].split('/')[-1])
+                assert hashlib.sha256(bundled).hexdigest() == patch['sha256'], f'{name}: modified source patch drift'
             for dependency in dependencies:
+                assert dependency.get('licenseChoice'), f"{name}: missing license selection for {dependency['name']}"
+                assert dependency['notices'], f"{name}: missing notices for {dependency['name']}"
+                for notice in dependency['notices']:
+                    assert 'extension/notices/' + notice in files, f"{name}: missing notice for {dependency['name']}"
                 if dependency['license'] == 'MPL-2.0' and str(dependency['source']).startswith('registry+'):
                     assert dependency.get('sourceArchive', '').startswith('https://crates.io/api/v1/crates/'), f"{name}: missing MPL source archive for {dependency['name']}"
                     assert 'extension/notices/licenses/MPL-2.0.txt' in files, f"{name}: missing MPL license text"

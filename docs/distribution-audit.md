@@ -1,18 +1,44 @@
 # Distribution review for the preview
 
-This is a review checklist and an inventory finding, not a determination that all third-party obligations are satisfied. Re-run the checks for the exact release artifacts before publishing to a marketplace.
+## 0.1.7 candidate review (2026-11-22)
 
-## Current evidence
+The five application installers use the pinned sources in `upstream/manifest.json` and modified host adapters. The optional Suite contains no renderer. This record describes packaging evidence; it does not certify marketplace approval or complete every publication requirement in [issue #14](https://github.com/yairkl/craft-editors/issues/14).
 
-The packager collects each renderer's Cargo dependency inventory and available license, NOTICE and font files into its VSIX. It also records the upstream source revisions, patch hashes and font source hashes. `npm run packages:check` verifies that the expected notice directory and font license exist; it does **not** prove that every dependency's license obligations have been met.
+| Installer | Conservative Cargo inventory | Previously unassociated notices | Resolution |
+| --- | ---: | ---: | --- |
+| Spreadsheets | 289 | 35 | Repository-root associations and pinned registry supplements |
+| Documents | 311 | 37 | Repository-root associations and pinned registry supplements |
+| Presentations | 303 | 42 | Repository-root associations and pinned registry supplements |
+| PDF | 454 | 78 | Repository-root associations and pinned registry supplements |
+| Vector | 352 | 53 | Repository-root associations and pinned registry supplements |
+| Suite | 0 | 0 | Original icon, MIT integration license; no engine |
 
-A local audit of the generated dependency inventories found a declared license expression for every listed dependency. However, 10–35 crates per application had no *per-crate* notice file in their inventory entry. Some are workspace crates whose license files may be collected at the repository root; those associations have not been verified individually. In particular, 16 Symphonia packages in the PowerPoint inventory declare `MPL-2.0` and did not ship a per-crate license file. Packaging now includes the [standard MPL-2.0 text](https://spdx.org/licenses/MPL-2.0.html) and an exact-version crates.io source archive link for each MPL registry dependency; this addresses those missing references, but does not complete the source and attribution review. The metadata inventory is a conservative dependency graph and does not itself prove which crates are linked into a given final binary.
+These counts include build dependencies and potentially unused features. They must not be presented as an exact list of linked crates. We retain the conservative graph and its notices rather than removing entries based on unverified linking assumptions.
 
-## Before a public marketplace release
+Local candidate validation on 2026-11-22 found zero inventory entries without notice associations in all five VSIXs. The supplement manifest covers 41 package versions across 17 source revisions with 32 retained notice files. Type checking, 17 npm tests, 22 Python tooling tests, fixture verification, packaging and archive verification passed. Installed-package tests passed for all five applications independently and with the Suite in disposable Linux VS Code 1.102.0 profiles. This is not a store installation or upgrade test.
 
-1. Rebuild the exact release VSIXs and inspect their `notices/dependencies.json` and accompanying files. Resolve every inventory entry without a per-crate notice to an applicable license/notice, documenting the path and selected option for dual-licensed dependencies. Check font and other embedded asset attribution separately.
-2. Determine the actual linked components and applicable source-distribution and notice requirements, including for MPL-licensed code. Keep the relevant source revisions and modifications accessible. Obtain qualified review where needed; do not infer compliance from Cargo metadata alone.
-3. Review application names and artwork against each upstream project's brand terms. Use an independent publisher and avoid implying endorsement unless agreed with ArtCraft.
-4. Confirm publisher identity, ownership, extension IDs, versioning, update and incident response for both registries. Test installed packages and their notices in VS Code and Cursor. Publish the already-verified archives only after all required release checks pass.
+## License and source evidence
 
-Track unresolved publication decisions in [issue #14](https://github.com/yairkl/craft-editors/issues/14). The project has not yet completed this review or published to a marketplace.
+`collect-notices.mjs` now associates workspace/git crates with the license and attribution files at their own repository roots. Registry crates whose published archives omit license files receive supplements from the exact repository commits recorded in their `.cargo_vcs_info.json`. The checked-in `licenses/registry-supplements/manifest.json` records package versions, immutable revisions, source URLs and content hashes. Supplements are verified locally during packaging; no network lookup of floating license text is needed.
+
+`licenses/choices.json` records the selected option for every known Cargo license expression. MIT is selected for alternatives offering it; compound AND requirements are retained. Apache-2.0 is selected for self_cell rather than GPL-2.0-only. Unknown expressions stop packaging for review. Retaining additional license texts does not change the recorded selection.
+
+Each installer includes `notices/dependencies.json` with these choices and notice paths, exact-version crates.io source archive links for registry dependencies, and `notices/provenance.json` with the upstream revision, adapter lock hash, renderer hashes and modification patch hashes. The actual upstream patches are bundled under `notices/modifications/`. Registry MPL-2.0 dependencies retain their license text and exact-version source links; these registry packages are not patched by this integration. The dependency source revisions remain accessible through the Cargo lockfile and their upstream repositories.
+
+Archive verification requires every dependency to have notices and a recorded license selection, every referenced notice to exist, and packaged renderers and modification patches to match their provenance hashes. This is a mechanical completeness check; it does not prove that every asset or legal obligation has been identified.
+
+## Assets and branding
+
+The applications' pinned `NOTICE` and `ATTRIBUTION.md` files identify embedded font/data inputs, including egui fonts and their MIT, Bitstream Vera, OFL and Ubuntu Font Licence notices. These texts and available asset notices are retained. The additional unmodified Noto Sans Hebrew font has its pinned source and OFL text recorded in `upstream/font-assets.json`, copied to each application's `notices/fonts/`. Optional unpinned external fonts are rejected by the renderer build.
+
+The upstream `docs/brand/LICENSE-brand.txt` terms require modified builds to remove ArtCraft marks. The pinned PDF/vector branding patches replace the embedded mark artwork; the shared host disables upstream title branding. Extension icons are original artwork with editable sources in `assets/icons/`. Listings describe an independent community preview and identify the upstream projects without claiming endorsement. This source inspection is not a trademark clearance for the eventual publisher name.
+
+## Outstanding marketplace acceptance
+
+- Publisher/namespace ownership is undecided, as confirmed by the maintainer on 2026-11-22. Keep `craft-vscode-dev` for GitHub betas until a permanent identity is chosen; do not silently change existing extension IDs.
+- Create/claim the chosen identities on both registries, complete the Eclipse publisher agreement, and configure protected publishing credentials or trusted publishing. No repository publishing secrets were configured at review time.
+- Run the tagged release workflow. Record its URL and results for the exact release candidate; prior green PR runs do not replace release validation.
+- Test installation and upgrade of the exact archives in current desktop VS Code and Cursor, including all five editor lifecycles, MCP discovery and the Suite. The cross-platform CI runs VS Code and does not establish Cursor compatibility.
+- Review the exact candidate notices and listing identity before the first marketplace upload. Store upload and update behavior are still unverified.
+
+Keep issue #14 open until these remaining acceptance criteria have evidence. See [the publication runbook](publication.md) for the maintainer steps.

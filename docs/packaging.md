@@ -80,6 +80,8 @@ For Remote SSH, install the desired VSIX into the **SSH host** Extensions sectio
 
 ## Cursor / Open VSX publication
 
+Follow the [publication runbook](publication.md) for identity setup, exact-artifact validation, installation/update testing and incident response. Current audit evidence and remaining acceptance criteria are recorded in the [distribution review](distribution-audit.md).
+
 Cursor's extension library uses Open VSX. Existing VSIX installers can also be installed manually in Cursor. The Cursor agent-plugin marketplace is a separate distribution system.
 
 Before registry publication, test the native webviews and lifecycle in the current Cursor build, choose a lasting publisher ID (currently `craft-vscode-dev`), create an Eclipse account, sign the Open VSX Publisher Agreement, and create/claim the matching namespace. Store an Open VSX token as a protected CI secret. Publish the five app VSIX files first, then the Suite pack, whose member IDs must match. Upload already verified release archives with `ovsx publish`; do not rebuild independently per store. Publication is not enabled by this change and no token is stored in the repository.
