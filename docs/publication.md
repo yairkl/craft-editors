@@ -2,6 +2,8 @@
 
 GitHub beta distribution and marketplace publication have separate prerequisites. The current supported channel is GitHub prereleases. All extensions remain previews; users should test with copies of valuable documents. The repository maintainer owns integration releases and security reports; upstream projects are not implied to endorse or support these packages.
 
+Prefer trusted publishing when configuring store authentication. Follow the current [Visual Studio Marketplace publishing guide](https://code.visualstudio.com/api/working-with-extensions/publishing-extension) and [Open VSX publishing guide](https://github.com/eclipse-openvsx/openvsx/wiki/Publishing-Extensions); account ownership and publisher agreements require the maintainer's decisions. Do not paste publishing tokens into issues or commits.
+
 ## Prepare and validate a GitHub beta
 
 1. Update affected package versions and the workspace lockfile. The Suite may retain its version when unchanged; bump it when releasing a coordinated set.

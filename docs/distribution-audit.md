@@ -15,7 +15,7 @@ The five application installers use the pinned sources in `upstream/manifest.jso
 
 These counts include build dependencies and potentially unused features. They must not be presented as an exact list of linked crates. We retain the conservative graph and its notices rather than removing entries based on unverified linking assumptions.
 
-Local candidate validation on 2026-11-22 found zero inventory entries without notice associations in all five VSIXs. The supplement manifest covers 41 package versions across 17 source revisions with 32 retained notice files. Type checking, 17 npm tests, 22 Python tooling tests, fixture verification, packaging and archive verification passed. Installed-package tests passed for all five applications independently and with the Suite in disposable Linux VS Code 1.102.0 profiles. This is not a store installation or upgrade test.
+Local candidate validation on 2026-11-22 found zero inventory entries without notice associations in all five VSIXs. The supplement manifest covers 41 package versions across 17 source revisions with 32 retained notice files. Type checking, 17 npm tests, 22 Python tooling tests, fixture verification, packaging and archive verification passed. Installed-package tests passed for all five applications independently and with the Suite in disposable Linux VS Code 1.102.0 profiles. A direct VSIX upgrade from the published 0.1.6 beta also passed version and rendering checks. This is not a store installation or upgrade test. See [the candidate verification record](verification/publication.md).
 
 ## License and source evidence
 
