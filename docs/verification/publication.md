@@ -14,7 +14,9 @@ The local upgrade command used the project's existing installed-test driver and 
 
 ## Release CI
 
-[Tagged release run](https://github.com/yairkl/craft-editors/actions/runs/45001299920): dispatched for this candidate. See the run for the authoritative final status. Publication is gated on the required build, Linux suites, Remote SSH and Linux/macOS/Windows matrix jobs.
+[Tagged release run](https://github.com/yairkl/craft-editors/actions/runs/45001299920) succeeded for this candidate. The required build, Linux editor/large-file/installed-package suites, Remote SSH and Linux/macOS/Windows matrix jobs passed. The workflow verified installer checksums and published [v0.1.7-beta.1](https://github.com/yairkl/craft-editors/releases/tag/v0.1.7-beta.1) as a GitHub prerelease with six VSIX installers and `SHA256SUMS`. The unchanged Suite remains version 0.1.6.
+
+All six published VSIX files were downloaded separately after publication and passed `sha256sum --check SHA256SUMS` against the published checksum file.
 
 ## Remaining scope
 

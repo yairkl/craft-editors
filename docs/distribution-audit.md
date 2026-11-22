@@ -37,8 +37,11 @@ The upstream `docs/brand/LICENSE-brand.txt` terms require modified builds to rem
 
 - Publisher/namespace ownership is undecided, as confirmed by the maintainer on 2026-11-22. Keep `craft-vscode-dev` for GitHub betas until a permanent identity is chosen; do not silently change existing extension IDs.
 - Create/claim the chosen identities on both registries, complete the Eclipse publisher agreement, and configure protected publishing credentials or trusted publishing. No repository publishing secrets were configured at review time.
-- Run the tagged release workflow. Record its URL and results for the exact release candidate; prior green PR runs do not replace release validation.
 - Test installation and upgrade of the exact archives in current desktop VS Code and Cursor, including all five editor lifecycles, MCP discovery and the Suite. The cross-platform CI runs VS Code and does not establish Cursor compatibility.
 - Review the exact candidate notices and listing identity before the first marketplace upload. Store upload and update behavior are still unverified.
 
 Keep issue #14 open until these remaining acceptance criteria have evidence. See [the publication runbook](publication.md) for the maintainer steps.
+
+## Completed release validation
+
+The [tagged 0.1.7 beta release workflow](https://github.com/yairkl/craft-editors/actions/runs/45001299920) passed all required checks, including full Linux editor suites, Remote SSH and the Linux/macOS/Windows matrix. It published [v0.1.7-beta.1](https://github.com/yairkl/craft-editors/releases/tag/v0.1.7-beta.1) with six VSIX files and checksums. This completes GitHub beta release validation; the marketplace requirements above remain open.
