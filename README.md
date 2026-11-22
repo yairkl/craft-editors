@@ -32,7 +32,7 @@ An optional **Craft Editors** pack groups the five extensions. Legacy `.doc` and
 2. Open the Extensions view, select **… → Install from VSIX…**, and choose each downloaded file. Reload when prompted. No Rust, Node.js or standalone Craft app is needed.
 3. Open a supported file. To use Craft Vector for an SVG or `.vectorcraft` file, choose **Reopen Editor With… → Craft Vector**. For Remote SSH, install the desired extension on the SSH host and reload the remote window.
 
-The extensions are not yet published to the VS Code Marketplace or Open VSX. For the optional Suite in this beta, install its five member VSIX files first. See [installation details and preview limits](docs/releases/v0.1.3-beta.1.md).
+The extensions are not yet published to the VS Code Marketplace or Open VSX. For the optional Suite in this beta, install its five member VSIX files first. See [installation details and preview limits](docs/releases/v0.1.7-beta.1.md).
 
 ## Working with files
 
@@ -54,7 +54,7 @@ Each editor includes an MCP bridge intended to give compatible agents access to 
 
 ## Preview limitations and feedback
 
-Complex Office, PDF and SVG fidelity; printing and signing; accessibility and IME input; and wider platform and font coverage are still being validated. An unfinished draft that cannot yet be serialized may not be recoverable after a crash. For details, see the [beta notes](docs/releases/v0.1.3-beta.1.md).
+Complex Office, PDF and SVG fidelity; printing and signing; accessibility and IME input; and wider platform and font coverage are still being validated. An unfinished draft that cannot yet be serialized may not be recoverable after a crash. For details, see the [beta notes](docs/releases/v0.1.7-beta.1.md).
 
 Please [report an issue](https://github.com/yairkl/craft-editors/issues) with your editor and OS versions, file type, and a shareable reproduction. Do not attach private documents. For security vulnerabilities, see [private reporting](SECURITY.md).
 
